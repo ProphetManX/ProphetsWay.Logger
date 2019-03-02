@@ -1,6 +1,11 @@
 using System;
 
 namespace ProphetsWay.Logger.Destinations{
+	
+	/// <summary>
+	/// A base class to handle logging destinations that are inherintly text based.
+	/// It will prepend a timestamp and the LogLevel to the message before passing the message out.
+	/// </summary>
 	public abstract class TextBasedDestination : BaseLoggingDestination
 	{
 		protected TextBasedDestination(LogLevels reportingLevel) : base(reportingLevel){}
