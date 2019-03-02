@@ -11,22 +11,23 @@
 		<Authors>G. Gordon Nasseri</Authors>
 		<Company>ProphetsWay</Company>
 		<Description>
-			A simple and easy to use Logging library that allows for customizable outputs for log entries.
+A simple and easy to use Logging library that allows for customizable outputs for log entries.
 
-			Just one of a few Utility projects I've created for myself and wanted to share.  The namespace for the projects are all "ProphetsWay.Utilities" and the class to use is "Logger".  
+Just one of a few Utility projects I've created for myself and wanted to share.  The namespace for the projects are all "ProphetsWay.Utilities" and the class to use is "Logger".  
 
-			To Use:
-			add "using ProphetsWay.Utilities;" to your class
+To Use:
+add "using ProphetsWay.Utilities;" to your class
 
-			and then you can call the Logger directly.
-			Logger.AddDestination(new ConsoleDestination());
-			Logger.Debug("Hello World!");</Description>
+and then you can call the Logger directly.
+Logger.AddDestination(new ConsoleDestination());
+Logger.Debug("Hello World!");
+		</Description>
 		<PackageReleaseNotes>
-			Pre-Release Running Changes:
-			
-			Created the project.
-			Modified the namespace for easier use.
-			Modified how description and release notes are pushed thru the pipelines.
+Pre-Release Running Changes:
+
+Created the project.
+Modified the namespace for easier use.
+Modified how description and release notes are pushed thru the pipelines.
 		</PackageReleaseNotes>
 	</PropertyGroup>
 
