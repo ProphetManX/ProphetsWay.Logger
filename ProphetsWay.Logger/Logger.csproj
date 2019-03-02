@@ -8,6 +8,9 @@
 		<Win32Resource />
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<SignAssembly>false</SignAssembly>
+		<Authors>G. Gordon Nasseri</Authors>
+		<Company>ProphetsWay</Company>
+		<Description>A simple and easy to use Logging library that allows for customizable outputs for log entries.</Description>
 	</PropertyGroup>
 
 </Project>
