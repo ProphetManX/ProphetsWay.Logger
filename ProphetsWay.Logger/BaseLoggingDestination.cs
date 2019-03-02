@@ -1,6 +1,7 @@
 using System;
 
-namespace ProphetsWay.Logger{
+namespace ProphetsWay.Utilities
+{
 
 	/// <summary>
 	/// A Base class for creating new ILoggingDestinations, it is thread safe and will check the level of a message before logging.

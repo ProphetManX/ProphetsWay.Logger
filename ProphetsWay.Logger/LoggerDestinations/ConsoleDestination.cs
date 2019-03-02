@@ -1,6 +1,6 @@
 using System;
 
-namespace ProphetsWay.Logger.Destinations{
+namespace ProphetsWay.Utilities.LoggerDestinations{
 	/// <summary>
 	/// A basic destination that simply prints the log statements out to the Console.
 	/// </summary>

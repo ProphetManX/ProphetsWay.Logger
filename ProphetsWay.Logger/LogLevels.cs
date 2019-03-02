@@ -1,6 +1,6 @@
 using System;
 
-namespace ProphetsWay.Logger
+namespace ProphetsWay.Utilities
 {
     [Flags]
     public enum LogLevels{

@@ -2,7 +2,8 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace ProphetsWay.Logger.Destinations{
+namespace ProphetsWay.Utilities.LoggerDestinations
+{
 
 	/// <summary>
 	/// A basic destination that will write your logs to a File on the hard disk.
