@@ -6,7 +6,7 @@
 		<AssemblyName>ProphetsWay.Logger</AssemblyName>
 		<ApplicationIcon />
 		<Win32Resource />
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<SignAssembly>false</SignAssembly>
 	</PropertyGroup>
 
