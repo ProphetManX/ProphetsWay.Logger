@@ -10,11 +10,17 @@
 		<SignAssembly>false</SignAssembly>
 		<Authors>G. Gordon Nasseri</Authors>
 		<Company>ProphetsWay</Company>
-		<Description>A simple and easy to use Logging library that allows for customizable outputs for log entries.</Description>
-		<PackageReleaseNotes>Just one of a few Utility projects I've created for myself and wanted to share.  The namespace for the projects are all "ProphetsWay.Utilities" and the class to use is "Logger".  In your code, add "using ProphetsWay.Utilities;" and then you can call the Logger directly.
+		<Description>A simple and easy to use Logging library that allows for customizable outputs for log entries.
 
+Just one of a few Utility projects I've created for myself and wanted to share.  The namespace for the projects are all "ProphetsWay.Utilities" and the class to use is "Logger".  
+
+To Use:
+add "using ProphetsWay.Utilities;" to your class
+
+and then you can call the Logger directly.
 Logger.AddDestination(new ConsoleDestination());
-Logger.Debug("Hello World!");</PackageReleaseNotes>
+Logger.Debug("Hello World!");</Description>
+		<PackageReleaseNotes></PackageReleaseNotes>
 	</PropertyGroup>
 
 </Project>
