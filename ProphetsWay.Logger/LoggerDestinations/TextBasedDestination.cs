@@ -1,6 +1,7 @@
 using System;
 
-namespace ProphetsWay.Logger.Destinations{
+namespace ProphetsWay.Utilities.LoggerDestinations
+{
 	
 	/// <summary>
 	/// A base class to handle logging destinations that are inherintly text based.

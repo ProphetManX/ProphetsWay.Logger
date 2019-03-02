@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using ProphetsWay.Logger.Destinations;
+using ProphetsWay.Utilities.LoggerDestinations;
 
-namespace ProphetsWay.Logger
+namespace ProphetsWay.Utilities
 {
 	public static class Logger
 	{

@@ -1,6 +1,6 @@
 using System;
 
-namespace ProphetsWay.Logger{
+namespace ProphetsWay.Utilities{
     public interface ILoggingDestination
     {
         void Log(LogLevels level, string message = null, Exception ex = null);

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ProphetsWay.Logger.Destinations
+namespace ProphetsWay.Utilities.LoggerDestinations
 {
 	/// <summary>
 	/// A basic destination meant for use in situations that require events to be invoked (ie: UI applications).
