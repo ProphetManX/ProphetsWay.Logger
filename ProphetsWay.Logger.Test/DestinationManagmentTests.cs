@@ -1,13 +1,14 @@
-﻿using ProphetsWay.Utilities;
+using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
 using Xunit;
 
 namespace ProphetsWay.Logger.Test
 {
-	public class LoggerTests
+	[Collection("Logger is a Singleton")]
+	public class DestinationManagementTests
 	{
 		[Fact]
-		public void LogShouldAddDestination()
+		public void ShouldAddDestination()
 		{
 			//setup
 			var triggered = false;
@@ -16,14 +17,14 @@ namespace ProphetsWay.Logger.Test
 
 			//act
 			Utilities.Logger.AddDestination(dest);
-			Utilities.Logger.Debug("Hello World!");
+			Utilities.Logger.Log(LogLevels.Debug, "Hello World!");
 
 			//assert
 			Assert.True(triggered);
 		}
 
 		[Fact]
-		public void LogShouldRemoveDestination()
+		public void ShouldRemoveDestination()
 		{
 			//setup
 			var triggered = false;
@@ -33,14 +34,14 @@ namespace ProphetsWay.Logger.Test
 			//act
 			Utilities.Logger.AddDestination(dest);
 			Utilities.Logger.RemoveDestination(dest);
-			Utilities.Logger.Debug("Hello World!");
+			Utilities.Logger.Log(LogLevels.Debug, "Hello World!");
 
 			//assert
 			Assert.False(triggered);
 		}
 
 		[Fact]
-		public void LogShouldClearAllDestinations()
+		public void ShouldClearAllDestinations()
 		{
 			//setup
 			var triggered = false;
@@ -56,14 +57,10 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.AddDestination(dest2);
 			Utilities.Logger.AddDestination(dest3);
 			Utilities.Logger.ClearDestinations();
-			Utilities.Logger.Debug("Hello World!");
+			Utilities.Logger.Log(LogLevels.Debug, "Hello World!");
 
 			//assert
 			Assert.False(triggered);
 		}
-
-
-
-
 	}
 }
