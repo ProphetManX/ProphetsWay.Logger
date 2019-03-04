@@ -39,6 +39,7 @@ namespace ProphetsWay.Utilities
 		/// Ex:  Warning | Security | Information
 		/// Will write to Destinations with any of those three LogLevels enabled.
 		/// </summary>
+		/// <param name="level">The severity level of the log statement.</param>
 		/// <param name="message">The message you wish to convey in the log entry.</param>
 		/// <param name="ex">Optional, pass if you have an exception you want to add to the log entry.</param>
 		public static void Log(LogLevels level, string message = null, Exception ex = null)
