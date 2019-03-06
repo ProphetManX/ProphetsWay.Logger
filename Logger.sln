@@ -5,7 +5,12 @@ VisualStudioVersion = 15.0.27703.2018
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProphetsWay.Logger", "ProphetsWay.Logger\ProphetsWay.Logger.csproj", "{DB85C930-630A-4404-9A33-1C31EA4B2F4C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProphetsWay.Logger.Test", "ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj", "{3FC63533-B2BD-47FF-B0AB-DDA6E7DA3AD5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProphetsWay.Logger.Test", "ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj", "{3FC63533-B2BD-47FF-B0AB-DDA6E7DA3AD5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{80EF23D7-E1C1-4A81-BB42-8F144C5E47AC}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
