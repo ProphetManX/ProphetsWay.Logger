@@ -11,7 +11,7 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 	{
 		protected TextBasedDestination(LogLevels reportingLevel) : base(reportingLevel){}
 
-		protected override void WriteLogEntry(string message, LogLevels level){
+		protected override void WriteLogEntry(string message, LogLevels level, string raw, Exception ex){
 			var msg = $"{DateTime.Now} :: {level.ToString().PadLeft(12)}:  {message}";
 			PrintLogEntry(msg);
 		}

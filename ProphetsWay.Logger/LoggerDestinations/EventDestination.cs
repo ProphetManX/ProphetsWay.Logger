@@ -15,9 +15,9 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 
 		}
 
-		protected override void WriteLogEntry(string message, LogLevels level)
+		protected override void WriteLogEntry(string message, LogLevels level, string raw, Exception ex)
 		{
-			var evt = new LoggerEventArgs(message, level);
+			var evt = new LoggerEventArgs(message, level, raw, ex);
 			LoggingEvent?.Invoke(this, evt);
 		}
 
@@ -28,14 +28,18 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 
 		public class LoggerEventArgs : EventArgs
 		{
-			public LoggerEventArgs(string message, LogLevels level)
+			public LoggerEventArgs(string message, LogLevels level, string raw, Exception ex)
 			{
 				Message = message;
 				LogLevel = level;
 				Timestamp = DateTime.Now;
+				RawMessage = raw;
+				Exception = ex;
 			}
 
 			public string Message { get; }
+			public string RawMessage { get; }
+			public Exception Exception { get; }
 			public LogLevels LogLevel { get; }
 			public DateTime Timestamp { get; }
 		}
