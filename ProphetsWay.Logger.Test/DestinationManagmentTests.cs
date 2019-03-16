@@ -1,3 +1,4 @@
+using FluentAssertions;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
 using Xunit;
@@ -20,7 +21,10 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Log(LogLevels.Debug, "Hello World!");
 
 			//assert
-			Assert.True(triggered);
+			triggered.Should().BeTrue();
+
+			//cleanup
+			Utilities.Logger.RemoveDestination(dest);
 		}
 
 		[Fact]
@@ -37,7 +41,7 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Log(LogLevels.Debug, "Hello World!");
 
 			//assert
-			Assert.False(triggered);
+			triggered.Should().BeFalse();
 		}
 
 		[Fact]
@@ -51,6 +55,7 @@ namespace ProphetsWay.Logger.Test
 			dest2.LoggingEvent += (sender, args) => triggered = true;
 			var dest3 = new EventDestination(LogLevels.Debug);
 			dest3.LoggingEvent += (sender, args) => triggered = true;
+			Utilities.Logger.ClearDestinations();
 
 			//act
 			Utilities.Logger.AddDestination(dest1);
@@ -60,7 +65,19 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Log(LogLevels.Debug, "Hello World!");
 
 			//assert
-			Assert.False(triggered);
+			triggered.Should().BeFalse();
+		}
+
+		[Fact]
+		public void ShouldRemoveDestinationEvenIfNotInList()
+		{
+			//setup
+			var dest = new EventDestination(LogLevels.Debug);
+
+			//act
+			Utilities.Logger.RemoveDestination(dest);
+
+			//assert that no exception was thrown
 		}
 	}
 }

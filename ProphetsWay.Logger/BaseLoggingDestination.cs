@@ -21,7 +21,7 @@ namespace ProphetsWay.Utilities
 		public void Log(LogLevels level, string message = null, Exception ex = null)
 		{
 			//if the level of the message being passed is lower than the ReportingLevel set on the Destination, then return and don't log the message
-			if((level & _reportingLevel) < level)
+			if((level & _reportingLevel) < level || level == LogLevels.NoLogging)
 				return;
 
 			MassageLogStatement(level, message, ex);

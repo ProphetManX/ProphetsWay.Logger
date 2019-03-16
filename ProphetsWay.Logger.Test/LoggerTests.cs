@@ -1,4 +1,5 @@
 ﻿using System;
+using FluentAssertions;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
 using Xunit;
@@ -6,7 +7,7 @@ using Xunit;
 namespace ProphetsWay.Logger.Test
 {
 	[Collection("Logger is a Singleton")]
-	public class ShortcutMethodTests
+	public class LoggerTests
 	{
 		[Fact]
 		public void ShouldTriggerDebugOnDebug()
@@ -20,7 +21,10 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Debug("Hello World!");
 
 			//assert
-			Assert.True(triggered);
+			triggered.Should().BeTrue();
+
+			//cleanup
+			Utilities.Logger.RemoveDestination(dest);
 		}
 
 		[Fact]
@@ -35,7 +39,10 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Info("Hello World!");
 
 			//assert
-			Assert.True(triggered);
+			triggered.Should().BeTrue();
+
+			//cleanup
+			Utilities.Logger.RemoveDestination(dest);
 		}
 
 		[Fact]
@@ -50,7 +57,10 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Security("Hello World!");
 
 			//assert
-			Assert.True(triggered);
+			triggered.Should().BeTrue();
+
+			//cleanup
+			Utilities.Logger.RemoveDestination(dest);
 		}
 
 		[Fact]
@@ -65,7 +75,10 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Warn("Hello World!");
 
 			//assert
-			Assert.True(triggered);
+			triggered.Should().BeTrue();
+
+			//cleanup
+			Utilities.Logger.RemoveDestination(dest);
 		}
 
 		[Fact]
@@ -80,7 +93,10 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Error(new Exception("Hello World!"));
 
 			//assert
-			Assert.True(triggered);
+			triggered.Should().BeTrue();
+
+			//cleanup
+			Utilities.Logger.RemoveDestination(dest);
 		}
 	}
 }
