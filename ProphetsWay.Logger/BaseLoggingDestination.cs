@@ -32,9 +32,11 @@ namespace ProphetsWay.Utilities
 		/// It is where you will actually write the given message wherever you want.
 		/// This is called from inside the Destination whenever there is a valid message to write to the log.
 		/// </summary>
-		/// <param name="message">The message being logged.</param>
+		/// <param name="masssagedMessage">The massaged statement text being logged.</param>
 		/// <param name="level">The LogLevel of the message being passed.</param>
-		protected abstract void WriteLogEntry(string message, LogLevels level);
+		/// <param name="rawMessage">The raw original message text that was logged.</param,>
+		/// <param name="thrownException">The raw original exception that was logged.</param>
+		protected abstract void WriteLogEntry(string masssagedMessage, LogLevels level, string rawMessage, Exception thrownException);
 
 		/// <summary>
 		/// This method is meant to massage the statement to be logged, before it goes to the WriteLogEntry method.
@@ -42,24 +44,29 @@ namespace ProphetsWay.Utilities
 		/// It is Virtual and can be overridden if you wish to customize how you handle writing the raw Log method call.
 		/// This method calls WriteLogEntry.
 		/// </summary>
-		protected virtual void MassageLogStatement(LogLevels level, string message = null, Exception ex = null){
-			string exMessage, exStackTrace;
+		protected virtual void MassageLogStatement(LogLevels level, string message = null, Exception ex = null)
+		{
+			string exMessage, exStackTrace, massagedMessage = null;
 
 			switch(level){
 				case  LogLevels.Error:
 					ExceptionDetailer(ex, out exMessage, out exStackTrace);
-					message = $"{message}{Environment.NewLine}{exMessage}{Environment.NewLine}{exStackTrace}";
+					massagedMessage = $"{message}{Environment.NewLine}{exMessage}{Environment.NewLine}{exStackTrace}";
 					break;
 
 				case LogLevels.Warning:
 					if(ex != null){
 						ExceptionDetailer(ex, out exMessage, out exStackTrace);
-						message = $"{message}{Environment.NewLine}{exMessage}{Environment.NewLine}{exStackTrace}";
+						massagedMessage = $"{message}{Environment.NewLine}{exMessage}{Environment.NewLine}{exStackTrace}";
 					}
+					break;
+
+				default:
+					massagedMessage = message;
 					break;
 			}
 
-			WriteLogEntry(message, level);
+			WriteLogEntry(massagedMessage, level, message, ex);
 		}
 
 		/// <summary>
