@@ -8,28 +8,37 @@
 		<Win32Resource />
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<SignAssembly>false</SignAssembly>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
     <!-- Assembly Override Properties -->
-    <PackageRequireLicenseAcceptance/>
-    <PackageId/>
-    <PackageVersion/>
-    <Authors/>
-    <Company/>
-    <Product/>
-    <Description/>
-    <Copyright/>
-    <LicenseUrl/>
-    <ProjectUrl/>
-    <IconUrl/>
-    <RepositoryUrl/>
-    <RepositoryType/>
-    <Tags/>
-    <ReleaseNotes/>
-    <AssemblyNeutralLanguage/>
-    <AssemblyVersion/>
-    <AssemblyFileVersion/>
-    <InformationalVersion/>
+    <PackageRequireLicenseAcceptance />
+    <PackageId />
+    <Version />
+    <Authors />
+    <Company />
+    <Product />
+    <Description />
+    <Copyright />
+    <PackageLicenseUrl />
+    <PackageProjectUrl />
+    <PackageIconUrl />
+    <RepositoryUrl />
+    <RepositoryType />
+    <PackageTags />
+    <PackageReleaseNotes />
+    <NeutralLanguage />
+    <AssemblyVersion />
+    <FileVersion />
+    <InformationalVersion />
+    
 		
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Include="..\LICENSE">
+	    <Pack>True</Pack>
+	    <PackagePath></PackagePath>
+	  </None>
+	</ItemGroup>
 
 </Project>
