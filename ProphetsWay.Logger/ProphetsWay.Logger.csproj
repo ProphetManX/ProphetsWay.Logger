@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net40;net45;net451;net452;net46;net461;net471;netstandard1.3;netstandard1.6;netstandard2.0;netcoreapp2.2;netcoreapp2.1;netcoreapp2.0;netcoreapp1.1;netcoreapp1.0</TargetFrameworks>
@@ -13,6 +13,8 @@
 		<Description>
 A simple and easy to use Logging library that allows for customizable outputs for log entries.
 
+Go to https://github.com/ProphetManX/ProphetsWay.Logger for more information.
+
 Just one of a few Utility projects I've created for myself and wanted to share.  The namespace for the projects are all "ProphetsWay.Utilities" and the class to use is "Logger".  
 
 To Use:
@@ -22,13 +24,6 @@ and then you can call the Logger directly.
 Logger.AddDestination(new ConsoleDestination());
 Logger.Debug("Hello World!");
 		</Description>
-		<PackageReleaseNotes>
-Pre-Release Running Changes:
-
-Created the project.
-Modified the namespace for easier use.
-Modified how description and release notes are pushed thru the pipelines.
-		</PackageReleaseNotes>
 	</PropertyGroup>
 
 </Project>

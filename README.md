@@ -1,4 +1,4 @@
-# ProphetsWay.Logger    [![Build status](https://dev.azure.com/ProphetsWay/Logger/_apis/build/status/GitHub%20-%20Logger%20-%20Master%20CI)](https://dev.azure.com/ProphetsWay/Logger/_build/latest?definitionId=5)
+# ProphetsWay.Logger    [![Build status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger/Logger%20CI)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=5)
 
 Logger is a quick to setup logging utility.  It is designed so that you can establish the destinations for your log messages to one or many different outputs, each targeting different log level severities (so you can have a log of Errors and Warnings separate from a logger dumping Debug and Info statements).
 
