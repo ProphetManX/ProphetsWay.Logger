@@ -45,15 +45,7 @@ Logger.Debug("Hello World!");
     <AssemblyVersion />
     <FileVersion />
     <InformationalVersion />
-    
 		
 	</PropertyGroup>
-
-	<ItemGroup>
-	  <None Include="..\LICENSE">
-	    <Pack>True</Pack>
-	    <PackagePath></PackagePath>
-	  </None>
-	</ItemGroup>
 
 </Project>
