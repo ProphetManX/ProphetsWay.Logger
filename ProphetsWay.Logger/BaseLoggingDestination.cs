@@ -12,6 +12,12 @@ namespace ProphetsWay.Utilities
 			_reportingLevel = reportingLevel;
 		}
 
+        protected bool IgnoreLog(LogLevels messageLevel)
+        {
+            //if the level of the message being passed is lower than the ReportingLevel set on the Destination, then return and don't log the message
+            return (messageLevel & _reportingLevel) < messageLevel || messageLevel == LogLevels.NoLogging;
+        }
+
 		protected readonly object LoggerLock = new object();
 		private readonly LogLevels _reportingLevel;
 
@@ -20,8 +26,7 @@ namespace ProphetsWay.Utilities
 		/// </summary>
 		public void Log(LogLevels level, string message = null, Exception ex = null)
 		{
-			//if the level of the message being passed is lower than the ReportingLevel set on the Destination, then return and don't log the message
-			if((level & _reportingLevel) < level || level == LogLevels.NoLogging)
+			if(IgnoreLog(level))
 				return;
 
 			MassageLogStatement(level, message, ex);
