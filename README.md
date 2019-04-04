@@ -111,10 +111,42 @@ Logger.AddDestination(debugDest);
 Logger.AddDestination(warnDest);
 ```
 
+### Using Generic LoggingDestinations
+Now you can create a generic ```ILoggingDestination<T>``` and pass an object to be logged along with your message and/or exception.
+Currently included is new destination ```GenericEventDestination<T>```, but it is inferred that if you want to include
+additional metadata to the log statements then you will likely need to create a custom destination to handle the 
+additional information in your metadata object.
 
-## Running the tests
+``` c#
+public class DbMetadata{
+	public int UserId { get; }
+	public string EntryPointMethod { get; }
+	public object Permissions { get; } 
+	//etc whatever other properties you would want
+}
 
-The library has 25 unit tests currently.  I tried to cover everything possible.  They are created with XUnit and utilize Moq for two tests.  The Test project is included in this repository, as well as an Example project.
+public class MyCustomDbDestination : BaseLoggingDestination<DbMetadata>{
+
+	public MyCustomDbDestination(LogLevels reportingLevel) : base(reportingLevel) { }
+
+	//setup the connection to the database for example
+	private context _db;
+
+    public override void WriteLogEntry(T metadata, LogLevels level, string message = null, Exception thrownException = null)
+    {
+		//for any given log message, write all the details passed to the database record
+		_db.WriteLogRecord(message, level, metadata.UserId, metadata.EntryPointMethod, metadata.Permissions);
+    }
+}
+```
+
+For more examples of how Generic logger can work, feel free to check out the Test project.  
+
+
+
+## Running the unit tests
+
+The library is up to 40 unit tests currently.  I tried to cover everything possible.  They are created with XUnit and utilize Moq for two tests.  The Test project is included in this repository, as well as an Example project.
 
 
 ## Versioning

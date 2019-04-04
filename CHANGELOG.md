@@ -1,4 +1,4 @@
-# v1.1.0
+# v1.2.0
 ### Now with Generics!
 Added the ability to log a custom object to a destination.  Currently only ```GenericEventDestination<T>``` was
 created for testing purposes, however the point of a generic Logger is so you can put your custom metadata into 
@@ -9,6 +9,11 @@ destination will parse out all the properties of your object, and log them accor
 
 There is no need to include `Message` or `Exception` in your custom object, as they are still required
 parameters for using Logger and will be passed via the BaseLoggingDestination.
+
+
+# v1.1.0
+### Project Refactor
+Changed a lot of properties on the .csproj file and updated the build/release pipelines for a more seamless setup.
 
 
 # v1.0.0
