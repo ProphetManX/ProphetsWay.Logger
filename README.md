@@ -27,28 +27,28 @@ dotnet add package ProphetsWay.Logger
 
 Because this is the first utility of a handful, they will all exist in the namespace of "ProphetsWay.Utilities".  Since the Logger is a static object, you can use it throughout your software to log messages without having to worry about any pre-configuration.  However the point is to be able to create LoggerDestinations where ever you want, with a minimum specified LogLevel severity.  You should establish your LoggerDestinations when your project initializes, so that the destinations are only created once.
 
-```
+``` c#
 using ProphetsWay.Utilities;
 ```
 
 To create a simple Console Logging Destination, just instantiate a new "ConsoleDestination" class, and add it to the logger.
 
-```
+``` c#
 Logger.AddDestination(new ConsoleDestination());
 ```
 or
-```
+``` c#
 var dest = new ConsoleDestination();
 Logger.AddDestination(dest);
 ```
 
 Destinations can be added and removed so long as you keep a reference to the object from when you initially added it.  There is also the option to "Clear" all current destinations and simply add new ones.
 
-```
+``` c#
 Logger.RemoveDestination(dest);
 ```
 and
-```
+``` c#
 Logger.ClearDestinations();
 ```
 
@@ -73,7 +73,7 @@ This is a specific Exception Message and will contain a stack trace.
 ```
 
 A FileDestination requires a target filename to dump the logs into.  If you want to clear the file on launch of your application (so that the file only contains logs from the 'last run') you can leave the reset flag as true, or if you want to have a running log, you can set it to false.
-```
+``` c#
 var fileDest = new FileDestination("Warnings.log", LogLevels.Warning, false);
 ```
 A final additional parameter is available to specify the text Encoder to be used.  The following are supported
@@ -87,7 +87,7 @@ A final additional parameter is available to specify the text Encoder to be used
 UTF8 is set by default.
 
 The last destination available by default is the EventDestination.  With this you will create the destination and then assign a delegate to the EventHandler.  As a valid statement is logged, the event will trigger, and you can handle the message however you please.  Generally this is the destination I use in my UI's.  I will use Dispatcher to invoke the UI to render the log messages into a UI control for the user to see.
-```
+``` c#
 var evtDest = new EventDestination(LogLevels.Debug);
 evtDest.LoggingEvent += (sender, eventArgs) => { /* whatever you want to do with the message here */ };
 ```
@@ -104,7 +104,7 @@ The BaseLoggingDestination requires an argument of LogLevel to be established, s
 If you set your destination to LogLevels.Debug, then all messages currently supported will be logged in your destination.  If you choose LogLevels.Warning, then only Warning and Error logs will be logged in your destination.
 
 You can have as many destinations as you wish; if you want to create two log files, one for Warnings and Errors, and a second one for all your Debug/Info logs, you only have to create two separate FileDestinations and add them both to the Logger.
-```
+``` c#
 var debugDest = new FileDestination("Debug.log", LogLevels.Debug);
 var warnDest = new FileDestination("Warnings.log", LogLevels.Warning);
 Logger.AddDestination(debugDest);
