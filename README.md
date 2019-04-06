@@ -117,6 +117,7 @@ Currently included is new destination ```GenericEventDestination<T>```, but it i
 additional metadata to the log statements then you will likely need to create a custom destination to handle the 
 additional information in your metadata object.
 
+#### Custom Destination Setup
 ``` c#
 public class DbMetadata{
 	public int UserId { get; }
@@ -139,6 +140,28 @@ public class MyCustomDbDestination : BaseLoggingDestination<DbMetadata>{
     }
 }
 ```
+#### Usage of Custom Destination
+``` c#
+public void main(string[] args){
+	var dest = new MyCustomDbDestination(LogLevels.Debug);
+	Logger.AddDestination(dest);
+	var context = new DbMetadata();
+	
+	//do stuff here
+
+	//update properties of the context object
+	
+	Logger.Debug("Logging a message that something happened.", context);
+	
+	try{
+		//do something in here
+	}
+	catch(Exception ex){
+		Logger.Error(ex, context);
+	}
+}
+```
+
 
 For more examples of how Generic logger can work, feel free to check out the Test project.  
 
