@@ -1,3 +1,10 @@
+# v1.3.0
+### Metadata Extensions
+With the addition of Generics, I wanted to make an easier way for a user to log statements around their context/metadata
+object.  Instead of requiring ```Logger.Info("information message", customMetadataObj);```, now you can modify your custom
+object to implement the interface ```ILoggerMetadata```.  With this small change, logging becomes as easy as ```customMetadataObj.Info("information message");```.
+
+
 # v1.2.0
 ### Now with Generics!
 Added the ability to log a custom object to a destination.  Currently only ```GenericEventDestination<T>``` was

@@ -138,15 +138,51 @@ public class MyCustomDbDestination : BaseLoggingDestination<DbMetadata>{
 		_db.WriteLogRecord(message, level, metadata.UserId, metadata.EntryPointMethod, metadata.Permissions);
     }
 }
+
+//example program usage
+public void Main(string[] args){
+	Logger.AddDestination(new MyCustomDbDestination(LogLevels.Debug));
+	var meta = new DbMetadata{...};
+
+	//...
+
+	Logger.Debug("I've got a debug statement to write...'", meta);
+}
 ```
 
 For more examples of how Generic logger can work, feel free to check out the Test project.  
 
+### Metadata Extensions
+If you inherit the interface ```ILoggerMetadata``` then you will have access to all the logging functionality right on your metadata object.
+With the above example, simply modify ```DbMetadata``` as follows:
+``` c#
+public class DbMetadata : ILoggingMetadata{
+	public int UserId { get; }
+	public string EntryPointMethod { get; }
+	public object Permissions { get; } 
+	//etc whatever other properties you would want
+}
+```
+
+As you can see, no actual methods or properties are added to your object when you inherit the new interface.  However adding
+it will allow you to log statements right off your object.
+
+``` c#
+//example program usage
+public void Main(string[] args){
+	Logger.AddDestination(new MyCustomDbDestination(LogLevels.Debug));
+	var meta = new DbMetadata{...};
+
+	//...
+
+	meta.Debug("I've got a debug statement to write...'");
+}
+```
 
 
 ## Running the unit tests
 
-The library is up to 40 unit tests currently.  I tried to cover everything possible.  They are created with XUnit and utilize Moq for two tests.  The Test project is included in this repository, as well as an Example project.
+The library is up to 45 unit tests currently.  I tried to cover everything possible.  They are created with XUnit and utilize Moq for two tests.  The Test project is included in this repository, as well as an Example project.
 
 
 ## Versioning
