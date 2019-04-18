@@ -15,15 +15,6 @@ namespace ProphetsWay.Utilities
         }
 
         /// <summary>
-        /// Returns true if the messageLevel doesn't match the level specified when the Destination was created.
-        /// </summary>
-        protected bool IgnoreLog(LogLevels messageLevel)
-        {
-            //if the level of the message being passed is lower than the ReportingLevel set on the Destination, then return and don't log the message
-            return (messageLevel & _reportingLevel) < messageLevel || messageLevel == LogLevels.NoLogging;
-        }
-
-        /// <summary>
         /// A lock object for use in making threadsafe destinations
         /// </summary>
         protected readonly object LoggerLock = new object();
@@ -81,6 +72,16 @@ namespace ProphetsWay.Utilities
             stack = string.IsNullOrEmpty(istack)
                 ? ex.StackTrace
                 : string.Format("{0}{1}{1}Inner Exception Stack Trace:{1}{2}", ex.StackTrace, Environment.NewLine, istack);
+        }
+
+
+        /// <summary>
+        /// Returns true if the messageLevel matches the level specified when the Destination was created.
+        /// </summary>
+        public bool ValidateMessageLevel(LogLevels messageLevel)
+        {
+            //if the level of the message being passed is lower than the ReportingLevel set on the Destination, then return and don't log the message
+            return (messageLevel & _reportingLevel) == messageLevel && messageLevel != LogLevels.NoLogging;
         }
     }
 }

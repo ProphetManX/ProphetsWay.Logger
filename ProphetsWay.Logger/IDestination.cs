@@ -5,6 +5,9 @@
     /// </summary>
     public interface IDestination
     {
-        //intentionally left blank, used to identify inheriting classes, not to specify functionality
+        /// <summary>
+        /// Should return true if the messageLevel matches the level specified when the Destination was created.
+        /// </summary>
+        bool ValidateMessageLevel(LogLevels messageLevel);
     }
 }
