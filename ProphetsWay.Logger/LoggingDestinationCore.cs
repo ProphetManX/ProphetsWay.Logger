@@ -2,6 +2,11 @@
 
 namespace ProphetsWay.Utilities
 {
+    /// <summary>
+    /// Core functionality that all Logging destinations will need to use, 
+    /// manages log level comparison in a single location,
+    /// includes a LoggerLock for use if needed in any inheriting destination.
+    /// </summary>
     public abstract class LoggingDestinationCore : IDestination
     {
         public LoggingDestinationCore(LogLevels reportingLevel)
@@ -9,13 +14,20 @@ namespace ProphetsWay.Utilities
             _reportingLevel = reportingLevel;
         }
 
+        /// <summary>
+        /// Returns true if the messageLevel doesn't match the level specified when the Destination was created.
+        /// </summary>
         protected bool IgnoreLog(LogLevels messageLevel)
         {
             //if the level of the message being passed is lower than the ReportingLevel set on the Destination, then return and don't log the message
             return (messageLevel & _reportingLevel) < messageLevel || messageLevel == LogLevels.NoLogging;
         }
 
+        /// <summary>
+        /// A lock object for use in making threadsafe destinations
+        /// </summary>
         protected readonly object LoggerLock = new object();
+
         private readonly LogLevels _reportingLevel;
 
         /// <summary>
