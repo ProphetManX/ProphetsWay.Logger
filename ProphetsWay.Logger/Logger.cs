@@ -15,7 +15,7 @@ namespace ProphetsWay.Utilities
         public static void AddDestination(ILoggingDestination newDest)
 		{
             if (!Destinations.ContainsKey(_nonGenericTypDestination))
-                Destinations.Add(_nonGenericTypDestination, new List<ILoggingDestination>());
+                Destinations.Add(_nonGenericTypDestination, new List<IDestination>());
 
             Destinations[_nonGenericTypDestination].Add(newDest);
 		}
@@ -50,12 +50,12 @@ namespace ProphetsWay.Utilities
 		public static void Log(LogLevels level, string message, Exception ex = null)
 		{
             if (!Destinations.ContainsKey(_nonGenericTypDestination))
-                Destinations.Add(_nonGenericTypDestination, new List<ILoggingDestination>());
+                Destinations.Add(_nonGenericTypDestination, new List<IDestination>());
 
             if (Destinations[_nonGenericTypDestination].Count == 0)
 				AddDestination(new FileDestination($"Default Log {DateTime.Now:yyyy-MM-dd hh-mm}.log"));
 
-			foreach (var dest in Destinations[_nonGenericTypDestination])
+			foreach (ILoggingDestination dest in Destinations[_nonGenericTypDestination])
 				dest.Log(level, message, ex);
 		}
 

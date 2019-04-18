@@ -2,9 +2,9 @@
 
 namespace ProphetsWay.Utilities.Generics
 {
-    public abstract class BaseLoggingDestination<T> : BaseLoggingDestination, ILoggingDestination<T>
+    public abstract class BaseLoggingDestination<T> : LoggingDestinationCore, ILoggingDestination<T>
     {
-        protected BaseLoggingDestination(LogLevels reportingLevel) : base(reportingLevel) { }
+        public BaseLoggingDestination(LogLevels reportingLevel) : base(reportingLevel) { }
 
         /// <summary>
 		/// This is the required method from the ILoggingDestinations interface, this is the entry point for the destination from the Logger static class.
@@ -27,14 +27,5 @@ namespace ProphetsWay.Utilities.Generics
 		/// <param name="message">The message text that was logged.</param,>
 		/// <param name="thrownException">The raw original exception that was logged.</param>
         public abstract void WriteLogEntry(T metadata, LogLevels level, string message = null, Exception thrownException = null);
-
-
-        /// <summary>
-        /// This function is being replaced by the one above.  This isn't used when using a Generic Destination
-        /// </summary>
-        protected override void WriteLogEntry(string massagedMessage, LogLevels level, string rawMessage, Exception thrownException)
-        {
-            return;
-        }
     }
 }

@@ -1,7 +1,6 @@
-﻿using ProphetsWay.Utilities.Generics;
-using System;
+﻿using System;
 
-namespace ProphetsWay.Utilities.LoggerDestinations
+namespace ProphetsWay.Utilities.Generics
 {
     public static class MetadataExtensions
     {

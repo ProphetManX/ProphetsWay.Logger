@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using FluentAssertions;
 using ProphetsWay.Utilities;
+using ProphetsWay.Utilities.Generics;
 using ProphetsWay.Utilities.LoggerDestinations;
 using Xunit;
 
@@ -34,7 +35,7 @@ namespace ProphetsWay.Logger.Test
 
 
 		private readonly Dictionary<LogLevels, bool> _triggers = new Dictionary<LogLevels, bool>();
-		private readonly Dictionary<LogLevels, BaseLoggingDestination> _destinations = new Dictionary<LogLevels, BaseLoggingDestination>();
+		private readonly Dictionary<LogLevels, BaseLoggingDestination<bool>> _destinations = new Dictionary<LogLevels, BaseLoggingDestination<bool>>();
 
 		private void SetupTriggers()
 		{
