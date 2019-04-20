@@ -81,7 +81,7 @@ namespace ProphetsWay.Utilities
         public bool ValidateMessageLevel(LogLevels messageLevel)
         {
             //if the level of the message being passed is lower than the ReportingLevel set on the Destination, then return and don't log the message
-            return (messageLevel & _reportingLevel) == messageLevel && messageLevel != LogLevels.NoLogging;
+            return (messageLevel & _reportingLevel) == messageLevel;
         }
     }
 }

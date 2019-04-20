@@ -1,3 +1,7 @@
+# v2.0.0
+### LogLevel Overhaul and Specific LogLevel Targeting for Destinations
+
+
 # v1.3.0
 ### Metadata Extensions
 With the addition of Generics, I wanted to make an easier way for a user to log statements around their context/metadata

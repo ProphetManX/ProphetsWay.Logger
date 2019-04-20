@@ -18,7 +18,7 @@ namespace ProphetsWay.Logger.Test
 
 			//act
 			Utilities.Logger.AddDestination(dest);
-			Utilities.Logger.Log(LogLevels.Debug, "Hello World!");
+			Utilities.Logger.Debug("Hello World!");
 
 			//assert
 			triggered.Should().BeTrue();
@@ -38,7 +38,7 @@ namespace ProphetsWay.Logger.Test
 			//act
 			Utilities.Logger.AddDestination(dest);
 			Utilities.Logger.RemoveDestination(dest);
-			Utilities.Logger.Log(LogLevels.Debug, "Hello World!");
+			Utilities.Logger.Debug("Hello World!");
 
 			//assert
 			triggered.Should().BeFalse();
@@ -62,7 +62,7 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.AddDestination(dest2);
 			Utilities.Logger.AddDestination(dest3);
 			Utilities.Logger.ClearDestinations();
-			Utilities.Logger.Log(LogLevels.Debug, "Hello World!");
+			Utilities.Logger.Debug("Hello World!");
 
 			//assert
 			triggered.Should().BeFalse();

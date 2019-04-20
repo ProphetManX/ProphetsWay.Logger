@@ -6,69 +6,69 @@ using Xunit;
 
 namespace ProphetsWay.Logger.Test
 {
-	[Collection("Logger is a Singleton")]
-	public class BasicTests
-	{
-		[Fact]
-		public void ShouldContainMessage()
-		{
-			//setup
-			const string msg = "Hello World!";
-			var evtMessage = string.Empty;
-			var d = new EventDestination(LogLevels.Debug);
-			d.LoggingEvent += (sender, args) => evtMessage = args.Message;
-			Utilities.Logger.AddDestination(d);
+    [Collection("Logger is a Singleton")]
+    public class BasicTests
+    {
+        [Fact]
+        public void ShouldContainMessage()
+        {
+            //setup
+            const string msg = "Hello World!";
+            var evtMessage = string.Empty;
+            var d = new EventDestination(LogLevels.Debug);
+            d.LoggingEvent += (sender, args) => evtMessage = args.Message;
+            Utilities.Logger.AddDestination(d);
 
-			//act
-			Utilities.Logger.Log(LogLevels.Debug, msg, new Exception("Custom Exception"));
-			
+            //act
+            Utilities.Logger.Debug(msg);
 
-			//assert 
-			evtMessage.Should().Contain(msg);
 
-			//cleanup
-			Utilities.Logger.RemoveDestination(d);
-		}
+            //assert 
+            evtMessage.Should().Contain(msg);
 
-		[Fact]
-		public void ShouldContainException()
-		{
-			//setup
-			var e = new Exception("Hello World!");
-			var evtMessage = string.Empty;
-			var d = new EventDestination(LogLevels.Error);
-			d.LoggingEvent += (sender, args) => evtMessage = args.Message;
-			Utilities.Logger.AddDestination(d);
+            //cleanup
+            Utilities.Logger.RemoveDestination(d);
+        }
 
-			//act
-			Utilities.Logger.Log(LogLevels.Error, "Goodbye Everyone", e);
+        [Fact]
+        public void ShouldContainException()
+        {
+            //setup
+            var e = new Exception("Hello World!");
+            var evtMessage = string.Empty;
+            var d = new EventDestination(LogLevels.Error);
+            d.LoggingEvent += (sender, args) => evtMessage = args.Message;
+            Utilities.Logger.AddDestination(d);
 
-			//assert
-			evtMessage.Should().Contain(e.Message);
+            //act
+            Utilities.Logger.Error(e, "Goodbye Everyone");
 
-			//cleanup
-			Utilities.Logger.RemoveDestination(d);
-		}
+            //assert
+            evtMessage.Should().Contain(e.Message);
 
-		[Fact]
-		public void ShouldContainMessageAndException()
-		{
-			//setup
-			const string msg = "Goodbye Everyone";
-			var e = new Exception("Hello World!");
-			var evtMessage = string.Empty;
-			var d = new EventDestination(LogLevels.Error);
-			d.LoggingEvent += (sender, args) => evtMessage = args.Message;
-			Utilities.Logger.AddDestination(d);
+            //cleanup
+            Utilities.Logger.RemoveDestination(d);
+        }
 
-			//act
-			Utilities.Logger.Log(LogLevels.Error, msg, e);
+        [Fact]
+        public void ShouldContainMessageAndException()
+        {
+            //setup
+            const string msg = "Goodbye Everyone";
+            var e = new Exception("Hello World!");
+            var evtMessage = string.Empty;
+            var d = new EventDestination(LogLevels.Error);
+            d.LoggingEvent += (sender, args) => evtMessage = args.Message;
+            Utilities.Logger.AddDestination(d);
 
-			//assert
-			evtMessage.Should().Contain(msg).And.Contain(e.Message);
+            //act
+            Utilities.Logger.Error(e, msg);
 
-			//cleanup
-			Utilities.Logger.RemoveDestination(d);
-		}
-	}
+            //assert
+            evtMessage.Should().Contain(msg).And.Contain(e.Message);
+
+            //cleanup
+            Utilities.Logger.RemoveDestination(d);
+        }
+    }
 }

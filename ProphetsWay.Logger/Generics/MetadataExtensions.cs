@@ -4,11 +4,6 @@ namespace ProphetsWay.Utilities.Generics
 {
     public static class MetadataExtensions
     {
-        public static void Log<T>(this T metadata, LogLevels level, string message = null, Exception ex = null) where T : ILoggerMetadata
-        {
-            Logger.Log(level, metadata, message, ex);
-        }
-
         /// <summary>
         /// Shortcut method to Log a message with a LogLevel of 'Debug'
         /// </summary>

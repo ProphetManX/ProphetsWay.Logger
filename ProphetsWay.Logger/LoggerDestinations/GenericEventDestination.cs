@@ -15,9 +15,9 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 		/// </summary>
         public GenericEventDestination(LogLevels reportingLevel) : base(reportingLevel) { }
 
-        public override void WriteLogEntry(T metadata, LogLevels level, string message = null, Exception thrownException = null)
+        public override void Log(LogLevels level, T metadata, string message = null, Exception ex = null)
         {
-            var evt = new LoggerEventArgs(message, level, thrownException, metadata);
+            var evt = new LoggerEventArgs(message, level, ex, metadata, MassageLogStatement(level, message, ex));
             LoggingEvent?.Invoke(this, evt);
         }
 
@@ -28,13 +28,14 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 
         public class LoggerEventArgs : EventArgs
         {
-            public LoggerEventArgs(string message, LogLevels level, Exception ex, T metadata)
+            public LoggerEventArgs(string message, LogLevels level, Exception ex, T metadata, string massagedMessage)
             {
-                Message = message;
+                RawMessage = message;
                 LogLevel = level;
                 Metadata = metadata;
                 Timestamp = DateTime.Now;
                 Exception = ex;
+                Message = massagedMessage;
             }
 
             public string Message { get; }
@@ -42,6 +43,7 @@ namespace ProphetsWay.Utilities.LoggerDestinations
             public Exception Exception { get; }
             public LogLevels LogLevel { get; }
             public DateTime Timestamp { get; }
+            public string RawMessage { get; }
         }
     }
 }
