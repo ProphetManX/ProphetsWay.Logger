@@ -6,7 +6,7 @@ namespace ProphetsWay.Utilities
 {
     public static partial class Logger
     {
-        private static readonly IDictionary<Type, IList<ILoggingDestination>> Destinations = new Dictionary<Type, IList<ILoggingDestination>>();
+        private static readonly IDictionary<Type, IList<IDestination>> Destinations = new Dictionary<Type, IList<IDestination>>();
 
         /// <summary>
         /// Will add a new LoggingDestination to the pool of targets.  
@@ -15,7 +15,7 @@ namespace ProphetsWay.Utilities
         public static void AddDestination<T>(ILoggingDestination<T> newDest)
         {
             if (!Destinations.ContainsKey(typeof(T)))
-                Destinations.Add(typeof(T), new List<ILoggingDestination>());
+                Destinations.Add(typeof(T), new List<IDestination>());
 
             Destinations[typeof(T)].Add(newDest);
         }

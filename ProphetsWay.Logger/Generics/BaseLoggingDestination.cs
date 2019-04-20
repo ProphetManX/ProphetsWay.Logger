@@ -2,7 +2,7 @@
 
 namespace ProphetsWay.Utilities.Generics
 {
-    public abstract class BaseLoggingDestination<T> : BaseLoggingDestination, ILoggingDestination<T>
+    public abstract class BaseLoggingDestination<T> : LoggingDestinationCore, ILoggingDestination<T>
     {
         protected BaseLoggingDestination(LogLevels reportingLevel) : base(reportingLevel) { }
 
@@ -11,10 +11,8 @@ namespace ProphetsWay.Utilities.Generics
 		/// </summary>
         public void Log(LogLevels level, T metadata, string message = null, Exception ex = null)
         {
-            if (IgnoreLog(level))
-                return;
-
-            WriteLogEntry(metadata, level, message, ex);
+            if (ValidateMessageLevel(level))
+                WriteLogEntry(metadata, level, message, ex);
         }
 
         /// <summary>
@@ -27,14 +25,5 @@ namespace ProphetsWay.Utilities.Generics
 		/// <param name="message">The message text that was logged.</param,>
 		/// <param name="thrownException">The raw original exception that was logged.</param>
         public abstract void WriteLogEntry(T metadata, LogLevels level, string message = null, Exception thrownException = null);
-
-
-        /// <summary>
-        /// This function is being replaced by the one above.  This isn't used when using a Generic Destination
-        /// </summary>
-        protected override void WriteLogEntry(string massagedMessage, LogLevels level, string rawMessage, Exception thrownException)
-        {
-            return;
-        }
     }
 }
