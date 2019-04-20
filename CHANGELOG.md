@@ -6,6 +6,13 @@ These new levels can be used to set your destination to only register log messag
 Now if you want to have all your ```Security``` logs written to a destination that your security officer will see, 
 without cluttering the log with any ```Error``` or ```Warning``` messages that might have also occurred.  
 
+Unfortunately the changes coming with this version will break any custom Destinations and code that ever used 
+the ```Log``` or ```Log<T>``` methods.  My assumption is that this project has low adoption at this point
+and any use of the pre-defined destinations aren't affected by these changes.  
+
+Now all Log messages must be triggered via the "Shortcut" methods, and instead of triggering the original LogLevels
+they now trigger the "Only" level.  This is the big change required to get Specific Level Targeting to work properly.
+
 
 # v1.3.0
 ### Metadata Extensions
