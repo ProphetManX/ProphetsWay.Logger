@@ -11,10 +11,8 @@ namespace ProphetsWay.Utilities.Generics
 		/// </summary>
         public void Log(LogLevels level, T metadata, string message = null, Exception ex = null)
         {
-            if (IgnoreLog(level))
-                return;
-
-            WriteLogEntry(metadata, level, message, ex);
+            if (ValidateMessageLevel(level))
+                WriteLogEntry(metadata, level, message, ex);
         }
 
         /// <summary>

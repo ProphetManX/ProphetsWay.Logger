@@ -15,11 +15,11 @@ namespace ProphetsWay.Utilities
 		/// </summary>
 		public void Log(LogLevels level, string message = null, Exception ex = null)
 		{
-			if(IgnoreLog(level))
-				return;
-
-			var massagedMessage = MassageLogStatement(level, message, ex);
-            WriteLogEntry(massagedMessage, level, message, ex);
+            if (ValidateMessageLevel(level))
+            {
+                var massagedMessage = MassageLogStatement(level, message, ex);
+                WriteLogEntry(massagedMessage, level, message, ex);
+            }
 		}
 
 		/// <summary>
