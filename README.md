@@ -96,9 +96,13 @@ For simple actions in specific situations, the EventDestination is likely your b
 The BaseLoggingDestination requires an argument of LogLevel to be established, so any log statement with a severity of what was chosen or higher will be logged at that destination.  The log levels are as follows:
 
 1. Debug
+1. DebugOnly
 1. Information
+1. InformationOnly
 1. Security
+1. SecurityOnly
 1. Warning
+1. WarningOnly
 1. Error
 
 If you set your destination to LogLevels.Debug, then all messages currently supported will be logged in your destination.  If you choose LogLevels.Warning, then only Warning and Error logs will be logged in your destination.

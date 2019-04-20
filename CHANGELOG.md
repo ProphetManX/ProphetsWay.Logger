@@ -1,5 +1,10 @@
 # v2.0.0
 ### LogLevel Overhaul and Specific LogLevel Targeting for Destinations
+Modified the actual values of the LogLevels enum values, setting them in Binary so it's easier to understand how 
+the logic works in the comparison functionality.  With these changes I have also created a subset of "xxxOnly" levels.
+These new levels can be used to set your destination to only register log messages of that specific log level.
+Now if you want to have all your ```Security``` logs written to a destination that your security officer will see, 
+without cluttering the log with any ```Error``` or ```Warning``` messages that might have also occurred.  
 
 
 # v1.3.0
