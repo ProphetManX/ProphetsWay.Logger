@@ -11,28 +11,85 @@ namespace ProphetsWay.Logger.Test
 	[Collection("Logger is a Singleton")]
 	public class GenericAdvancedTests
 	{
-		[Theory]
-		[InlineData(LogLevels.NoLogging, false, false, false, false, false, false)]
-		[InlineData(LogLevels.Error, false, true, true, true, true, true)]
-		[InlineData(LogLevels.Warning, false, false, true, true, true, true)]
-		[InlineData(LogLevels.Security, false, false, false, true, true, true)]
-		[InlineData(LogLevels.Information, false, false, false, false, true, true)]
-		[InlineData(LogLevels.Debug, false, false, false, false, false, true)]
-		public void ShouldTriggerSevereLevelThruLowerLevels(LogLevels level, bool no, bool err, bool warn, bool sec, bool info, bool debug)
+		[Fact]
+		public void ShouldTriggerProperlyWhenError()
 		{
 			//setup
 			SetupTriggers();
 
 			//act
-			Utilities.Logger.Log(level, true, "Hello World", new Exception("Custom Exception"));
+			Utilities.Logger.Error(new Exception("Hello World"), true);
 
 			//assert
-			AssertTriggers(no, err, warn, sec, info, debug);
+			AssertTriggers(true, true, true, true, true, false, false, false, false);
 
 			//cleanup
 			CleanupTriggers();
 		}
 
+		[Fact]
+		public void ShouldTriggerProperlyWhenWarn()
+		{
+			//setup
+			SetupTriggers();
+
+			//act
+			Utilities.Logger.Warn("Hello World!", true, new Exception("Goodbye"));
+
+			//assert
+			AssertTriggers(false, true, true, true, true, true, false, false, false);
+
+			//cleanup
+			CleanupTriggers();
+		}
+
+		[Fact]
+		public void ShouldTriggerProperlyWhenSecurity()
+		{
+			//setup
+			SetupTriggers();
+
+			//act
+			Utilities.Logger.Security("Hello World!", true);
+
+			//assert
+			AssertTriggers(false, false, true, true, true, false, true, false, false);
+
+			//cleanup
+			CleanupTriggers();
+		}
+
+		[Fact]
+		public void ShouldTriggerProperlyWhenInfo()
+		{
+			//setup
+			SetupTriggers();
+
+			//act
+			Utilities.Logger.Info("Hello World!", true);
+
+			//assert
+			AssertTriggers(false, false, false, true, true, false, false, true, false);
+
+			//cleanup
+			CleanupTriggers();
+		}
+
+		[Fact]
+		public void ShouldTriggerProperlyWhenDebug()
+		{
+			//setup
+			SetupTriggers();
+
+			//act
+			Utilities.Logger.Debug("Hello World!", true);
+
+			//assert
+			AssertTriggers(false, false, false, false, true, false, false, false, true);
+
+			//cleanup
+			CleanupTriggers();
+		}
 
 		private readonly Dictionary<LogLevels, bool> _triggers = new Dictionary<LogLevels, bool>();
 		private readonly Dictionary<LogLevels, BaseLoggingDestination<bool>> _destinations = new Dictionary<LogLevels, BaseLoggingDestination<bool>>();
@@ -59,14 +116,17 @@ namespace ProphetsWay.Logger.Test
 			_destinations.Clear();
 		}
 
-		private void AssertTriggers(bool no, bool err, bool warn, bool sec, bool info, bool debug)
+		private void AssertTriggers(bool err, bool warn, bool sec, bool info, bool debug, bool oWarn, bool oSec, bool oInfo, bool oDebug)
 		{
-			AssertTrigger(no, LogLevels.NoLogging);
 			AssertTrigger(err, LogLevels.Error);
 			AssertTrigger(warn, LogLevels.Warning);
 			AssertTrigger(sec, LogLevels.Security);
 			AssertTrigger(info, LogLevels.Information);
 			AssertTrigger(debug, LogLevels.Debug);
+			AssertTrigger(oWarn, LogLevels.WarningOnly);
+			AssertTrigger(oSec, LogLevels.SecurityOnly);
+			AssertTrigger(oInfo, LogLevels.InformationOnly);
+			AssertTrigger(oDebug, LogLevels.DebugOnly);
 		}
 
 		private void AssertTrigger(bool expected, LogLevels checkLevel)

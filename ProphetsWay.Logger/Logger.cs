@@ -40,14 +40,12 @@ namespace ProphetsWay.Utilities
         }
 
 		/// <summary>
-		/// Use this method if you want to log with a grouped set of LogLevels
-		/// Ex:  Warning | Security | Information
-		/// Will write to Destinations with any of those three LogLevels enabled.
+		/// Now hidden, you shouldn't need to use this method directly, only use the shortcut methods below
 		/// </summary>
 		/// <param name="level">The severity level of the log statement.</param>
 		/// <param name="message">The message you wish to convey in the log entry.</param>
 		/// <param name="ex">Optional, pass if you have an exception you want to add to the log entry.</param>
-		public static void Log(LogLevels level, string message, Exception ex = null)
+		private static void Log(LogLevels level, string message, Exception ex = null)
 		{
             if (!Destinations.ContainsKey(_nonGenericTypDestination))
                 Destinations.Add(_nonGenericTypDestination, new List<IDestination>());
@@ -55,8 +53,9 @@ namespace ProphetsWay.Utilities
             if (Destinations[_nonGenericTypDestination].Count == 0)
 				AddDestination(new FileDestination($"Default Log {DateTime.Now:yyyy-MM-dd hh-mm}.log"));
 
-			foreach (ILoggingDestination dest in Destinations[_nonGenericTypDestination])
-				dest.Log(level, message, ex);
+            foreach (ILoggingDestination dest in Destinations[_nonGenericTypDestination])
+                if (dest.ValidateMessageLevel(level))
+                    dest.Log(level, message, ex);
 		}
 
 		/// <summary>
@@ -65,7 +64,7 @@ namespace ProphetsWay.Utilities
 		/// <param name="message">The message you wish to convey in the log entry.</param>
 		public static void Debug(string message)
 		{
-			Log(LogLevels.Debug, message);
+			Log(LogLevels.DebugOnly, message);
 		}
 
 		/// <summary>
@@ -74,7 +73,7 @@ namespace ProphetsWay.Utilities
 		/// <param name="message">The message you wish to convey in the log entry.</param>
 		public static void Info(string message)
 		{
-			Log(LogLevels.Information, message);
+			Log(LogLevels.InformationOnly, message);
 		}
 
 		/// <summary>
@@ -83,7 +82,7 @@ namespace ProphetsWay.Utilities
 		/// <param name="message">The message you wish to convey in the log entry.</param>
 		public static void Security(string message)
 		{
-			Log(LogLevels.Security, message);
+			Log(LogLevels.SecurityOnly, message);
 		}
 
 		/// <summary>
@@ -93,7 +92,7 @@ namespace ProphetsWay.Utilities
 		/// <param name="ex">Optional, pass if you have an exception you want to add to the log entry.</param>
 		public static void Warn(string message, Exception ex = null)
 		{
-			Log(LogLevels.Warning, message, ex);
+			Log(LogLevels.WarningOnly, message, ex);
 		}
 
 		/// <summary>
