@@ -7,7 +7,7 @@ namespace ProphetsWay.Utilities.Generics
 	/// </summary>
     public abstract class BaseLoggingDestination<T> : LoggingDestinationCore, ILoggingDestination<T>
     {
-        public BaseLoggingDestination(LogLevels reportingLevel) : base(reportingLevel) { }
+        protected BaseLoggingDestination(LogLevels reportingLevel) : base(reportingLevel) { }
 
         /// <summary>
 		/// This is the required method from the ILoggingDestinations interface, this is the entry point for the destination from the Logger static class.

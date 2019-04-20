@@ -11,11 +11,13 @@ without cluttering the log with any ```Error``` or ```Warning``` messages that m
 ### Metadata Extensions
 With the addition of Generics, I wanted to make an easier way for a user to log statements around their context/metadata
 object.  Instead of requiring ```Logger.Info("information message", customMetadataObj);```, now you can modify your custom
-object to implement the interface ```ILoggerMetadata```.  With this small change, logging becomes as easy as ```customMetadataObj.Info("information message");```.
+object to implement the interface ```ILoggerMetadata```.  With this small change, logging becomes as easy as 
+```customMetadataObj.Info("information message");```.
 
 Cleaned up architecture of base logging destination classes.  I didn't like how the generic base inherited the regular base, and thus 
-the generic base had both log functions implemented (Log and Log<T>, even tho only one was accessible).  Created new base class
-for Destinations where the log level check logic, and the message massager can be shared across both base destinations.  
+the generic base had both log functions implemented (```Log``` and ```Log<T>```, even tho only one was accessible). 
+Created new base class for Destinations where the log level check logic, and the message massager can be shared across 
+both base destinations.  
 
 
 # v1.2.0
