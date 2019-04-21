@@ -117,17 +117,17 @@ specific database destination that is tightly coupled to a solution you are work
 The BaseLoggingDestination requires an argument of LogLevel to be established, so any log statement with a 
 severity of what was chosen or higher will be logged at that destination.  The log levels are as follows:
 
-    1. Debug        - All LogLevels will log to this level
-    1. Information  - Everything but Debug messages will log to this level
-    1. Security     - Error, Warning, and Security messages will log to this level
-    1. Warning      - Only Warnings and Errors 
-    1. Error        - Only Errors will log to this level
+    Debug        - All LogLevels will log to this level
+    Information  - Everything but Debug messages will log to this level
+    Security     - Error, Warning, and Security messages will log to this level
+    Warning      - Only Warnings and Errors 
+    Error        - Only Errors will log to this level
 
     //added in 2.0 new LogLevels
-    1. DebugOnly         - Will only accept Debug level messages
-    1. InformationOnly   - Will only accept Information level messages
-    1. SecurityOnly      - Will only accept Security level messages
-    1. WarningOnly       - Will only accept Warning level messages
+    DebugOnly         - Will only accept Debug level messages
+    InformationOnly   - Will only accept Information level messages
+    SecurityOnly      - Will only accept Security level messages
+    WarningOnly       - Will only accept Warning level messages
 
 If your curious why there isn't an "ErrorOnly" option, that's because Error already works that way.
 
