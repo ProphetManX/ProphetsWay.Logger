@@ -14,6 +14,25 @@ namespace ProphetsWay.Utilities
             _reportingLevel = reportingLevel;
         }
 
+        public LoggingDestinationCore(string strReportingLevel)
+        {
+            _reportingLevel = ParseReportingLevel(strReportingLevel);   
+        }
+
+        public LoggingDestinationCore(int intReportingLevel)
+        {
+            var strReportingLevel = Enum.GetName(typeof(LogLevels), intReportingLevel);
+            _reportingLevel = ParseReportingLevel(strReportingLevel);
+        }
+
+        private LogLevels ParseReportingLevel(string strReportingLevel)
+        {
+            if (Enum.TryParse(strReportingLevel, out LogLevels reportinglevel))
+                return reportinglevel;
+            else
+                return LogLevels.Information;
+        }
+
         /// <summary>
         /// A lock object for use in making threadsafe destinations
         /// </summary>
