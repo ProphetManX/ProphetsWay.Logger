@@ -24,47 +24,86 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 			: base(reportingLevel)
 		{
 			_fi = new FileInfo(fileName);
+			_encoder = GetEncoding(encoder);
 
-			switch(encoder){
+			InitFile(resetFile);
+		}
+
+		/// <summary>
+		/// A basic destination that will write your logs to a File on the hard disk.
+		/// </summary>
+		/// <param name="fileName">The target file for writing the logs to.</param>
+		/// <param name="strReportingLevel">The string representation of the level or levels that this destination should write log statements for.</param>
+		/// <param name="resetFile">Default: true - will delete the current log file if it exists and recreate it.</param>
+		/// <param name="encoder">Default: UTF8 - allows user to specify what encoding pattern to use when writing the output file.</param>
+		public FileDestination(string fileName, string strReportingLevel, bool resetFile = true, EncodingOptions encoder = EncodingOptions.UTF8)
+			: base(strReportingLevel)
+		{
+			_fi = new FileInfo(fileName);
+			_encoder = GetEncoding(encoder);
+
+			InitFile(resetFile);
+		}
+
+		/// <summary>
+		/// A basic destination that will write your logs to a File on the hard disk.
+		/// </summary>
+		/// <param name="fileName">The target file for writing the logs to.</param>
+		/// <param name="intReportingLevel">The integer representation of the level or levels that this destination should write log statements for.</param>
+		/// <param name="resetFile">Default: true - will delete the current log file if it exists and recreate it.</param>
+		/// <param name="encoder">Default: UTF8 - allows user to specify what encoding pattern to use when writing the output file.</param>
+		public FileDestination(string fileName, int intReportingLevel, bool resetFile = true, EncodingOptions encoder = EncodingOptions.UTF8)
+			: base(intReportingLevel)
+		{
+			_fi = new FileInfo(fileName);
+			_encoder = GetEncoding(encoder);
+
+			InitFile(resetFile);
+		}
+
+		private Encoding GetEncoding(EncodingOptions encodingOption)
+		{
+			switch (encodingOption)
+			{
 				case EncodingOptions.ASCII:
-					_encoder = Encoding.ASCII;
-					break;
-				
+					return Encoding.ASCII;
+
 				case EncodingOptions.BigEndianUnicode:
-					_encoder = Encoding.BigEndianUnicode;
-					break;
+					return Encoding.BigEndianUnicode;
 
 				case EncodingOptions.UTF32:
-					_encoder = Encoding.UTF32;
-					break;
+					return Encoding.UTF32;
 
 				case EncodingOptions.UTF7:
-					_encoder = Encoding.UTF7;
-					break;
+					return Encoding.UTF7;
 
 				case EncodingOptions.UTF8:
-					_encoder = Encoding.UTF8;
-					break;
+					return Encoding.UTF8;
 
 				case EncodingOptions.Unicode:
-					_encoder = Encoding.Unicode;
-					break;
-			}
+					return Encoding.Unicode;
 
-			try{
-				if(_fi.Exists && resetFile)
+				default:
+					return null;
+			}
+		}
+
+		private void InitFile(bool resetFile)
+		{
+			try
+			{
+				if (_fi.Exists && resetFile)
 					_fi.Delete();
 
-				if(!(_fi.Directory?.Exists).GetValueOrDefault())
+				if (!(_fi.Directory?.Exists).GetValueOrDefault())
 					_fi.Directory?.Create();
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Console.WriteLine(ex.Message);
 				throw;
 			}
 		}
-
 
 		protected override void PrintLogEntry(string message)
 		{
