@@ -1,11 +1,8 @@
 # ProphetsWay.Logger    
 
-| Release   | Status |
-|   ---     |  ---   |
-| Latest Build: | [![Build status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger/Logger%20CI)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=5)
-| Alpha:    | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/3/3)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=3)
-| Beta:     | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/3/10)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=3)
-| Release:  | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/3/11)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=3)
+| Master Build Status | NuGet Alpha | NuGet Beta | Nuget Release |
+|   ---   |   ---   |   ---   |   ---   |
+| [![Build status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger/Logger%20CI)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/?definitionId=5)| [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/3/3)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=3)| [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/3/10)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=3)| [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/3/11)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=3)
 
 
 Logger is a quick to setup logging utility.  It is designed so that you can establish the destinations for your 
@@ -117,17 +114,17 @@ specific database destination that is tightly coupled to a solution you are work
 The BaseLoggingDestination requires an argument of LogLevel to be established, so any log statement with a 
 severity of what was chosen or higher will be logged at that destination.  The log levels are as follows:
 
-    Debug        - All LogLevels will log to this level
-    Information  - Everything but Debug messages will log to this level
-    Security     - Error, Warning, and Security messages will log to this level
-    Warning      - Only Warnings and Errors 
-    Error        - Only Errors will log to this level
+	Debug        - All LogLevels will log to this level
+	Information  - Everything but Debug messages will log to this level
+	Security     - Error, Warning, and Security messages will log to this level
+	Warning      - Only Warnings and Errors 
+	Error        - Only Errors will log to this level
 
-    //added in 2.0 new LogLevels
-    DebugOnly         - Will only accept Debug level messages
-    InformationOnly   - Will only accept Information level messages
-    SecurityOnly      - Will only accept Security level messages
-    WarningOnly       - Will only accept Warning level messages
+	//added in 2.0 new LogLevels
+	DebugOnly         - Will only accept Debug level messages
+	InformationOnly   - Will only accept Information level messages
+	SecurityOnly      - Will only accept Security level messages
+	WarningOnly       - Will only accept Warning level messages
 
 If your curious why there isn't an "ErrorOnly" option, that's because Error already works that way.
 
@@ -167,11 +164,11 @@ public class MyCustomDbDestination : BaseLoggingDestination<DbMetadata>{
 	//setup the connection to the database for example
 	private context _db;
 
-    public override void WriteLogEntry(T metadata, LogLevels level, string message = null, Exception thrownException = null)
-    {
+	public override void WriteLogEntry(T metadata, LogLevels level, string message = null, Exception thrownException = null)
+	{
 		//for any given log message, write all the details passed to the database record
 		_db.WriteLogRecord(message, level, metadata.UserId, metadata.EntryPointMethod, metadata.Permissions);
-    }
+	}
 }
 
 //example program usage
@@ -239,7 +236,7 @@ public void Main(string[] args){
 
 ## Running the unit tests
 
-The library is up to 44 unit tests currently.  I tried to cover everything possible.  They are created with 
+The library is up to 48 unit tests currently.  I tried to cover everything possible.  They are created with 
 XUnit and utilize Moq for two tests.  The Test project is included in this repository, as well as an Example project.
 
 
@@ -257,7 +254,7 @@ who participated in this project.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
 
 ##### P.S.

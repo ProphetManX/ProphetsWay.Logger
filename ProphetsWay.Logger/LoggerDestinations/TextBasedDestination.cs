@@ -15,7 +15,9 @@ namespace ProphetsWay.Utilities.LoggerDestinations
             PrintLogEntry(msg);
         }
 
-        protected TextBasedDestination(LogLevels reportingLevel) : base(reportingLevel){}
+		protected TextBasedDestination(LogLevels reportingLevel) : base(reportingLevel) { }
+		protected TextBasedDestination(string strReportingLevel) : base(strReportingLevel) { }
+		protected TextBasedDestination(int intReportingLevel) : base(intReportingLevel) { }
 
 		protected abstract void PrintLogEntry(string message);
 	}

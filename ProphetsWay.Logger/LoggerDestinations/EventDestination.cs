@@ -10,21 +10,28 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 		/// <summary>
 		/// A basic destination meant for use in situations that require events to be invoked (ie: UI applications).
 		/// </summary>
-		public EventDestination(LogLevels reportingLevel) : base(reportingLevel)
-		{
+		public EventDestination(LogLevels reportingLevel) : base(reportingLevel) { }
 
+		/// <summary>
+		/// A basic destination meant for use in situations that require events to be invoked (ie: UI applications).
+		/// </summary>
+		public EventDestination(string strReportingLevel) : base(strReportingLevel) { }
+
+		/// <summary>
+		/// A basic destination meant for use in situations that require events to be invoked (ie: UI applications).
+		/// </summary>
+		public EventDestination(int intReportingLevel) : base(intReportingLevel) { }
+
+		public override void Log(LogLevels level, string message = null, Exception ex = null)
+		{
+			var evt = new LoggerEventArgs(MassageLogStatement(level, message,ex), level, message, ex);
+			LoggingEvent?.Invoke(this, evt);
 		}
 
-        public override void Log(LogLevels level, string message = null, Exception ex = null)
-        {
-            var evt = new LoggerEventArgs(MassageLogStatement(level, message,ex), level, message, ex);
-            LoggingEvent?.Invoke(this, evt);
-        }
-
-        /// <summary>
-        /// The event you must subscribe to, to receive the relevant log events.
-        /// </summary>
-        public EventHandler<LoggerEventArgs> LoggingEvent;
+		/// <summary>
+		/// The event you must subscribe to, to receive the relevant log events.
+		/// </summary>
+		public EventHandler<LoggerEventArgs> LoggingEvent;
 
 		public class LoggerEventArgs : EventArgs
 		{

@@ -15,6 +15,16 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 		/// </summary>
         public GenericEventDestination(LogLevels reportingLevel) : base(reportingLevel) { }
 
+        /// <summary>
+		/// A basic destination meant for use in situations that require events to be invoked (ie: UI applications).
+		/// </summary>
+        public GenericEventDestination(string strReportingLevel) : base(strReportingLevel) { }
+
+        /// <summary>
+		/// A basic destination meant for use in situations that require events to be invoked (ie: UI applications).
+		/// </summary>
+        public GenericEventDestination(int intReportingLevel) : base(intReportingLevel) { }
+
         public override void Log(LogLevels level, T metadata, string message = null, Exception ex = null)
         {
             var evt = new LoggerEventArgs(message, level, ex, metadata, MassageLogStatement(level, message, ex));

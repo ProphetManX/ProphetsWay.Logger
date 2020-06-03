@@ -1,15 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net40;net45;net451;net452;net46;net461;net471;netstandard1.3;netstandard1.6;netstandard2.0;netcoreapp2.2;netcoreapp2.1;netcoreapp2.0;netcoreapp1.1;netcoreapp1.0</TargetFrameworks>
+		<TargetFrameworks>
+			net40;net45;net451;net452;net46;net461;net471;net48;
+			netstandard1.3;netstandard1.6;netstandard2.0;netstandard2.1;
+			netcoreapp2.2;netcoreapp2.1;netcoreapp2.0;netcoreapp1.1;netcoreapp1.0;netcoreapp3.0;netcoreapp3.1;
+		</TargetFrameworks>
 		<RootNamespace>ProphetsWay.Utilities</RootNamespace>
 		<AssemblyName>ProphetsWay.Logger</AssemblyName>
 		<ApplicationIcon />
 		<Win32Resource />
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<SignAssembly>false</SignAssembly>
-    
-    <Description>
+	
+	<Description>
 A simple and easy to use Logging library that allows for customizable outputs for log entries.
 
 Go to https://github.com/ProphetManX/ProphetsWay.Logger for more information.
@@ -22,28 +26,28 @@ add "using ProphetsWay.Utilities;" to your class
 and then you can call the Logger directly.
 Logger.AddDestination(new ConsoleDestination());
 Logger.Debug("Hello World!");
-    </Description>
+	</Description>
 
-    <!-- Assembly Override Properties -->
-    <PackageRequireLicenseAcceptance />
-    <PackageId />
-    <Version />
-    <Authors />
-    <Company />
-    <Product />
+	<!-- Assembly Override Properties -->
+	<PackageRequireLicenseAcceptance />
+	<PackageId />
+	<Version />
+	<Authors />
+	<Company />
+	<Product />
 
-    <Copyright />
-    <PackageLicenseUrl />
-    <PackageProjectUrl />
-    <PackageIconUrl />
-    <RepositoryUrl />
-    <RepositoryType />
-    <PackageTags />
-    <PackageReleaseNotes />
-    <NeutralLanguage />
-    <AssemblyVersion />
-    <FileVersion />
-    <InformationalVersion />
+	<Copyright />
+	<PackageLicenseUrl />
+	<PackageProjectUrl />
+	<PackageIconUrl />
+	<RepositoryUrl />
+	<RepositoryType />
+	<PackageTags />
+	<PackageReleaseNotes />
+	<NeutralLanguage />
+	<AssemblyVersion />
+	<FileVersion />
+	<InformationalVersion />
 		
 	</PropertyGroup>
 

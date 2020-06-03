@@ -1,3 +1,10 @@
+# v2.1.0
+### Configurable LogLevels
+You can now instanciate the Logger Destinations using the string or integer value of a given LogLevel.
+
+Library now targets .NetFramework 4.8, .NetStandard 2.1 .NetCore 3.1
+
+
 # v2.0.0
 ### LogLevel Overhaul and Specific LogLevel Targeting for Destinations
 Modified the actual values of the LogLevels enum values, setting them in Binary so it's easier to understand how 

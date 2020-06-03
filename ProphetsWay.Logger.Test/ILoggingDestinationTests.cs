@@ -15,7 +15,7 @@ namespace ProphetsWay.Logger.Test
 			const string msg = "Hello World!";
 			var mDest = new Mock<ILoggingDestination>();
 			mDest.Setup(dest => dest.Log(LogLevels.DebugOnly, msg, null)).Verifiable();
-            mDest.Setup(dest => dest.ValidateMessageLevel(LogLevels.DebugOnly)).Returns(true).Verifiable();
+			mDest.Setup(dest => dest.ValidateMessageLevel(LogLevels.DebugOnly)).Returns(true).Verifiable();
 			Utilities.Logger.AddDestination(mDest.Object);
 
 			//act
@@ -28,24 +28,24 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.RemoveDestination(mDest.Object);
 		}
 
-        [Fact]
-        public void ShouldTriggerLogMethodOnGenericIDestination()
-        {
-            //setup
-            const string msg = "Hello World!";
-            var mDest = new Mock<ILoggingDestination<bool>>();
-            mDest.Setup(dest => dest.Log(LogLevels.DebugOnly, true, msg, null)).Verifiable();
-            mDest.Setup(dest => dest.ValidateMessageLevel(LogLevels.DebugOnly)).Returns(true).Verifiable();
-            Utilities.Logger.AddDestination(mDest.Object);
+		[Fact]
+		public void ShouldTriggerLogMethodOnGenericIDestination()
+		{
+			//setup
+			const string msg = "Hello World!";
+			var mDest = new Mock<ILoggingDestination<bool>>();
+			mDest.Setup(dest => dest.Log(LogLevels.DebugOnly, true, msg, null)).Verifiable();
+			mDest.Setup(dest => dest.ValidateMessageLevel(LogLevels.DebugOnly)).Returns(true).Verifiable();
+			Utilities.Logger.AddDestination(mDest.Object);
 
-            //act
-            Utilities.Logger.Debug(msg, true);
+			//act
+			Utilities.Logger.Debug(msg, true);
 
-            //assert
-            mDest.VerifyAll();
+			//assert
+			mDest.VerifyAll();
 
-            //cleanup
-            Utilities.Logger.RemoveDestination(mDest.Object);
-        }
-    }
+			//cleanup
+			Utilities.Logger.RemoveDestination(mDest.Object);
+		}
+	}
 }
