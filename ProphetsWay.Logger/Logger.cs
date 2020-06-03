@@ -6,18 +6,18 @@ namespace ProphetsWay.Utilities
 {
 	public static partial class Logger
 	{
-        //private static readonly IList<ILoggingDestination> Destinations = new List<ILoggingDestination>();
-        private static readonly Type _nonGenericTypDestination = typeof(ILoggingDestination);
-        /// <summary>
-        /// Will add a new LoggingDestination to the pool of targets.  
-        /// </summary>
-        /// <param name="newDest">Either an existing or a custom Destination that implements the ILoggingDestination interface.</param>
-        public static void AddDestination(ILoggingDestination newDest)
+		//private static readonly IList<ILoggingDestination> Destinations = new List<ILoggingDestination>();
+		private static readonly Type _nonGenericTypDestination = typeof(ILoggingDestination);
+		/// <summary>
+		/// Will add a new LoggingDestination to the pool of targets.  
+		/// </summary>
+		/// <param name="newDest">Either an existing or a custom Destination that implements the ILoggingDestination interface.</param>
+		public static void AddDestination(ILoggingDestination newDest)
 		{
-            if (!Destinations.ContainsKey(_nonGenericTypDestination))
-                Destinations.Add(_nonGenericTypDestination, new List<IDestination>());
+			if (!Destinations.ContainsKey(_nonGenericTypDestination))
+				Destinations.Add(_nonGenericTypDestination, new List<IDestination>());
 
-            Destinations[_nonGenericTypDestination].Add(newDest);
+			Destinations[_nonGenericTypDestination].Add(newDest);
 		}
 
 		/// <summary>
@@ -26,18 +26,18 @@ namespace ProphetsWay.Utilities
 		/// <param name="destToRemove">Either an existing or a custom Destination that implements the ILoggingDestination interface; must have already been added to the pool via "AddDestination".</param>
 		public static void RemoveDestination(ILoggingDestination destToRemove)
 		{
-            if (Destinations.ContainsKey(_nonGenericTypDestination))
-                Destinations[_nonGenericTypDestination].Remove(destToRemove);
-        }
+			if (Destinations.ContainsKey(_nonGenericTypDestination))
+				Destinations[_nonGenericTypDestination].Remove(destToRemove);
+		}
 
 		/// <summary>
 		/// Resets the pool of targets, removes any/all Destinations that have been added.
 		/// </summary>
 		public static void ClearDestinations()
 		{
-            if (Destinations.ContainsKey(_nonGenericTypDestination))
-                Destinations[_nonGenericTypDestination].Clear();
-        }
+			if (Destinations.ContainsKey(_nonGenericTypDestination))
+				Destinations[_nonGenericTypDestination].Clear();
+		}
 
 		/// <summary>
 		/// Now hidden, you shouldn't need to use this method directly, only use the shortcut methods below
@@ -47,15 +47,15 @@ namespace ProphetsWay.Utilities
 		/// <param name="ex">Optional, pass if you have an exception you want to add to the log entry.</param>
 		private static void Log(LogLevels level, string message, Exception ex = null)
 		{
-            if (!Destinations.ContainsKey(_nonGenericTypDestination))
-                Destinations.Add(_nonGenericTypDestination, new List<IDestination>());
+			if (!Destinations.ContainsKey(_nonGenericTypDestination))
+				Destinations.Add(_nonGenericTypDestination, new List<IDestination>());
 
-            if (Destinations[_nonGenericTypDestination].Count == 0)
+			if (Destinations[_nonGenericTypDestination].Count == 0)
 				AddDestination(new FileDestination($"Default Log {DateTime.Now:yyyy-MM-dd hh-mm}.log"));
 
-            foreach (ILoggingDestination dest in Destinations[_nonGenericTypDestination])
-                if (dest.ValidateMessageLevel(level))
-                    dest.Log(level, message, ex);
+			foreach (ILoggingDestination dest in Destinations[_nonGenericTypDestination])
+				if (dest.ValidateMessageLevel(level))
+					dest.Log(level, message, ex);
 		}
 
 		/// <summary>

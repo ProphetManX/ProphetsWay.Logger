@@ -7,7 +7,7 @@ namespace ProphetsWay.Utilities
 	/// </summary>
 	public abstract class BaseLoggingDestination : LoggingDestinationCore, ILoggingDestination
 	{
-        protected BaseLoggingDestination(LogLevels reportingLevel) : base(reportingLevel) { }
+		protected BaseLoggingDestination(LogLevels reportingLevel) : base(reportingLevel) { }
 		protected BaseLoggingDestination(string strReportingLevel) : base(strReportingLevel) { }
 		protected BaseLoggingDestination(int intReportingLevel) : base(intReportingLevel) { }
 
