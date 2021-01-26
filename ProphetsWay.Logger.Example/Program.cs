@@ -21,7 +21,7 @@ namespace ProphetsWay.Example
 			Logger.Error(ex2, "Another generic message about an error occuring. (friendly message to show a UI maybe?)");
 
 
-			var dest = new FileDestination("test.log", LogLevels.Warning, false, FileDestination.EncodingOptions.UTF7);
+			var dest = new FileDestination("test.log", LogLevels.Warning, false, FileDestination.EncodingOptions.UTF8);
 
 			var evtDest = new EventDestination(LogLevels.Debug);
 			evtDest.LoggingEvent += (sender, eventArgs) => { /* whatever you want to do with the message here */ };
