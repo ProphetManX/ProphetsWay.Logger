@@ -1,6 +1,8 @@
-# v2.3.0
+# v3.0.0
 ### Converted build/release pipelines into YML source files
 Project's build and release pipleines are now written in YML files that are checked into the source code.
+Removed build targets for unsupported versions of .Net frameworks (removed netcoreapp1.0, netcoreapp1.1, netcoreapp2.0, netcoreapp2.2, netcoreapp3.0.)
+Removed UTF7 as a target filetype encoding for FileDestinations as this is obsolete, should be using UTF8.
 
 # v2.2.0
 ### Build target for Net 5.0
