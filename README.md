@@ -92,7 +92,6 @@ A final additional parameter is available to specify the text Encoder to be used
 * ASCII
 * BigEndianUnicode
 * Unicode
-* UTF7
 * UTF8
 * UTF32
 
