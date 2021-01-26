@@ -12,8 +12,8 @@ pr:
 
 
 variables:
-  MajorVersion: '2'
-  MinorVersion: '3'
+  MajorVersion: '3'
+  MinorVersion: '0'
   PatchVersion: '0'
 
 

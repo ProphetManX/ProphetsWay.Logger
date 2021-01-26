@@ -1,8 +1,8 @@
 # ProphetsWay.Logger    
 
-| Master Build Status | NuGet Alpha | NuGet Beta | Nuget Release |
+| Master Build Status | NuGet Alpha | NuGet Beta | NuGet Release |
 |   ---   |   ---   |   ---   |   ---   |
-| [![Build status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger/Logger%20CI)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/?definitionId=5)| [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/3/3)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=3)| [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/3/10)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=3)| [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/3/11)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=3)
+| [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger?branchName=master&stageName=Build%20Stage&jobName=CI%20Build)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=19&branchName=master)| [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger?branchName=master&stageName=Deploy%20Alpha%20NuGet%20Package)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=19&branchName=master) | [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger?branchName=master&stageName=Deploy%20Beta%20NuGet%20Package)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=19&branchName=master) | [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger?branchName=master&stageName=Deploy%20Release%20NuGet%20Package)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=19&branchName=master)
 
 
 Logger is a quick to setup logging utility.  It is designed so that you can establish the destinations for your 
@@ -92,7 +92,6 @@ A final additional parameter is available to specify the text Encoder to be used
 * ASCII
 * BigEndianUnicode
 * Unicode
-* UTF7
 * UTF8
 * UTF32
 
