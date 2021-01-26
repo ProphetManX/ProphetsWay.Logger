@@ -9,9 +9,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProphetsWay.Logger.Test", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{80EF23D7-E1C1-4A81-BB42-8F144C5E47AC}"
 	ProjectSection(SolutionItems) = preProject
+		azure-pipelines.yml = azure-pipelines.yml
+		build-and-test.yml = build-and-test.yml
+		build-test-deploy-release.yml = build-test-deploy-release.yml
 		CHANGELOG.md = CHANGELOG.md
 		LICENSE = LICENSE
 		README.md = README.md
+		version-variables.yml = version-variables.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProphetsWay.Logger.Example", "ProphetsWay.Logger.Example\ProphetsWay.Logger.Example.csproj", "{F4E19CED-1BDC-4DBE-AC62-8D95DB14C535}"

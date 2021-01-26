@@ -74,9 +74,6 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 				case EncodingOptions.UTF32:
 					return Encoding.UTF32;
 
-				case EncodingOptions.UTF7:
-					return Encoding.UTF7;
-
 				case EncodingOptions.UTF8:
 					return Encoding.UTF8;
 
@@ -123,7 +120,6 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 			ASCII,
 			BigEndianUnicode,
 			Unicode,
-			UTF7,
 			UTF8,
 			UTF32
 		}
