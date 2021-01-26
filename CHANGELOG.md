@@ -1,3 +1,7 @@
+# v2.2.0
+### Build target for Net 5.0
+Library now targets .Net 5.0
+
 # v2.1.0
 ### Configurable LogLevels
 You can now instanciate the Logger Destinations using the string or integer value of a given LogLevel.

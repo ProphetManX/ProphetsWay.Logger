@@ -8,12 +8,12 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 	/// </summary>
 	public abstract class TextBasedDestination : BaseLoggingDestination
 	{
-        public override void Log(LogLevels level, string message = null, Exception ex = null)
-        {
-            var massagedMessage = MassageLogStatement(level, message, ex);
-            var msg = $"{DateTime.Now} :: {level.ToString().PadLeft(12)}:  {massagedMessage}";
-            PrintLogEntry(msg);
-        }
+		public override void Log(LogLevels level, string message = null, Exception ex = null)
+		{
+			var massagedMessage = MassageLogStatement(level, message, ex);
+			var msg = $"{DateTime.Now} :: {level.ToString().PadLeft(12)}:  {massagedMessage}";
+			PrintLogEntry(msg);
+		}
 
 		protected TextBasedDestination(LogLevels reportingLevel) : base(reportingLevel) { }
 		protected TextBasedDestination(string strReportingLevel) : base(strReportingLevel) { }

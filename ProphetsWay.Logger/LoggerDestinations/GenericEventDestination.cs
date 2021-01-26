@@ -3,57 +3,57 @@ using System;
 
 namespace ProphetsWay.Utilities.LoggerDestinations
 {
-    /// <summary>
+	/// <summary>
 	/// A generic destination meant for use in situations that require events to be invoked (ie: UI applications).
-    /// The generic version allows for passing a custom object thru to your logging destination to be
-    /// handled specially.  (ie: database logging parameters)
+	/// The generic version allows for passing a custom object thru to your logging destination to be
+	/// handled specially.  (ie: database logging parameters)
 	/// </summary>
-    public class GenericEventDestination<T> : BaseLoggingDestination<T>
-    {
-        /// <summary>
+	public class GenericEventDestination<T> : BaseLoggingDestination<T>
+	{
+		/// <summary>
 		/// A basic destination meant for use in situations that require events to be invoked (ie: UI applications).
 		/// </summary>
-        public GenericEventDestination(LogLevels reportingLevel) : base(reportingLevel) { }
+		public GenericEventDestination(LogLevels reportingLevel) : base(reportingLevel) { }
 
-        /// <summary>
+		/// <summary>
 		/// A basic destination meant for use in situations that require events to be invoked (ie: UI applications).
 		/// </summary>
-        public GenericEventDestination(string strReportingLevel) : base(strReportingLevel) { }
+		public GenericEventDestination(string strReportingLevel) : base(strReportingLevel) { }
 
-        /// <summary>
+		/// <summary>
 		/// A basic destination meant for use in situations that require events to be invoked (ie: UI applications).
 		/// </summary>
-        public GenericEventDestination(int intReportingLevel) : base(intReportingLevel) { }
+		public GenericEventDestination(int intReportingLevel) : base(intReportingLevel) { }
 
-        public override void Log(LogLevels level, T metadata, string message = null, Exception ex = null)
-        {
-            var evt = new LoggerEventArgs(message, level, ex, metadata, MassageLogStatement(level, message, ex));
-            LoggingEvent?.Invoke(this, evt);
-        }
+		public override void Log(LogLevels level, T metadata, string message = null, Exception ex = null)
+		{
+			var evt = new LoggerEventArgs(message, level, ex, metadata, MassageLogStatement(level, message, ex));
+			LoggingEvent?.Invoke(this, evt);
+		}
 
-        /// <summary>
-        /// The event you must subscribe to, to receive the relevant log events.
-        /// </summary>
-        public EventHandler<LoggerEventArgs> LoggingEvent;
+		/// <summary>
+		/// The event you must subscribe to, to receive the relevant log events.
+		/// </summary>
+		public EventHandler<LoggerEventArgs> LoggingEvent;
 
-        public class LoggerEventArgs : EventArgs
-        {
-            public LoggerEventArgs(string message, LogLevels level, Exception ex, T metadata, string massagedMessage)
-            {
-                RawMessage = message;
-                LogLevel = level;
-                Metadata = metadata;
-                Timestamp = DateTime.Now;
-                Exception = ex;
-                Message = massagedMessage;
-            }
+		public class LoggerEventArgs : EventArgs
+		{
+			public LoggerEventArgs(string message, LogLevels level, Exception ex, T metadata, string massagedMessage)
+			{
+				RawMessage = message;
+				LogLevel = level;
+				Metadata = metadata;
+				Timestamp = DateTime.Now;
+				Exception = ex;
+				Message = massagedMessage;
+			}
 
-            public string Message { get; }
-            public T Metadata { get; }
-            public Exception Exception { get; }
-            public LogLevels LogLevel { get; }
-            public DateTime Timestamp { get; }
-            public string RawMessage { get; }
-        }
-    }
+			public string Message { get; }
+			public T Metadata { get; }
+			public Exception Exception { get; }
+			public LogLevels LogLevel { get; }
+			public DateTime Timestamp { get; }
+			public string RawMessage { get; }
+		}
+	}
 }
