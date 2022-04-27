@@ -1,3 +1,7 @@
+# v3.0.1
+### Build target for Net 6.0
+Library now targets .Net 6.0
+
 # v3.0.0
 ### Converted build/release pipelines into YML source files
 Project's build and release pipleines are now written in YML files that are checked into the source code.

@@ -4,7 +4,7 @@
 		<TargetFrameworks>
 			net45;net451;net452;net46;net461;net471;net48;
 			netcoreapp2.1;netcoreapp3.1;
-			net50;
+			net50;net60;
 		</TargetFrameworks>
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
