@@ -1,6 +1,7 @@
 # v3.0.1
 ### Build target for Net 6.0
 Library now targets .Net 6.0
+Updated repository to build using the new https://github.com/ProphetManX/prophets-pipelines framework
 
 # v3.0.0
 ### Converted build/release pipelines into YML source files
