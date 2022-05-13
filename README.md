@@ -1,8 +1,7 @@
 # ProphetsWay.Logger    
 
-| Master Build Status | NuGet Alpha | NuGet Beta | NuGet Release |
-|   ---   |   ---   |   ---   |   ---   |
-| [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger?branchName=master&stageName=Build%20Stage&jobName=CI%20Build)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=19&branchName=master)| [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger?branchName=master&stageName=Deploy%20Alpha%20NuGet%20Package)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=19&branchName=master) | [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger?branchName=master&stageName=Deploy%20Beta%20NuGet%20Package)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=19&branchName=master) | [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/Logger?branchName=master&stageName=Deploy%20Release%20NuGet%20Package)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=19&branchName=master)
+Build Status:  
+[![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/ProphetManX.ProphetsWay.Logger?repoName=ProphetManX%2FProphetsWay.Logger&branchName=main)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=25&repoName=ProphetManX%2FProphetsWay.Logger&branchName=main)
 
 
 Logger is a quick to setup logging utility.  It is designed so that you can establish the destinations for your 
