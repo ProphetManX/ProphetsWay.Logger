@@ -7,13 +7,22 @@
 			netcoreapp2.1;netcoreapp3.1;
 			net50;net60;
 		</TargetFrameworks>
+		<Authors>G. Gordon Nasseri</Authors>
+		<Company>Prophet's Way</Company>
+		<Product>Logger</Product>
 		<RootNamespace>ProphetsWay.Utilities</RootNamespace>
 		<AssemblyName>ProphetsWay.Logger</AssemblyName>
+		<PackageId>ProphetsWay.Logger</PackageId>
+		<RepositoryType>GitHub</RepositoryType>
+		<RepositoryUrl>https://github.com/ProphetManX/ProphetsWay.Logger</RepositoryUrl>
 		<ApplicationIcon />
 		<Win32Resource />
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<SignAssembly>false</SignAssembly>
-	
+		<PackageIcon>profile.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 	<Description>
 A simple and easy to use Logging library that allows for customizable outputs for log entries.
 
@@ -29,27 +38,25 @@ Logger.AddDestination(new ConsoleDestination());
 Logger.Debug("Hello World!");
 	</Description>
 
-	<!-- Assembly Override Properties -->
-	<PackageRequireLicenseAcceptance />
-	<PackageId />
-	<Version />
-	<Authors />
-	<Company />
-	<Product />
+		<!-- Assembly Override Properties -->
+		
+		<Version />
 
-	<Copyright />
-	<PackageLicenseUrl />
-	<PackageProjectUrl />
-	<PackageIconUrl />
-	<RepositoryUrl />
-	<RepositoryType />
-	<PackageTags />
-	<PackageReleaseNotes />
-	<NeutralLanguage />
-	<AssemblyVersion />
-	<FileVersion />
-	<InformationalVersion />
+		<Copyright />
+		<PackageProjectUrl />
+		<PackageTags />
+		<PackageReleaseNotes />
+		<NeutralLanguage />
+		<AssemblyVersion />
+		<FileVersion />
+		<InformationalVersion />
 		
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\CHANGELOG.md" Link="CHANGELOG.md" Pack="true" PackagePath="" />
+		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="" />
+		<Content Include="..\profile.png" Link="profile.png" Pack="true" PackagePath="" />
+	</ItemGroup>
 
 </Project>
