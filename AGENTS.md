@@ -250,7 +250,7 @@ the project header and sidecars are what change.
   | `Interface Architect` | Interfaces and their supporting types — never tests, never implementations |
   | `API Designer` | HTTP contracts and `docs/api/` — never implementations |
   | `Test Designer` | `*Tests.cs` only |
-  | `Implementer` | Implementation `.cs` only — **never** a test file |
+  | `Implementer` | Production implementation artifacts, including `.cs`, `.sql`, and explicitly scoped `.xml` — **never** tests or project/build files |
   | `Refactorer` | Implementation `.cs` only, behavior-preserving — **never** a test file |
   | `Modernizer` | `.csproj` / `.sqlproj` build and packaging config — never versions, never namespaces |
   | `Pipeline Engineer` | `.yml` / `.yaml` only — never versions, secrets, project files, or Markdown |
