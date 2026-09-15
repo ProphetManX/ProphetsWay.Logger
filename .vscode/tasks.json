@@ -1,0 +1,104 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Logger focused net48 tests",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"${workspaceFolder}/ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj",
+				"--no-restore",
+				"--framework",
+				"net48",
+				"--configuration",
+				"Debug",
+				"--filter",
+				"FullyQualifiedName~ProphetsWay.Logger.Test.ILoggingDestinationTests",
+				"--logger",
+				"trx;LogFileName=existing-net48-baseline.trx",
+				"--results-directory",
+				"c:\\Projects\\ProphetManX\\.agent-runs\\20260913-2133-logger-docs-first-tdd\\evidence\\baseline"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Logger focused net48 tests",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"${workspaceFolder}/ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj",
+				"--no-restore",
+				"--framework",
+				"net48",
+				"--configuration",
+				"Debug",
+				"--filter",
+				"FullyQualifiedName~ProphetsWay.Logger.Test.ILoggingDestinationTests",
+				"--logger",
+				"trx",
+				"--results-directory",
+				"c:\\Projects\\ProphetManX\\.agent-runs\\20260913-2133-logger-docs-first-tdd\\evidence\\baseline"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Logger net48 in-memory baseline",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"${workspaceFolder}/ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj",
+				"--no-restore",
+				"--framework",
+				"net48",
+				"--configuration",
+				"Debug",
+				"--filter",
+				"FullyQualifiedName~ProphetsWay.Logger.Test.ILoggingDestinationTests",
+				"--logger",
+				"trx",
+				"--results-directory",
+				"c:\\Projects\\ProphetManX\\.agent-runs\\20260913-2133-logger-docs-first-tdd\\evidence\\baseline"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Logger verify label specification inputs",
+			"type": "shell",
+			"command": "Import-Module 'c:/Projects/ProphetManX/prophets-pipelines/conventions/scripts/AgentEvidence.psm1' -PassThru | ForEach-Object { Get-Content -LiteralPath 'c:/Projects/ProphetManX/.agent-runs/20260913-2133-logger-docs-first-tdd/evidence/label-specifications-r1.json' -Raw | ConvertFrom-Json -Depth 30 | ForEach-Object { Compare-AgentManifest -Baseline $_ } | ForEach-Object { Save-AgentEvidence -Value $_ -RunDirectory 'c:/Projects/ProphetManX/.agent-runs/20260913-2133-logger-docs-first-tdd' -Name 'label-parent-pre-audit.json' } }",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger verify repaired label red stage",
+			"type": "shell",
+			"command": "Import-Module 'c:/Projects/ProphetManX/prophets-pipelines/conventions/scripts/AgentEvidence.psm1' -PassThru | ForEach-Object {\n    $runDirectory = 'c:/Projects/ProphetManX/.agent-runs/20260913-2133-logger-docs-first-tdd'\n    $specification = Get-Content -LiteralPath \"$runDirectory/evidence/label-specifications-r2.json\" -Raw | ConvertFrom-Json -Depth 30\n    $specificationComparison = Compare-AgentManifest -Baseline $specification\n    Save-AgentEvidence -Value $specificationComparison -RunDirectory $runDirectory -Name 'label-parent-specifications-r2.json'\n    if (-not $specificationComparison.Matches) { throw 'Protected specification inputs changed.' }\n    $configuration = [ordered]@{\n        Framework = 'net48'\n        BuildConfiguration = 'Debug'\n        Restore = $false\n        Filter = 'FullyQualifiedName~ProphetsWay.Logger.Test.SensitivityLabelTests'\n        ExpectedResult = 'Executed missing-export red with identical repaired-case membership'\n        SpecificationBaseline = \"$runDirectory/evidence/label-specifications-r2.json\"\n        VerificationRole = 'Parent independent verification'\n    }\n    $arguments = @('test', 'c:/Projects/ProphetManX/ProphetsWay.Logger/ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj', '--no-restore', '--framework', 'net48', '--configuration', 'Debug', '--filter', 'FullyQualifiedName~ProphetsWay.Logger.Test.SensitivityLabelTests', '--logger', 'trx;LogFileName=label-parent-red-r2.trx', '--results-directory', \"$runDirectory/evidence\")\n    $validation = Invoke-AgentValidation -FilePath dotnet -ArgumentList $arguments -WorkingDirectory 'c:/Projects/ProphetManX/ProphetsWay.Logger' -Configuration $configuration -InputManifestPath \"$runDirectory/evidence/label-red-inputs-r2.json\" -RunDirectory $runDirectory -Name 'label-parent-red-r2' -Kind Tests -TrxPath \"$runDirectory/evidence/label-parent-red-r2.trx\"\n    $previous = Get-Content -LiteralPath \"$runDirectory/evidence/label-red-r2.json\" -Raw | ConvertFrom-Json -Depth 30\n    $testComparison = Compare-AgentTestResults -Before $previous -After $validation.Record\n    $sameCases = @($testComparison.Differences).Count -eq 0\n    $expectedRed = $validation.Record.ExitCode -eq 1 -and -not $validation.Record.TimedOut -and $null -eq $validation.Record.ResultError -and $validation.Record.InputComparison.Matches -and $validation.Record.Results.Counts.Executed -gt 0 -and $validation.Record.Results.Counts.Failed -eq $validation.Record.Results.Counts.Executed -and $validation.Record.Results.Counts.Skipped -eq 0 -and $sameCases\n    $summary = [pscustomobject][ordered]@{\n        Schema = 'label-parent-red-verification-v1'\n        CheckedUtc = [DateTimeOffset]::UtcNow.ToString('o')\n        SpecificationComparison = $specificationComparison\n        ValidationPath = $validation.Path\n        PriorValidation = \"$runDirectory/evidence/label-red-r2.json\"\n        SameTestIdentitiesAndOutcomes = $sameCases\n        TestDifferences = @($testComparison.Differences)\n        Counts = $validation.Record.Results.Counts\n        ExpectedRedConfirmed = $expectedRed\n        GreenGatePassed = $false\n    }\n    Save-AgentEvidence -Value $summary -RunDirectory $runDirectory -Name 'label-parent-r2-verification.json'\n    $summary | ConvertTo-Json -Depth 6\n    if (-not $expectedRed) { throw 'Focused validation did not match the recorded expected red.' }\n}",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger verify repaired label red evidence",
+			"type": "shell",
+			"command": "Import-Module 'c:/Projects/ProphetManX/prophets-pipelines/conventions/scripts/AgentEvidence.psm1' -PassThru | ForEach-Object {\n    $runDirectory = 'c:/Projects/ProphetManX/.agent-runs/20260913-2133-logger-docs-first-tdd'\n    $evidenceDirectory = Join-Path $runDirectory 'evidence'\n    $specificationPath = Join-Path $evidenceDirectory 'label-specifications-r2.json'\n    $specification = Get-Content -LiteralPath $specificationPath -Raw | ConvertFrom-Json -Depth 30\n    $specificationComparison = Compare-AgentManifest -Baseline $specification\n    Save-AgentEvidence -Value $specificationComparison -RunDirectory $runDirectory -Name 'label-parent-specifications-r2.json'\n    if (-not $specificationComparison.Matches) { throw 'Protected specification inputs changed.' }\n    $configuration = [ordered]@{\n        Framework = 'net48'\n        BuildConfiguration = 'Debug'\n        Restore = $false\n        Filter = 'FullyQualifiedName~ProphetsWay.Logger.Test.SensitivityLabelTests'\n        ExpectedResult = 'Executed missing-export red with identical repaired-case membership'\n        SpecificationBaseline = $specificationPath\n        VerificationRole = 'Parent independent verification'\n    }\n    $arguments = @('test', 'c:/Projects/ProphetManX/ProphetsWay.Logger/ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj', '--no-restore', '--framework', 'net48', '--configuration', 'Debug', '--filter', 'FullyQualifiedName~ProphetsWay.Logger.Test.SensitivityLabelTests', '--logger', 'trx;LogFileName=label-parent-red-r2.trx', '--results-directory', $evidenceDirectory)\n    $validation = Invoke-AgentValidation -FilePath dotnet -ArgumentList $arguments -WorkingDirectory 'c:/Projects/ProphetManX/ProphetsWay.Logger' -Configuration $configuration -InputManifestPath (Join-Path $evidenceDirectory 'label-red-inputs-r2.json') -RunDirectory $runDirectory -Name 'label-parent-red-r2' -Kind Tests -TrxPath (Join-Path $evidenceDirectory 'label-parent-red-r2.trx')\n    $previous = Get-Content -LiteralPath (Join-Path $evidenceDirectory 'label-red-r2.json') -Raw | ConvertFrom-Json -Depth 30\n    $testComparison = Compare-AgentTestResults -Before $previous -After $validation.Record\n    $sameCases = @($testComparison.Differences).Count -eq 0\n    $expectedRed = $validation.Record.ExitCode -eq 1 -and -not $validation.Record.TimedOut -and $null -eq $validation.Record.ResultError -and $validation.Record.InputComparison.Matches -and $validation.Record.Results.Counts.Executed -gt 0 -and $validation.Record.Results.Counts.Failed -eq $validation.Record.Results.Counts.Executed -and $validation.Record.Results.Counts.Skipped -eq 0 -and $sameCases\n    $summary = [pscustomobject][ordered]@{\n        Schema = 'label-parent-red-verification-v1'\n        CheckedUtc = [DateTimeOffset]::UtcNow.ToString('o')\n        SpecificationComparison = $specificationComparison\n        ValidationPath = $validation.Path\n        PriorValidation = (Join-Path $evidenceDirectory 'label-red-r2.json')\n        SameTestIdentitiesAndOutcomes = $sameCases\n        TestDifferences = @($testComparison.Differences)\n        Counts = $validation.Record.Results.Counts\n        ExpectedRedConfirmed = $expectedRed\n        GreenGatePassed = $false\n    }\n    Save-AgentEvidence -Value $summary -RunDirectory $runDirectory -Name 'label-parent-r2-verification.json'\n    $summary | ConvertTo-Json -Depth 6\n    if (-not $expectedRed) { throw 'Focused validation did not match the recorded expected red.' }\n}",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}
