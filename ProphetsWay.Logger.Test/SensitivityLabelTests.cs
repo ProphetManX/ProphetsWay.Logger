@@ -19,6 +19,7 @@ namespace ProphetsWay.Logger.Test
 			var contract = new LabelContract();
 			var labelType = contract.LabelType;
 			Assert.True(labelType.IsPublic && labelType.IsClass && labelType.IsSealed);
+			Assert.Equal(typeof(object), labelType.BaseType);
 			Assert.False(labelType.IsAbstract);
 			Assert.False(labelType.ContainsGenericParameters);
 			Assert.Equal("ProphetsWay.Logger", labelType.Assembly.GetName().Name);

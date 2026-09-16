@@ -99,6 +99,14 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "test"
+		},
+		{
+			"label": "Logger verify label green r3",
+			"type": "shell",
+			"command": "Import-Module 'c:/Projects/ProphetManX/prophets-pipelines/conventions/scripts/AgentEvidence.psm1' -PassThru | ForEach-Object {\n    $runDirectory = 'c:/Projects/ProphetManX/.agent-runs/20260914-0015-logger-overnight'\n    $evidenceDirectory = Join-Path $runDirectory 'evidence'\n    $specification = Get-Content -LiteralPath (Join-Path $evidenceDirectory 'label-specifications-r3.json') -Raw | ConvertFrom-Json -Depth 30\n    $specificationComparison = Compare-AgentManifest -Baseline $specification\n    Save-AgentEvidence -Value $specificationComparison -RunDirectory $runDirectory -Name 'label-parent-spec-r3.json'\n    if (-not $specificationComparison.Matches) { throw 'Protected specifications changed before parent validation.' }\n    $author = Get-Content -LiteralPath (Join-Path $evidenceDirectory 'label-green.json') -Raw | ConvertFrom-Json -AsHashtable -Depth 30\n    $arguments = @('test', 'c:/Projects/ProphetManX/ProphetsWay.Logger/ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj', '--no-restore', '--framework', 'net48', '--configuration', 'Debug', '--filter', 'FullyQualifiedName~ProphetsWay.Logger.Test.SensitivityLabelTests', '--logger', 'trx;LogFileName=label-parent-green.trx', '--results-directory', $evidenceDirectory)\n    $validation = Invoke-AgentValidation -FilePath dotnet -ArgumentList $arguments -WorkingDirectory 'c:/Projects/ProphetManX/ProphetsWay.Logger' -Configuration $author.Configuration -InputManifestPath (Join-Path $evidenceDirectory 'label-green-inputs.json') -RunDirectory $runDirectory -Name 'label-parent-green' -Kind Tests -TrxPath (Join-Path $evidenceDirectory 'label-parent-green.trx')\n    $comparison = Compare-AgentTestResults -Before $author -After $validation.Record\n    $finalSpecifications = Compare-AgentManifest -Baseline $specification\n    $summary = [pscustomobject][ordered]@{\n        Schema = 'label-parent-green-verification-v1'\n        CheckedUtc = [DateTimeOffset]::UtcNow.ToString('o')\n        Role = 'Parent independent verification'\n        ValidationPath = $validation.Path\n        AuthorValidation = (Join-Path $evidenceDirectory 'label-green.json')\n        SpecificationComparison = $finalSpecifications\n        TestComparison = $comparison\n        Counts = $validation.Record.Results.Counts\n        GreenGatePassed = ($validation.Record.Success -and $comparison.Matches -and $finalSpecifications.Matches)\n    }\n    Save-AgentEvidence -Value $summary -RunDirectory $runDirectory -Name 'label-parent-green-verification.json'\n    $summary | ConvertTo-Json -Depth 6\n    if (-not $summary.GreenGatePassed) { throw 'Parent green verification failed.' }\n}",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
 		}
 	]
 }
