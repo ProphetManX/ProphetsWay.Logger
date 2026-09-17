@@ -1,9 +1,13 @@
 # Logger v4 Requirements And Staged Plan
 
-**Basis:** accepted D001-D015 in [decision-log.md](decision-log.md), summarized by
+**Basis:** accepted D001-D021 in [decision-log.md](decision-log.md), summarized by
 [product-brief.md](product-brief.md). P01-P12 are accepted, not questions awaiting approval.
+**Alignment:** 2026-09-16. D001-D015 retain their 2026-09-13 provenance; D016-D021 were accepted
+2026-09-15 and recorded 2026-09-16. Apply their dated, clause-specific supersession, not a blanket
+replacement of capture/filter policy. The confirmed F1-F3 answers need no new policy interview.
 **Disposition:** requirements draft for independent Requirements Reviewer v2 review.
 Acceptance criteria below are obligations, not execution results or gate-clearance claims.
+This revision establishes no F1-F3 file/dispatch implementation, bridge delivery or full-v4 completion.
 This is utility-level planning, not a new multi-layer application architecture.
 Read [../AGENTS.md](../AGENTS.md) and actual project files for current repository facts.
 
@@ -16,7 +20,7 @@ Read [../AGENTS.md](../AGENTS.md) and actual project files for current repositor
 | Atomically published route snapshots with synchronous destination invocation. | Locks held through callbacks and drain-on-removal conflict with callback mutation and captured-call completion (D005/D006). |
 | Optional whole-entry recipient filtering before that recipient's rendering/handoff. | Field redaction and automatic classification are not the selected confidentiality boundary (D004/D013). |
 | Explicitly enabled bridges and private per-entry visited-route context. | Automatic reverse installation or text-based global deduplication loses independent entries (D011). |
-| Independent automatic routes sharing one coordinated per-run file. | A shared global filter or truncate-on-reactivation breaks isolation or destroys earlier output (D012). |
+| Independent automatic routes sharing one coordinated fixed file path per run, with remembered failed initial establishment. | A shared global filter, truncate-on-reactivation, CWD-following relocation or repeated failed-initialization probes conflicts with D012/D019/D020. Same-path recreation is not physical-identity policing. |
 
 ## Original Scope Trace
 
@@ -78,11 +82,11 @@ A destination selects no label filter, Exclude, or Allow-Only, never both config
 - AC-05.2: Allow-Only `{A,B}` permits `{A}` and `{A,B}`, denies `{A,C}` and unlabeled entries; empty Allow-Only receives nothing. Inherited labels participate identically.
 - AC-05.3: Reject null configured collections and combined modes. Duplicate identities add no matching power; valid reject-all configuration stays active and never activates fallback.
 
-### R-06 - Withholding And Direct Calls (D004/P02, D010/P08, D013/P11)
+### R-06 - Withholding And Direct Calls (D004/P02, D010/P08, D013/P11, D018)
 
 Eligibility precedes recipient formatting and raw handoff; withholding covers message, exception/data, metadata and scopes.
 
-- AC-06.1: A denied recipient observes no payload through its formatter, callback or export. A check failure also withholds that recipient, attempts independent recipients and follows R-15/R-16 without permissive rescue.
+- AC-06.1: A denied recipient observes no payload through its formatter, callback or export. An opted-in check failure also withholds that recipient and attempts independent recipients under AC-15.3 and R-16, without permissive rescue. It is not reclassified as a configured rendering/output failure by D018.
 - AC-06.2: Supplied built-ins/bases apply configured eligibility even on direct calls. Logger checks registration policy before custom handoff; arbitrary direct application calls into custom destinations are not sandboxed.
 
 ### R-07 - Severity Vocabulary (D002)
@@ -101,12 +105,13 @@ Use ordinary argument contracts without fabricating message/exception content or
 - AC-08.2: Ordinary, typed and metadata helpers agree: Trace/Debug/Info/Warn require non-null message; Error requires exception but permits absent message; Critical requires both. Empty/whitespace messages are accepted; permitted raw/direct/Microsoft absences cause no accidental exception.
 - AC-08.3: Reject null destinations, required null collections and invalid encodings before side effects. Microsoft None is disabled/no-op and unknown ordinals are rejected. Contract review maps exact exceptions; no new validation-order priority is specified.
 
-### R-09 - Independent Routes (D005/P03, D012/P10)
+### R-09 - Independent Routes (D005/P03, D012/P10, D019)
 
-Ordinary and exact declared-metadata-type registrations/settings are independent, including their automatic fallback state.
+Ordinary and exact declared-metadata-type registrations/settings and fallback suppression/reactivation are
+independent; the shared automatic file's establishment state follows R-20/R-21.
 
 - AC-09.1: Ordinary logging, metadata declared as a destination-contract type and two different declared metadata types cannot alias registrations. Runtime subtype/assignability does not reroute a typed call.
-- AC-09.2: A compatible explicit destination, including a registered built-in, suppresses only its route's fallback even when it rejects the entry. Removing/disabling the last restores only that route; no-setup typed fallback requires no custom subclass.
+- AC-09.2: A compatible explicit destination, including a registered built-in, suppresses only its route's fallback even when it rejects the entry. Removing/disabling the last restores only that route; no-setup typed fallback requires no custom subclass. Restored default use follows AC-21.4/AC-21.5: reactivation does not reset remembered failed initialization.
 
 ### R-10 - Snapshot Publication (D005/P03)
 
@@ -139,27 +144,30 @@ Built-in text records occupy one physical line; framing is not redaction.
 - AC-13.1: Backslash, CR/LF, tabs, controls and Unicode line separators are escaped in message, metadata, exception and marker text. Synthetic forged-prefix/multiline input cannot become a second physical record.
 - AC-13.2: One UTC event timestamp is captured per call and shared across that call's records, independently of filename allocation; escaping does not silently discard supplied content.
 
-### R-14 - Capture Boundaries (D008/P06)
+### R-14 - Capture Boundaries (D008/P06, D018)
 
 Capture producer-formatted text once when delivery is needed and copy property/scope membership synchronously, not arbitrary object graphs.
 
 - AC-14.1: Later collection additions/removals cannot change captured membership. Nested mutable values are not promised frozen; producer mutation during capture is unsupported. All-rejected entries do not invoke recipient formatters.
-- AC-14.2: Shared producer/collection-capture failure withholds the incomplete entry from all affected recipients and reports one core failure. Recipient-local rendering/filter failure withholds only that recipient; independent recipients continue under R-15/R-16.
+- AC-14.2: Shared producer/collection-capture failure withholds the incomplete entry from all affected recipients and reports one core failure under AC-15.3. An opted-in filter-check failure withholds only that recipient under the same retained policy. Configured recipient-local rendering failure withholds only that recipient but requires AC-15.1 propagation; independent recipients continue and all reporting follows R-16.
 
-### R-15 - Output Failure Policy (D009/P07)
+### R-15 - Output Failure Policy (D009/P07, D018-D020)
 
-Default handling attempts independently eligible recipients, notifies and returns; explicitly selected strict handling throws after attempts/notification for an original failure.
+Attempt all independently eligible recipients before safe reporting and required propagation. D018 replaces
+the old non-strict return rule for configured rendering/output failures, not for every failure class.
+Automatic file failures follow R-21; compatible shared capture and opted-in check policy remains below.
 
-- AC-15.1: One failing output plus one successful output still throws in strict mode, regardless of subscribers or successful reporting; default returns. Check/capture/render failures use the same applicable policy.
-- AC-15.2: A filter mismatch and successful internal initial-file recovery are not failures. No unconfigured rescue destination, buffered recovery or later asynchronous-completion guarantee is introduced.
+- AC-15.1: One configured rendering/output failure plus one successful output throws after all independently eligible attempts and safe reporting, with or without strict selection. Reversing recipient order does not omit an eligible attempt. Another output's success, subscriber presence or reporting success cannot suppress propagation.
+- AC-15.2: Deliberate severity/label mismatch and active reject-all are non-failures even when every recipient rejects; neither restores a less restrictive fallback. Qualifying successful initial secondary-file recovery is not itself a failure (AC-21.1). No unconfigured rescue destination, buffered recovery or later asynchronous-completion guarantee is introduced.
+- AC-15.3: With no failure requiring mandatory propagation present, shared producer/collection-capture and opted-in filter-check failures retain default reporting-and-return and explicitly selected strict throwing after independent attempts and safe reporting, even if another recipient succeeds. Withholding follows R-06/R-14. A check/capture failure cannot suppress a configured rendering/output or automatic-file failure that requires propagation under AC-15.1/R-21; no new strict option is introduced.
 
-### R-16 - Safe Original-Cause Reporting (D009/P07, CR-07)
+### R-16 - Safe Original-Cause Reporting (D009/P07, D018, CR-07)
 
 Report safe provenance without retaining/exposing raw failure payloads or allowing reporting failures to replace original failures.
 
 - AC-16.1: A failed call produces one bounded notification with at most eight safe descriptors plus overflow count; best-effort stderr summary is at most 512 characters. A nine-failure synthetic call exposes eight descriptors and overflow one.
-- AC-16.2: Only generated registration/correlation identifiers, stage codes and counts are exposed. Message/state/labels, paths, exception text/stack/Data, raw causes and user names are absent; strict errors have the same safe summaries and no raw inner exceptions/archive.
-- AC-16.3: Subscribers are invoked individually; one throwing does not stop others or create new strict escalation. Reporting never uses ordinary fanout/secondary destinations; recursive notification is suppressed, not unrelated entries. Unavailable reporting is not guaranteed delivery or rate limiting.
+- AC-16.2: Dynamic failure details expose only generated registration/correlation identifiers, stage codes and counts. D018's fixed developer guidance may name generic default locations and advise making an appropriate location writable or configuring a destination. Actual/resolved paths, message/state/labels, exception text/stack/Data, raw causes and user names remain absent. Every propagated error, including retained strict errors, uses the same safe summaries without raw inner exceptions or a raw-failure archive.
+- AC-16.3: Subscribers are invoked individually; one throwing does not stop others or create new strict escalation. Subscriber/stderr failures cannot replace the original failure or suppress propagation required by R-15/R-21. Reporting never uses ordinary fanout/secondary destinations; recursive notification is suppressed, not unrelated entries. Unavailable reporting is not guaranteed delivery or rate limiting.
 
 ### R-17 - Explicit Bidirectional Bridges (D011/P09)
 
@@ -183,35 +191,45 @@ Private per-entry visited-route identity/context stays outside application-edita
 - AC-19.1: A cyclic return to a visited route is suppressed while other original recipients, unrelated nested calls and fresh identical-text entries remain eligible. Application property edits cannot manufacture/reset the guard; cleanup survives exceptions.
 - AC-19.2: Inbound delivery enforces enablement without a prior precheck. A level/route precheck does not promise label acceptance; guarantees cover controlled adapters, not arbitrary context-discarding providers, global deduplication or instrumentation.
 
-### R-20 - Automatic File Session (D012/P10)
+### R-20 - Automatic File Session (D012/P10, D018-D020)
 
-Ordinary and typed automatic routes share one coordinated UTF-8 file per run, retaining independent policies and all-six-severity coverage.
+Ordinary and typed automatic routes share one coordinated UTF-8 file path per run, retaining independent
+policies and all-six-severity coverage. Automatic output is quick-start support; guidance recommends
+configuring intended destinations rather than relying on defaults as the main logging arrangement.
 
-- AC-20.1: Prepare route information at setup/first use but open only for eligible output; concurrent first use shares the coordinated file. Reactivation appends earlier records rather than truncating, and rejects never bypass policy through another route.
-- AC-20.2: Default location is the consuming host's application base directory, with explicit host override and application-specific local application data secondary. Invariant UTC naming uses exclusive collision allocation, never replacing existing files or relying on Logger's assembly folder/current working directory.
+- AC-20.1: Prepare route information at setup/first use but attempt actual establishment only for eligible output, not permission prechecks for every message; concurrent first use shares the coordinated file. Reactivation of an established default appends rather than truncating; failed initial establishment follows AC-21.4/AC-21.5. Rejects never bypass policy through another route.
+- AC-20.2: Default location is the consuming host application's base directory, with the existing explicit host override and application-specific LocalApplicationData secondary, never Logger's assembly folder or a hosting `dotnet.exe` installation directory. A later CWD change from A to B leaves the selected path unchanged. Initial invariant UTC naming uses exclusive collision allocation without replacing an unrelated existing file; later same-path recreation follows AC-21.6, not a new session allocation.
 
-### R-21 - File Recovery And Explicit Outputs (D012/P10)
+### R-21 - File Recovery And Explicit Outputs (D012/P10, D018-D020)
 
-Initial recovery is distinct from uncertain writes; explicit destinations retain their selected path and encoding/reset choices.
+Distinguish an uninitialized default, an established fixed path and remembered failed initial establishment.
+Initial secondary recovery is distinct from later I/O or uncertain writes; compatible explicit routes bypass
+default state without resetting it. Explicit destinations retain their selected path and encoding/reset choices.
 
-- AC-21.1: If initial primary establishment fails before any record bytes are written, the secondary location must be attempted. If secondary writing succeeds, return normally even in strict mode; both locations failing follows R-15/R-16 and preserves safe original-cause provenance.
-- AC-21.2: After writing starts or acceptance is uncertain, do not replay, copy or create another session file. Report failure and let later calls try the established file; do not claim crash-safe/exactly-once storage.
-- AC-21.3: Explicit files append by default, reset only on explicit request and never silently relocate. Route configuration does not delete an existing automatic file; no automatic pruning or across-restart one-file bound is imposed.
+- AC-21.1: For eligible default-dependent output without a compatible explicit destination, initial primary establishment failure before any record bytes are written requires a secondary-location attempt. Qualifying secondary success returns normally even in strict mode, unless another independent failure requires propagation. If neither initial location is usable, throw regardless of strict selection after independent eligible attempts and safe reporting, with R-16's fixed safe guidance to make an appropriate generic default location writable or configure a destination.
+- AC-21.2: After writing starts or acceptance is uncertain, do not replay, copy, relocate or create another session file. Actual I/O failure propagates after independent eligible attempts and safe reporting; later default-dependent calls attempt the established path under AC-21.6. Do not claim crash-safe or exactly-once storage.
+- AC-21.3: Explicit files append by default, retain encoding/reset choices, reset only on explicit request and never silently relocate or follow later CWD changes. Exact explicit relative-path capture belongs to D010's reviewed contract detail; it cannot make the destination follow later CWD. Route configuration does not delete an existing automatic file; no implicit truncation, automatic pruning or across-restart one-file bound is imposed.
+- AC-21.4: Remember both initial locations failing for the current application/session run. Later default-dependent calls throw with the same safe guidance without new path or permission probes; waiting or changing permissions alone does not cause re-establishment. No configuration observer, background retry, recovery service or new public reset API is introduced.
+- AC-21.5: A new application/session instance starts fresh. In the same run, a compatible explicit destination makes remembered default failure irrelevant for its route, including deliberate rejection; another default-dependent route still throws from the remembered failure. Removing/disabling the last compatible explicit destination does not erase that failure or cause re-probing when its route needs the default again.
+- AC-21.6: At an established automatic or selected explicit path, append if the file exists or create a missing file at that same path; actual open/write failures throw under R-15/R-16. Require neither persistent physical-identity policing nor content/binary detection: writable non-log content can accept appended bytes and need not be rejected as binary. Existing-content suitability and external interference remain developer responsibilities. Missing-file recreation does not authorize replay, copying, relocation or implicit destructive reset.
 
-### R-22 - Intended Support And Tooling (D014/P12)
+### R-22 - Intended Support And Tooling (D014/P12, D017, D021)
 
-D014's library/example/test-consumer support matrix is intended design, not current project inventory; exact versions and writes remain review/authorization conditions.
+D014's library/example/test-consumer matrix remains intended support, not current project inventory.
+D017 selects tooling and defers non-Windows execution for now; exact technical records and write grants
+remain authoritative, not permission for additional package, project or operation changes.
 
-- AC-22.1: Approved builds and consumer checks cover that matrix, Windows Framework behavior and cross-platform core restore/reference/build/load. One runtime's success is not evidence for other required legs.
+- AC-22.1: Focus current approved execution on Windows, including Framework behavior and the applicable intended test/consumer legs. Record Mac/Linux execution and cross-platform core restore/reference/build/load evidence as deferred under D017, not passed or permanently waived from full qualification. One runtime's success is not evidence for other required legs.
 - AC-22.2: Review actual compatible assets, licenses and fresh advisories before exact dependency selection; prefer minimal Microsoft abstraction/registration dependencies in the main distribution. Initial v4 requires no Event Log, Azure or compliance-redaction dependency.
-- AC-22.3: Approved tooling modernizes tests/runner/SDK, migrates assertions to Shouldly, adds coverage and retains justified mocks. Enumerate test-project rename, solution and reference edits for explicit approval; neither omit that W2 work nor silently bundle it into label coding.
+- AC-22.3: Use the selected xUnit v3 MTP-off direction (`xunit.v3.mtp-off`) within D017's exact ON-02/A1 technical authorization, retaining its VSTest route and other reviewed tooling limits. Approved tooling modernizes tests/runner/SDK, migrates assertions to Shouldly, adds coverage and retains justified mocks. The test-project rename remains separate deferred W2 work; enumerate rename, solution and reference edits for explicit approval, without silently bundling or dropping them.
+- AC-22.4: D021 approves `c:/temp/logger tests/` as the isolated-test parent. Use fresh uniquely owned children and synthetic data; clean only verified owned children after users/handles finish. Never delete the parent, alter pre-existing files or escape through links/junctions. This location permission neither authorizes old fixed-filename/destructive tests nor supplies file-output implementation or fixture-operation authority for a documentation-only task.
 
-### R-23 - Packaging And Consumer Proof (D014/P12)
+### R-23 - Packaging And Consumer Proof (D014/P12, D017-D020)
 
 Preserve the intentional namespace and packaged consumer material; meaningful refactors preserve approved behavior and protected specifications.
 
 - AC-23.1: Actual package metadata has a populated homepage/tags and repository kind `git`, with the retained README/changelog/icon and approved assets present. Record XML documentation, source/symbol and reproducibility assessment against actual outputs, not project-property assertions alone.
-- AC-23.2: Compile quick-start, custom, typed, helper and both bridge examples; verify label/filter, formatter, ownership/lifetime, failure and breaking-migration guidance against behavior. Release narrative traces all W1-W4 obligations, not just a successful label milestone.
+- AC-23.2: Compile quick-start, custom, typed, helper and both bridge examples; verify label/filter, formatter, ownership/lifetime, failure and breaking-migration guidance against behavior. Include R-15/R-16's failure-class distinction and private-path-safe guidance, and R-20/R-21's quick-start limits, fixed paths, append/create limits, remembered initialization failure and explicit-route bypass. Distinguish D017's deferred Mac/Linux evidence from passed or permanently waived qualification. Release narrative traces all W1-W4 obligations, not just a successful label milestone or this document alignment.
 
 ### R-24 - Responsibility And Exclusions (D001, D013/P11, D014/P12)
 
@@ -247,28 +265,34 @@ authorized owner with exact needed changes; it neither changes label semantics n
 Stages organize dependencies, not new file grants. Split later groups into scoped reviewed TDD targets;
 contracts, specifications and implementation retain separate owners. Independent review precedes dependent work.
 
+A separately scoped pure R-05 membership predicate is independent of F1-F3 file/dispatch work. Its
+permitting result establishes only membership-policy permission, not delivery or payload withholding.
+M3's integration prerequisites do not apply to that isolated predicate; its reviewed public details
+remain under D010, without changing R-01 through R-05 or making file work a new prerequisite.
+
 | Stage | Scope and prerequisite | Completion boundary |
 | --- | --- | --- |
-| M0 - Requirements | Independent Requirements Reviewer v2 checks these requirements, brief and D001-D015. | Resolve findings through the author; at most one repair/re-review. A draft is not approved by silence. |
+| M0 - Requirements | Independent Requirements Reviewer v2 checks these requirements, brief and D001-D021 with dated supersession. | Resolve findings through the author; at most one repair/re-review. A draft is not approved by silence. |
 | M1 - Label value | R-01 through R-03 after M0; reviewed public detail and available isolated runner. | The ten label criteria and the contract/test/implementation gates above, with no integration or I/O. |
-| M2 - Dispatch foundation | R-07 through R-11, R-15/R-16; reviewed severity, argument, snapshot, lifetime and reporting contracts. | Synthetic recipients prove concurrency, route isolation, callbacks, ownership and safe failures; no file/backend dependency for these checks. |
+| M2 - Dispatch foundation | R-07 through R-11, R-15/R-16; reviewed severity, argument, snapshot, lifetime and reporting contracts. | Synthetic recipients prove concurrency, route isolation, callbacks, ownership, failure-class-specific propagation and safe reporting; no file/backend dependency for these checks. |
 | M3 - Label integration | R-04 through R-06 and R-14 after M1/M2. | Reviewed annotations/origins, capture and whole-entry filtering; inherited-label and denied-recipient canaries before handoff. |
-| M4 - Text and fallback | R-12/R-13, R-20/R-21 after M2/M3; authorize uniquely owned isolated fixtures first. | Warning/exception fidelity, escaped framing, lazy non-destructive allocation, recovery and uncertain-write cases; preserve shared/local failure distinctions. |
+| M4 - Text and fallback | R-12/R-13, R-20/R-21 after M2/M3; D021 supplies the isolated parent, while exact fixture/specification/implementation work needs its own scoped authority. | Warning/exception fidelity, framing, initial recovery/failure memory, fixed-path append/create and uncertain-write cases; preserve capture/check versus rendering/output failure treatment. |
 | M5 - Bridges | R-17 through R-19 after route/lifetime, label/capture and failure contracts; reviewed P09 details and exact dependencies. | Both directions, ordered scope/state/origin fidelity, enablement and private cycle guard; controlled synthetic round trips only. |
-| M6 - Full-v4 qualification | R-22/R-23 and all W1-W4 evidence; support/tooling prerequisites may be separately authorized earlier where needed. | Complete G1-G6, including approved rename/support/package work and consumer examples; this is not publication authority. |
+| M6 - Full-v4 qualification | R-22/R-23 and all W1-W4 evidence; support/tooling prerequisites may be separately authorized earlier where needed. | Complete G1-G6, including approved rename/support/package work and examples; D017's deferred non-Windows proof is not supplied by Windows-only completion. This is not publication authority. |
 
 ## Verification Gates
 
-G1-G6 are pending evidence obligations from D014, not statuses passed by this document or by M1 alone.
+G1-G6 are evidence obligations from D014 with D017's current-execution deferral and D021's fixture
+boundary, not statuses passed by this document or by a bounded label/policy milestone.
 
 | Gate | Required evidence and owner boundary |
 | --- | --- |
 | G1 | Approved behavior and exact public/member/file inventory; Interface Architect and independent Contract Reviewer. P08/P09 delegate detail, not new policy or extra files. |
-| G2 | Authorized tooling, actual discovery, synthetic recipients and uniquely owned isolated fixtures; generated protected specification/input baseline. No arbitrary existing-file deletion. |
+| G2 | Authorized tooling, actual discovery, synthetic recipients and uniquely owned isolated fixtures within D021/AC-22.4; generated protected specification/input baseline. No parent/pre-existing-file deletion, link/junction escape or implicit old fixed-filename test execution. |
 | G3 | Test Designer/Test Auditor separation, nonzero observed behavioral/boundary/concurrency results with identities, no unexplained skips and unchanged approved expectations through implementation. |
-| G4 | Approved build/package and complete intended test/consumer legs; Windows Framework and cross-platform core evidence; actual assets/metadata/XML/source/symbol and fresh license/advisory review. |
+| G4 | Approved build/package and complete intended test/consumer legs; actual assets/metadata/XML/source/symbol and fresh license/advisory review. Current execution is Windows-first under D017, including Framework behavior; Mac/Linux and cross-platform core proof remain deferred evidence for full qualification, not passed or permanently removed. |
 | G5 | Threat Modeler design assessment and independent implementation security review: raw-payload/reporting canaries, framing, lifetime/concurrency and private bridge-context checks. |
-| G6 | Compiled examples and verified migration/label/rendering/lifetime/failure guidance plus complete W1-W4 trace and release narrative. |
+| G6 | Compiled examples and verified migration/label/rendering/lifetime/failure guidance, including R-23's failure/path/reuse and deferred-platform distinctions, plus complete W1-W4 trace and release narrative. |
 
 No tests, builds, packages, runtime inspection, security clearance or independent review are established
 by authoring requirements. Record execution identity/configuration and protected inputs with real results;
@@ -278,11 +302,12 @@ static counts and diagnostics do not substitute for execution. Release operation
 
 | Owner | Ready input and remaining gate |
 | --- | --- |
-| Interface Architect | M1 validation/equality/immutability boundaries are specified; exact normal exception/member/operator details require its contract and independent review. Later origins and policies remain separate stages. |
+| Interface Architect | M1 and pure R-05 membership semantics are unchanged. R-15/R-20/R-21 define failure classes and file states for separately scoped contract work; exact exception/member and relative-path capture details retain D010/D011's reviewed delegation, not a new owner-policy question. |
 | API Designer | No HTTP resource, verb, endpoint or authorization contract is selected; no HTTP workstream is fabricated. |
-| Test Designer | Ten M1 criteria are measurable; reviewed contract details, actual runner discovery and protected specification records precede execution claims. Later I/O requires isolated-fixture authority. |
+| Test Designer | Ten M1 criteria remain measurable; the pure membership predicate needs no file/dispatch implementation. R-15/R-21 specify failure precedence and run/path transitions; reviewed contracts, audited specifications, actual discovery and protected inputs precede execution claims. D021 supplies the later isolated parent, not unscoped I/O authority. |
 | Threat Modeler | Application identifiers/payloads are consumer-classified; recipient raw handoff, text output, stderr/subscribers and controlled bridges are trust boundaries. M1 crosses none of those output boundaries. |
-| Implementer | M1 scope is bounded, but implementation waits for reviewed contracts, audited specifications and available focused verification. Later stages and release are not implicitly authorized. |
+| Implementer | Each scoped implementation follows reviewed contracts, audited specifications and focused verification. The pure membership predicate remains independent; aligned F1-F3 requirements do not deliver or authorize runtime changes, either bridge or full-v4 completion. |
 
-No new owner-policy question is introduced. P08/P09 detail review, P12 exact dependency/file/rename
-authorization and runner availability remain dependencies, not reasons to re-present accepted P01-P12.
+No new owner-policy question is introduced. D010/D011 detail review, D014/D017's exact dependency/file/
+rename authorization boundaries and scoped verification remain dependencies, not reasons to re-present
+accepted P01-P12, F1-F3, tooling, isolated-parent or current-platform decisions.

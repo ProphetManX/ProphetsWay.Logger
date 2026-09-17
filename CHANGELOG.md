@@ -1,3 +1,42 @@
+# Unreleased
+
+## Support and tooling
+
+The library target set is now `netstandard2.0;net10.0`. This removes dedicated assets for the
+older .NET Framework, .NET Standard 1.x, .NET Core, .NET 5 and .NET 6 targets, including the former
+`net48` library asset. Consumers that can use the `netstandard2.0` asset remain supported; consumers
+that require one of the removed assets must move to a compatible `netstandard2.0` consumer or to
+`net10.0`. This target change is breaking and requires a major-version decision before publication.
+
+The test project now exercises `net48` and `net10.0` with the refreshed xUnit v3 tooling. This changes
+the verification matrix, not the Logger runtime behavior.
+
+## Sensitivity labels
+
+A new immutable `SensitivityLabel` reference type is available in `ProphetsWay.Utilities`. Create one
+with an application-defined identifier, for example:
+
+```csharp
+var label = new SensitivityLabel("internal");
+```
+
+Labels retain their exact non-null identifier, compare by ordinal value, and provide a matching hash
+code. Identifiers must contain 1 through 256 UTF-16 code units and must not contain whitespace or
+control characters. Invalid input is rejected without copying the supplied identifier into argument
+diagnostics.
+
+## Pure destination-label policy
+
+The new `LabelFilterMode` enum (`NoFilter`, `Exclude`, and `AllowOnly`) and `DestinationLabelPolicy`
+class provide immutable, defensive-copying membership evaluation. `Exclude` rejects any intersecting
+label; `AllowOnly` requires nonempty effective membership wholly contained in the configured labels;
+`NoFilter` permits valid effective input. Duplicate identities and ordering do not affect the result,
+and null labels or undeclared modes are rejected with argument errors.
+
+This is a standalone policy API. It does not yet dispatch Logger entries, render or redact content,
+select fallback destinations, or provide confidentiality or security guarantees; callers must apply
+the Boolean result themselves. Existing Logger and destination behavior is unchanged.
+
 # v3.0.1
 ### Build target for Net 6.0
 Library now targets .Net 6.0
