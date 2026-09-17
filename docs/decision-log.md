@@ -221,3 +221,132 @@ Breaking changes are accepted. No version edit, tag, channel, date, feed, public
 These portable records preserve accepted policy rather than re-presenting old options for approval.
 The orchestrator selected the approved immutable label value as the first bounded milestone; the owner did not narrow full-v4 completion to it. Requirements and detailed contracts proceed through their authors and independent reviewers, followed by real specifications/audit and implementation under scoped authority.
 No tests, modernization, contract gate, implementation milestone or release gate are claimed complete by authoring these documents. Detailed names/signatures belong to D010/D011's reviewed delegation, not a new owner-policy questionnaire.
+
+## September 15 Amendments - Recorded 2026-09-16
+
+D001-D015 above remain verbatim historical decisions. The owner is G. Gordon Nasseri for every
+entry below; acceptance occurred on 2026-09-15 and durable capture on 2026-09-16. These are confirmed
+answers, not the earlier preparation report's proposed readings or a new interview.
+
+Source records are the complete [September 15 owner message](../../.agent-runs/20260915-2052-logger-overnight-approval/slice-01-r1.md#owner-message),
+the [ON-02 exact document grant](../../.agent-runs/20260915-2052-logger-overnight-approval/ON-02-approval-r1.md#other-exact-allowed-product-paths),
+the [F1-F3 answers and ON-02 activation](../../.agent-runs/20260915-2052-logger-overnight-approval/ON-02-activation-r1.md#exact-owner-confirmation),
+and the [A1 activation](../../.agent-runs/20260915-2052-logger-overnight-approval/ON-02-A1-activation-r1.md#owner-confirmation).
+The relevant owner quotations are reproduced below so the decisions do not depend on retention of
+external run artifacts. The original proposal's unapproved status is historical; the activation supplies
+approval, and its F1 answer selects the alternative to that proposal's non-strict return recommendation.
+
+### Dated Supersession Markers
+
+| Historical clause | Disposition effective 2026-09-15, recorded 2026-09-16 |
+| --- | --- |
+| D009 default contains output failures and returns; throwing requires explicit strict mode | **Partially superseded by D018:** configured destination rendering/output failures propagate after independent attempts and safe reporting, even if another destination succeeds. Compatible check/capture treatment and safe-reporting limits are not blanket-repealed. |
+| D008 sends destination-local rendering/filter failures to D009 default/strict treatment | **Partially superseded by D018 for configured rendering failures only.** Shared producer/capture and opted-in filter-check failure policy is not changed by F1. |
+| D012 both initial locations failing follows D009 | **Superseded by D018:** eligible default-dependent output throws when neither initial location is usable, regardless of strict selection. Successful qualifying secondary establishment remains normal success. |
+| D012 later calls try the established file | **Clarified by D019/D020:** an established fixed path still receives actual I/O attempts; failed initial establishment is remembered without re-probing for the current run. These are different states. |
+| D012 host-base location, collision allocation, explicit path/reset and append default | **Clarified by D020, not deleted:** fixed paths and later same-path append/create do not imply physical-identity policing or content detection. Initial collision allocation and separately explicit destructive-reset permission remain distinct. |
+| D014 test-tooling direction and G4 cross-platform evidence | **Narrowed for current execution by D017:** xUnit v3 is selected and verification focuses on Windows for now. Non-Windows evidence is deferred, not passed or permanently removed from full qualification. |
+| D015 durable capture and reviewed downstream work | **Extended by D016-D021:** confirmed intent is recorded; requirements, contracts and new behavior still need their own alignment and delivery gates. |
+
+## D016 - Confirmed Document Authority
+
+**Accepted:** 2026-09-15. **Recorded:** 2026-09-16. **Provenance:** ON-02 and A1 owner activations linked above.
+
+> Checkpointed; approve ON02
+>
+> Approve ON-02 A1
+
+ON-02's exact Product Discovery grant permits dated additions to [decision-log.md](decision-log.md)
+and narrow alignment of [product-brief.md](product-brief.md), preserving history. This capture uses
+only those two product paths; it does not exercise the envelope's grants to other authors.
+A1 amends the tooling variant, not product behavior or release authority. No version change,
+Git operation, publication, new public surface or implementation follows from writing these records.
+
+## D017 - Test Tooling And Windows-First Verification
+
+**Accepted:** 2026-09-15. **Recorded:** 2026-09-16. **Provenance:** owner message items 1/7; A1 activation.
+
+> 1:   proceed directly to xUnit v3
+>
+> 7:  focus on windows for now,  if you can establish mac and linux verifiecation somehow within my current system, then i'm open to discuss your suggestions, but i'm not worrying about building/testing that at this time.
+
+- Select xUnit v3 directly; do not re-open a v2-versus-v3 choice. The exact A1-authorized variant is `xunit.v3.mtp-off` 4.0.1, not the original ordinary `xunit.v3` candidate. The activation records the bounded amendment; it is not a claim about today's installed or resolved inventory.
+- Retain the reviewed tooling/file/operation limits in ON-02 as amended by A1. Exact package and execution records stay in those technical records, not in product intent as a mutable inventory. Approval alone proves neither runtime compatibility nor security clearance.
+- Focus current execution on Windows. Mac/Linux execution and full cross-platform proof are deferred, not certified, permanently waived, or a new platform/release promise. D014's other support, quality and review conditions remain.
+- The test-project rename remains separate deferred W2 work, not silently included or removed. Product-version and release authority are unchanged.
+
+## D018 - Failure Propagation And Safe Developer Guidance
+
+**Accepted:** 2026-09-15. **Recorded:** 2026-09-16. **Provenance:** owner message item 2 and activated F1.
+
+> 2:  in general, the app should be able to write where the exe is, and if for some reason it can't, the appData backup location should also be accessible.  if neither are usable, i feel like we should throw an exception to the user.  If the user hasn't established any destinations themselves, and the two default file options don't work/can't write, we need to let the developer know.  we can tell the user that they must either verify the app can write to one of the generic/default locations, or they must setup a destination themselves for use.   otherwise there is no point in having a logger that can't/doesn't log the messages anywhere.    we shouldn't be checking for default permissions every log statement, really just that first time, right?
+>
+> F1:  if a configured destination is unable to render logs, it should throw an exception.  there's no gaurantee that configured destinations will be logging/managing error/critical level messages, so i'm not sure we should try to just log information elsewhere and "hope" it gets seen.  if the developer has configured something to log data of a determined level, then we should do so, and if we cannot, throw so they can understand why and fix it.   if you have another suggestion, i'm open to hearing it.
+
+- A configured destination's rendering/output failure must propagate to the caller after all independently eligible destinations have been attempted and safe reporting performed. Another destination succeeding, subscriber presence or reporting success does not turn it into a successful return. Explicit strict selection is no longer required for these failures; do not retain D009's old non-strict swallowing here.
+- When eligible automatic output has no compatible explicit destination and neither initial default location is usable, throw with safe developer guidance. Try actual first-use establishment, not repeated permission prechecks. Qualifying initial secondary-location success remains normal success; later real I/O can still fail.
+- Fixed safe guidance may name generic default locations and tell the developer to make an appropriate default location writable or configure a destination. It must not expose actual/resolved paths, payloads, labels, user-provided names, raw causes or exception contents. Preserve D009's bounded safe descriptors/reporting, subscriber isolation and original-failure precedence; a reporting failure cannot replace the original failure.
+- No unconfigured rescue destination, recursive ordinary-fanout report or hope-based rerouting is selected. Deliberate severity/label mismatch and active reject-all remain non-failures, even if no recipient accepts an entry; neither activates fallback.
+- This supersedes only the identified rendering/output and initial-default failure clauses. D004/D008/D009's compatible treatment of shared producer/collection-capture failures and opted-in filter-check failures remains; do not infer a new policy for those classes or add strict options, exception names or callback APIs. D008's no-arbitrary-reflection/implicit-object-formatting limits are unchanged.
+
+## D019 - Remember Failed Default Initialization
+
+**Accepted:** 2026-09-15. **Recorded:** 2026-09-16. **Provenance:** activated F2, following owner message item 2.
+
+> F2:  if it's not too much overhead, you may remember the failed default initialization, so that if a log later tries to write without having any new destinations configured, then it can just throw again.  restarting the application/instance will reset this, and if the user configures a destination, then the status of the default doesn't matter.
+
+- Remember failed initial default establishment for the current application/session run. Later default-dependent calls throw from that remembered failure without new path or permission probes; waiting or changing permissions alone does not require another attempt.
+- A new application/session instance starts fresh. This describes the run boundary, not an existing public instance/reset facility and not permission to introduce a public reset API, configuration observer, background retry or recovery service.
+- A compatible explicit destination makes the default failure irrelevant for its route, including when its deliberate filters reject an entry. Other routes remain independent. If a route later needs its default again in the same run, remembered failed initialization is not silently re-probed.
+- Failure to establish any default differs from a later failure at an already established path. The latter still uses D020's fixed-path actual-I/O behavior; neither state promises cross-instance ownership or guaranteed recovery.
+
+## D020 - Fixed Paths And Ordinary Append Or Create
+
+**Accepted:** 2026-09-15. **Recorded:** 2026-09-16. **Provenance:** owner message items 3/4 and activated F3; ON-02's settled path clarification.
+
+> 3:  i'm not sure i understand the premis of the host changing their configured directory from A to B?   is this the app's "Current Directory" pointer, and so we'll just chase/follow that with the application?    I don't think our default log file should do that, nor should any developer configured destinations for that matter.   default files should look for the exe and save there by default, appData as a fallback, and no matter what the app does, we just stay where we're at.   Ideally, the developer should always define custom destinations for their messages, and not rely on the defaults.    the default is just there to help get the user up and running asap, and shouldn't be relied on as the main logging destination/target.
+>
+> 4:  my kneejerk for these default locations is to "append or create"  if the file exists, open as text and append to it, if not, create it.  if you can't write/open as text or whatever to interface with the file, maybe its a jpeg or whatever, then throw an exception.   this is a core utility, i don't think we need to plan for every possible way that the world could disrupt the expected workflows.  the developer should be aware of processes running in their environemnt, and messing with their file log destinations during execution is unwise in general.  if they need/want access to the contents of said logs, they can setup a custom destination to trigger an event and receive each log message immediately to any subscriber, no need to read it from a text file.   so even for a developer's destination, if it's a file destination, append or create, if unable, throw.
+>
+> F3:  I concur.  we don't need to overthink and attempt to avoid any wonky-ness the developer could throw our way.  file logs are intended to work as expected, if they're messing with them out of our expected use case, then they'll have to deal with the ramifications in their own way.
+
+- Keep a selected automatic or explicit file path fixed despite later current-directory changes. The normal default is the consuming host application's base directory, with application-specific LocalApplicationData secondary; it is neither Logger's assembly folder nor the installation directory of a hosting `dotnet.exe`. D012's explicit host override remains. Exact public handling of explicit relative-path capture belongs to the contract author/reviewer, not a promise to follow later CWD changes.
+- Append to an existing selected file or create a missing file at that same path. Actual open/write failures throw; Logger invocation preserves independent eligible attempts and safe reporting before propagation. Initial successful secondary recovery remains the D018 exception to treating the failed primary establishment as a failed call.
+- F3 confirms ordinary I/O, not content/binary detection. The earlier JPEG example is not a guarantee that opening for text append rejects binary data: writable non-log content can accept appended bytes. Existing-content suitability and interference by other processes remain developer responsibilities.
+- Do not add persistent physical-identity policing, replay, copying, relocation, a new session file after uncertain acceptance, or crash-safe/exactly-once guarantees. Missing-file recreation at the established path is distinct from initial session allocation; D012's exclusive collision allocation must still avoid replacing an unrelated existing file.
+- Append remains the default for both automatic and explicit files. D012's separately explicit destructive-reset permission and encoding choices were not expressly revoked; retain them as distinct from default append/reuse. No implicit truncation, deletion, pruning or unrelated-file cleanup follows.
+- Automatic output is quick-start support. Developers should deliberately configure their intended destinations rather than treat defaults as their main logging arrangement. Existing custom/event destination use is not a grant for a new callback surface.
+
+## D021 - Isolated Test Parent
+
+**Accepted:** 2026-09-15. **Recorded:** 2026-09-16. **Provenance:** owner message item 6 and ON-02's exact isolated-fixture limits.
+
+> 6:  I approve of what you want to do here, do i need ot tell you a location to use for writing the files now?   can you use c:\temp\logger tests or something like that, just anything under c:\temp shoudl suffice
+
+The approved parent is `c:/temp/logger tests/`, for fresh uniquely owned children and synthetic test data.
+Only verified run-owned children may be cleaned up after their users/handles finish; never delete the
+parent, alter pre-existing files or follow links/junctions outside the owned tree. This is sufficient
+location permission, not a question to ask again, a grant to run old fixed-filename tests, or a grant
+to implement file output. No fixture operations are performed by this document capture.
+
+## Required Alignment After This Capture
+
+**Recorded:** 2026-09-16. The confirmed F1-F3 answers require no new owner-policy interview.
+[requirements.md](requirements.md) remains unmodified on its D001-D015 basis. Its affected clauses,
+especially R-15, R-20/R-21 and their R-06/R-14/R-16 cross-references, require targeted Solution Architect v2
+alignment and independent Requirements Reviewer v2 review before new file/dispatch behavior is specified
+or implemented. R-22 and G4 need the selected tooling direction and deferred platform-evidence distinction;
+R-23 consumer guidance must reflect the fixed-path, quick-start and failure limits. Do not treat the old
+default/strict or recovery wording as governing F1-F3 unchanged, and do not blanket-change other failure classes.
+
+The contract author and independent Contract Reviewer retain exact public-detail work under D010/D011,
+including explicit relative-path capture, without a new reset API or changed pure-label contract.
+Later authorized specifications/audit and source implementation/verification remain pending for the new
+F1-F3 behavior; tooling success is not evidence of that behavior. No label-filter integration, dispatch,
+file, bridge, full-v4 or security-release completion is established here.
+
+README, changelog and security-document promotions remain with their existing owners and were not reached
+by this capture. No requirements, source, test, project, configuration, task, open-question, feature-index
+or other product document is changed here. Release/version authority, privacy rules, independent destinations
+and the approved reflection limits remain intact. D010/D011's prior reviewed delegation is unchanged;
+no new OWNER decision area is downgraded to INFER.
