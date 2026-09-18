@@ -3,9 +3,11 @@
 Route log messages to console, file, event, or custom destinations with per-destination severity selection.
 
 > **Current tree: unreleased v4 work.** The version file still reads `3.0.1`.
-> `SensitivityLabel`, `LabelFilterMode`, and `DestinationLabelPolicy` exist in source;
-> this is not a claim that the published NuGet package contains them. The label policy
-> is a standalone predicate, not yet integrated into Logger registration or dispatch.
+> Six native severities, strict mask validation, and severity checks before supplied
+> destination rendering are implemented. `SensitivityLabel`, `LabelFilterMode`, and
+> `DestinationLabelPolicy` also exist in source, but the label policy remains a standalone
+> predicate, not integrated into Logger registration or dispatch. These are not claims
+> about the published NuGet package or completion of v4.
 
 Build Status:  
 [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/ProphetManX.ProphetsWay.Logger?repoName=ProphetManX%2FProphetsWay.Logger&branchName=main)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=25&repoName=ProphetManX%2FProphetsWay.Logger&branchName=main)
@@ -38,7 +40,7 @@ Install-Package ProphetsWay.Logger
 ```
 
 These commands do not install the unreleased API merely because it is documented here.
-To use the new label/policy examples now, reference the current
+To use the native severity and label/policy examples now, reference the current
 [library project](ProphetsWay.Logger/ProphetsWay.Logger.csproj) from your application.
 [app-variables.yml](app-variables.yml) still selects `3.0.1`; no v4 package or release is claimed.
 
@@ -58,8 +60,8 @@ new target set. Verification is currently Windows-focused, not equivalent Mac/Li
 ## Quick Start
 
 Each C# block below is a separate, self-contained console example, not a set of files to
-combine. Examples are checked against current declarations and test calls. All five snippets
-compiled in memory against both documented target environments; none were executed.
+combine. Examples use current declarations and test call patterns. Expected output describes
+the source contract, not a recorded execution of these programs.
 
 ### Log To The Console
 
@@ -77,10 +79,11 @@ public static class Program
 {
     public static void Main()
     {
-        var destination = new ConsoleDestination();
+        var destination = new ConsoleDestination(LogLevels.Trace);
         Logger.AddDestination(destination);
         try
         {
+            Logger.Trace("Detailed startup trace.");
             Logger.Debug("Hello World!");
         }
         finally
@@ -91,7 +94,9 @@ public static class Program
 }
 ```
 
-The message is written with a local timestamp and the current emitted level, `DebugOnly`.
+The messages use local timestamps and exact emitted levels, `TraceOnly` and `DebugOnly`.
+The explicit `Trace` destination mask accepts all six severities; the constructor's
+unchanged default `Debug` mask does not accept Trace.
 `Logger.ClearDestinations()` clears plain registrations; `Logger.ClearDestinations<T>()`
 clears registrations for that metadata type. Removing or clearing does not dispose your
 destinations. Do not log after removing the last destination unless you intend fallback.
@@ -170,25 +175,38 @@ The package and assembly are `ProphetsWay.Logger`; the utility namespace deliber
 
 ### Severity Selection
 
-These are the **current** values in [LogLevels.cs](ProphetsWay.Logger/LogLevels.cs),
-not the future severity vocabulary in the requirements.
+These are the **current source** values in [LogLevels.cs](ProphetsWay.Logger/LogLevels.cs).
+Each helper emits one exact bit; an inclusive destination setting accepts that severity
+and every more severe one.
 
-| Destination setting | Messages accepted from Logger helpers |
-| --- | --- |
-| `Debug` | Debug, Information, Security, Warning, Error. |
-| `Information` | Information, Security, Warning, Error. |
-| `Security` | Security, Warning, Error. |
-| `Warning` | Warning, Error. |
-| `Error` | Error only; there is currently no `ErrorOnly` member. |
-| `DebugOnly` | Debug only. |
-| `InformationOnly` | Information only. |
-| `SecurityOnly` | Security only. |
-| `WarningOnly` | Warning only. |
+| Helper | Exact message bit | Inclusive destination mask | Accepted severities |
+| --- | --- | --- | --- |
+| `Trace` | `TraceOnly = 32` | `Trace = 63` | Trace, Debug, Information, Warning, Error, Critical. |
+| `Debug` | `DebugOnly = 16` | `Debug = 31` | Debug, Information, Warning, Error, Critical. |
+| `Info` | `InformationOnly = 8` | `Information = 15` | Information, Warning, Error, Critical. |
+| `Warn` | `WarningOnly = 4` | `Warning = 7` | Warning, Error, Critical. |
+| `Error` | `ErrorOnly = 2` | `Error = 3` | Error, Critical. |
+| `Critical` | `Critical = 1` | `Critical = 1` | Critical only. |
 
-`LogLevels` is a flags enum. The existing comparison requires every message bit to be
-present in the destination mask. The first four helpers emit their `Only` bit; `Error`
-emits `Error`. Built-in constructors also accept string or integer reporting levels.
-Prefer named enum settings; do not assume the future strict argument rules apply today.
+`LogLevels` is an Int32 flags enum with these eleven names. There is no `CriticalOnly`,
+`None`, or `All` alias. Use an exact bit as the destination mask for just that severity,
+or combine bits with `|`. `Security` and `SecurityOnly` have been removed.
+
+Destination masks accept **every integer from 0 through 63**, including unnamed combinations.
+Zero is an active reject-all destination, not an absent registration or a reason to use fallback.
+Raw/direct message masks accept **1 through 63**, never zero. Eligibility requires
+`(messageLevel & destinationMask) == messageLevel`: message mask 9 passes destination 15
+but fails destination 8. A valid mismatch returns normally without delivery.
+
+The core's enum, integer and string constructors preserve equivalent accepted bits.
+Strings use case-sensitive `Enum.TryParse<LogLevels>` grammar: decimal Int32 text or
+comma-separated recognized names, with its surrounding/token whitespace handling.
+Signs and leading zeroes follow that parser too: `" +009 "` is 9 and `"-0"` is zero.
+`"0"`, `"9"`, `" +9 "`, and `"Critical, InformationOnly"` are valid; duplicate names combine
+by OR. Empty/whitespace-only text, wrong-case names, removed/unknown names, empty comma
+tokens, `"Critical|InformationOnly"`, `"Critical, 8"`, `"1, 8"`, `"0x9"`, overflow, negative
+values and unknown bits are rejected. Invalid text no longer silently selects Information.
+Prefer named masks; configure `LogLevels.Trace` explicitly when you need all six severities.
 
 ### Label Identity
 
@@ -231,18 +249,39 @@ The tables summarize the current declarations, not proposed APIs.
 | `DestinationLabelPolicy.Mode` / `Labels` | Read the selected mode and copied, unique, read-only membership. |
 | `DestinationLabelPolicy.Allows(IEnumerable<SensitivityLabel> effectiveLabels)` | Synchronous Boolean membership decision; no output operation. |
 | `Logger.AddDestination` / `RemoveDestination` / `ClearDestinations` | Manage plain registrations; generic overloads manage registrations keyed by `T`. |
-| `Logger.Debug(string message)` / `Info(string message)` / `Security(string message)` | Plain message helpers. |
-| `Logger.Warn(string message, Exception ex = null)` | Warning with an optional exception. |
-| `Logger.Error(Exception ex, string message = null)` | Error with an exception and optional context message. Supply a non-null exception. |
-| `Logger.Debug<T>(string message, T metadata)` / `Info<T>` / `Security<T>` | Typed message helpers using the same parameter order. |
-| `Logger.Warn<T>(string message, T metadata, Exception ex = null)` | Typed warning. |
-| `Logger.Error<T>(Exception ex, T metadata, string message = null)` | Typed error. |
-| `ILoggerMetadata` / `MetadataExtensions` | Optional empty marker enabling `Debug`, `Info`, `Security`, `Warn`, and `Error` extension calls on your metadata. |
+| `ILoggerMetadata` / `MetadataExtensions` | Optional empty marker and the six metadata extension helpers below. |
+
+### All Eighteen Helper Forms
+
+All helpers return `void`. Ordinary and typed methods belong to `ProphetsWay.Utilities.Logger`;
+typed `T` is unconstrained. Extensions belong to `ProphetsWay.Utilities.Generics.MetadataExtensions`
+and each has only `where T : ILoggerMetadata`. Parameter order and optional defaults are:
+
+| Ordinary Logger method | Typed Logger method | Metadata extension declaration |
+| --- | --- | --- |
+| `Trace(string message)` | `Trace<T>(string message, T metadata)` | `Trace<T>(this T metadata, string message)` |
+| `Debug(string message)` | `Debug<T>(string message, T metadata)` | `Debug<T>(this T metadata, string message)` |
+| `Info(string message)` | `Info<T>(string message, T metadata)` | `Info<T>(this T metadata, string message)` |
+| `Warn(string message, Exception ex = null)` | `Warn<T>(string message, T metadata, Exception ex = null)` | `Warn<T>(this T metadata, string message, Exception ex = null)` |
+| `Error(Exception ex, string message = null)` | `Error<T>(Exception ex, T metadata, string message = null)` | `Error<T>(this T metadata, Exception ex, string message = null)` |
+| `Critical(Exception ex, string message)` | `Critical<T>(Exception ex, T metadata, string message)` | `Critical<T>(this T metadata, Exception ex, string message)` |
+
+Trace/Debug/Info/Warn require a non-null message. Warn's exception may be omitted or null.
+Error requires a non-null exception; its context message may be omitted or null.
+Critical requires both exception and message. Empty and whitespace-only messages are valid
+and are not trimmed or replaced. Required-null checks run before routing, eligibility checks,
+rendering or fallback effects, even when every destination would reject the entry.
+
+Metadata is a required argument, **not a required non-null value**: null and `default(T)` are
+valid. Extension receivers may also be null or value-type marker implementations. Destinations
+must handle the metadata values they accept; Logger does not clone or transform them.
+
+### Destinations
 
 | Destination or extension point | Current use |
 | --- | --- |
-| `ConsoleDestination` | Text output; reporting level defaults to `Debug`. |
-| `FileDestination` | Required filename; defaults: `Debug`, `resetFile: true`, `EncodingOptions.UTF8`. |
+| `ConsoleDestination` | Text output; reporting level defaults to `Debug`, excluding Trace. |
+| `FileDestination` | Required filename; defaults: `Debug` (excluding Trace), `resetFile: true`, `EncodingOptions.UTF8`. |
 | `EventDestination` | Required reporting level; subscribe to `LoggingEvent`. |
 | `GenericEventDestination<T>` | Typed callback; event arguments also expose `Metadata`. |
 | `ILoggingDestination` / `ILoggingDestination<T>` | `Log` receives severity, optional message/exception, and metadata for the generic form; `IDestination` supplies `ValidateMessageLevel`. |
@@ -255,13 +294,19 @@ your own storage behavior behind the appropriate base. The plain override is
 `Log(LogLevels level, T metadata, string message = null, Exception ex = null)`.
 No database context, schema, or `WriteLogRecord` API is provided by this library.
 
+The core and these bases/event destinations accept `LogLevels reportingLevel`,
+`string strReportingLevel`, or `int intReportingLevel` constructors. Console/file constructors
+forward the same mask rules. `ValidateMessageLevel(LogLevels messageLevel)` queries eligibility
+without dispatching or changing the captured mask. There is no public raw `Logger.Log` method;
+the destination `Log` methods are the direct/raw entrypoints.
+
 ## Common Scenarios
 
 ### Keep Detailed And Warning Logs
 
 Choose paths whose contents and access you control. This example **writes files** beneath
-local application data and explicitly appends. `Debug.log` receives all current severities,
-not just Debug/Information; `Warnings.log` receives Warning/Error.
+local application data and explicitly appends. With the explicit `Trace` mask, `Debug.log`
+receives all six severities; `Warnings.log` receives Warning/Error/Critical.
 
 > **Illustrative** — not currently present in the repo.
 
@@ -279,15 +324,17 @@ public static class Program
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "ProphetsWay.Logger.Example");
         var detailed = new FileDestination(Path.Combine(directory, "Debug.log"),
-            LogLevels.Debug, resetFile: false);
+            LogLevels.Trace, resetFile: false);
         var warnings = new FileDestination(Path.Combine(directory, "Warnings.log"),
             LogLevels.Warning, resetFile: false);
         Logger.AddDestination(detailed);
         Logger.AddDestination(warnings);
         try
         {
+            Logger.Trace("Trace detail.");
             Logger.Debug("Detailed diagnostic.");
             Logger.Warn("Check configuration.");
+            Logger.Critical(new InvalidOperationException("Example failure."), "Cannot continue.");
         }
         finally
         {
@@ -322,13 +369,14 @@ public static class Program
 {
     public static void Main()
     {
-        var destination = new EventDestination(LogLevels.Information);
+        var destination = new EventDestination("Critical, InformationOnly");
         destination.LoggingEvent += (sender, entry) =>
             Console.WriteLine($"{entry.LogLevel}: {entry.RawMessage}");
         Logger.AddDestination(destination);
         try
         {
             Logger.Info("Ready.");
+            destination.Log(LogLevels.Critical | LogLevels.InformationOnly, "Composite.");
         }
         finally
         {
@@ -338,8 +386,11 @@ public static class Program
 }
 ```
 
-Expected callback output: `InformationOnly: Ready.` The registration/event pattern is also
-in [EventDestinationTests.cs](ProphetsWay.Logger.Test/EventDestinationTests.cs).
+The first callback prints `InformationOnly: Ready.` The direct call also passes: its full
+mask 9 is present in the destination's mask 9. It would be rejected by `InformationOnly = 8`.
+The callback receives that complete composite mask, not a single-bit reduction.
+The registration/event pattern is also in
+[EventDestinationTests.cs](ProphetsWay.Logger.Test/EventDestinationTests.cs).
 
 ### Carry Metadata And Use Extension Calls
 
@@ -366,7 +417,7 @@ public static class Program
 {
     public static void Main()
     {
-        var destination = new GenericEventDestination<DbMetadata>(LogLevels.Debug);
+        var destination = new GenericEventDestination<DbMetadata>(LogLevels.Trace);
         destination.LoggingEvent += (sender, entry) =>
             Console.WriteLine($"{entry.Metadata.UserId}: {entry.RawMessage}");
         Logger.AddDestination(destination);
@@ -376,9 +427,11 @@ public static class Program
         };
         try
         {
+            Logger.Trace("Routing detail.", metadata);
             Logger.Debug("Starting.", metadata);
             metadata.Info("Finished.");
             Logger.Error(new InvalidOperationException("Example failure."), metadata, "Stopped.");
+            metadata.Critical(new InvalidOperationException("Critical failure."), "Cannot continue.");
         }
         finally
         {
@@ -388,8 +441,9 @@ public static class Program
 }
 ```
 
-Expected output is `42: Starting.`, `42: Finished.`, then `42: Stopped.` Metadata remains
-available as an object; this callback chooses what to print. See the real call patterns in
+Expected output is `42: Routing detail.`, `42: Starting.`, `42: Finished.`, `42: Stopped.`,
+then `42: Cannot continue.` Metadata remains available as an object; this callback chooses
+what to print. See the real call patterns in
 [GenericLoggerTests.cs](ProphetsWay.Logger.Test/GenericLoggerTests.cs) and
 [MetadataLoggerTests.cs](ProphetsWay.Logger.Test/MetadataLoggerTests.cs).
 
@@ -399,6 +453,53 @@ If that type has no registered destination, current typed logging falls back to 
 automatically broadcast to the plain destinations when a typed registration exists.
 
 ## Behavior And Limitations
+
+### Native Argument Errors
+
+These errors apply to the core and its forwarding constructors, helpers, registrations,
+and supplied direct `Log` implementations, as indicated. Valid rejection is not an error.
+
+| Invalid input | Exception | `ParamName` |
+| --- | --- | --- |
+| Enum destination mask outside 0-63 | `ArgumentOutOfRangeException` | `reportingLevel` |
+| Integer destination mask outside 0-63 | `ArgumentOutOfRangeException` | `intReportingLevel` |
+| Null string destination mask | `ArgumentNullException` | `strReportingLevel` |
+| Any other invalid string mask, including parsed negative/unknown bits or overflow | `ArgumentException` | `strReportingLevel` |
+| Raw mask outside 1-63 passed to `ValidateMessageLevel` | `ArgumentOutOfRangeException` | `messageLevel` |
+| Raw mask outside 1-63 passed to a supplied destination's `Log` | `ArgumentOutOfRangeException` | `level` |
+| Null required helper message or exception | `ArgumentNullException` | `message` or `ex` |
+| Null ordinary or typed `AddDestination` argument | `ArgumentNullException` | `newDest` |
+
+No competing-error priority is promised when both Critical arguments are null. Exception
+message text is not a configuration contract. Equivalent valid mask representations have
+the same eligibility, but invalid strings deliberately use different errors from invalid enums/integers.
+
+### Dispatch And Direct Calls
+
+For registered plain and typed destinations, Logger calls each recipient's
+`ValidateMessageLevel` before handing raw content to its `Log`; a false result withholds
+that handoff. A present reject-all destination still suppresses fallback on that route.
+
+`EventDestination.Log`, `GenericEventDestination<T>.Log`, and `TextBasedDestination.Log`
+also enforce mask validity and all-bits eligibility when you call them **directly**.
+Invalid masks throw before recipient work, even without event subscribers. A valid mismatch
+returns without massage, event construction/callback, text composition or `PrintLogEntry`.
+Console/file output inherits the text path. Arbitrary custom `Log` implementations or overrides
+called directly are not sandboxed; inheriting an abstract destination base alone cannot guard
+your override.
+
+Direct/raw content is distinct from helper preconditions: message and exception may each be
+absent, even at Critical or ErrorOnly. Typed metadata may still be null/default. For accepted
+callbacks, `RawMessage`, `Exception`, the complete `LogLevel` mask, and typed `Metadata` retain
+their supplied values/references. `Message` contains the massaged text, not a replacement raw
+payload; Error's omitted context remains null in `RawMessage`.
+
+Without an exception, the base `MassageLogStatement` returns the original message, including
+null, empty or whitespace. With an exception, it preserves context and includes exception and
+nested-exception messages and available stack traces **at every valid mask**, including warnings
+and composites. It does not serialize exception `Data`, redact content, or clone raw objects.
+`Timestamp` remains each event carrier's construction-time local `DateTime.Now`, not a shared UTC
+timestamp. Accepted raw exception/metadata references are not sanitized reporting objects.
 
 ### Label And Policy Arguments
 
@@ -422,18 +523,19 @@ Mutation through readback collection interfaces throws `NotSupportedException`.
 
 ### Current Logging And Text Output
 
-- With no plain destination, Logger creates a timestamp-named relative file using local time and
-  the current `FileDestination` defaults. Recreating a default can reset an existing same-name file.
-  Configure a destination before logging and explicitly use `resetFile: false` for append behavior.
+- With no plain destination, Logger adds a timestamp-named relative file destination using local
+    time and the current `FileDestination` defaults. Recreating a default can reset an existing
+    same-name file. Its `Debug` mask excludes Trace: **no-setup Trace delivery is not provided**.
+    Configure an explicit `Trace` destination for all six severities, and use `resetFile: false`
+    for append behavior.
 - Registration uses mutable global collections. Do not assume concurrent registration or callback
   add/remove/clear is safe; atomic route snapshots are unfinished work.
 - Current dispatch can stop at a throwing destination. The planned independent-attempt and safe
-  failure-reporting behavior is not implemented by the new policy.
+    failure-reporting behavior is not implemented by the native severity changes or label policy.
 - Console/file formatting uses local, culture-dependent timestamps and pads severity names to 12
   characters. It does not escape multiline/control input into one physical record or redact content.
-- Error formatting includes exception and inner-exception messages and any available stack traces.
-  Do not rely on text output to include an exception supplied to `Logger.Warn`: its emitted
-  `WarningOnly` does not reach the formatter's current `Warning` exception-detail branch.
+- Supplied exceptions now retain their detail for warnings, errors, critical entries and every
+    valid composite. The text layout is otherwise unchanged; exception detail can itself be multiline.
 
 For example, `Logger.Debug("Hello World!")` has this text shape, with the actual host timestamp:
 
@@ -446,7 +548,7 @@ This retained illustrative error excerpt shows their messages; a constructed-but
 exception does not acquire a stack trace merely because its message mentions one:
 
 ```text
-3/15/2019 11:25:41 PM ::        Error:  Another generic message about an error occuring. (friendly message to show a UI maybe?)
+3/15/2019 11:25:41 PM ::    ErrorOnly:  Another generic message about an error occuring. (friendly message to show a UI maybe?)
 This exception has an inner exception. (likely details to hide from a UI)
 
 Inner Exception Message:
@@ -455,11 +557,18 @@ This is a specific Exception Message and will contain a stack trace.
 
 ### Unfinished Integration And Security Boundaries
 
-The labels and membership predicate are implemented. Destination registration/filter integration,
-entry/scope origin collection, pre-render/raw-payload withholding, record framing, safe failure
-reporting, fixed automatic-file recovery/reuse, and bidirectional Microsoft logging bridges are not.
-Planned append-by-default files and new severity rules in [docs/requirements.md](docs/requirements.md)
-are **future behavior**, not current Logger behavior. Requirements readiness is not delivery.
+Native severity/mask/helper validation and supplied-recipient **severity** withholding are implemented,
+alongside the standalone labels and membership predicate. This completes neither the full dispatch
+foundation (M2) nor v4. Label registration/filter integration and entry/scope origin collection remain
+future work; a label policy does not yet withhold Logger payloads.
+
+Independent route-key isolation, atomic snapshots/concurrency and lifetime work, record framing,
+invariant rendering/shared UTC timestamps, safe failure reporting and independent recipient attempts,
+fixed automatic-file recovery/reuse and remembered initialization failure, append-by-default explicit
+files, and both Microsoft logging bridges remain unfinished. Microsoft severity conversion/None
+handling is not supplied by this native enum. The new file/fallback/failure policies in
+[docs/requirements.md](docs/requirements.md) are **future behavior**, not current runtime promises.
+Requirements readiness is not delivery.
 
 A false policy result is an ordinary mismatch, not an output failure or instruction to activate
 fallback. True means only membership permission, not successful delivery, correct classification,
@@ -472,6 +581,31 @@ See the scoped [security review](docs/security/security-review.md),
 [threat model](docs/security/threat-model.md), and
 [data classification](docs/security/data-classification.md). Their scope is not a confidentiality,
 compliance, sandboxing, whole-library security, or publication guarantee.
+The native source assessment does not refresh the earlier dated advisory scan or provide new
+license, bundled-component, SDK/runtime, or release clearance.
+
+### Breaking Migration From Earlier Logger APIs
+
+Recompile consumers, custom destinations, and code that compares or persists enum values.
+Enum constants can be embedded in compiled callers; replacing a library binary does not translate
+their old numeric meanings. This is unreleased major-version work, not a patch-safe drop-in update.
+
+- Remove calls to ordinary, typed, and metadata-extension `Security`, plus `Security`/`SecurityOnly`
+    configuration names. Choose the appropriate remaining severity for each call. There is no automatic
+    security-event/concern replacement, and the standalone label policy is not a routing replacement.
+- Recalculate saved integer/numeric-string masks from the intended new bits: 1 is Critical, 2 is
+    ErrorOnly, 4 is WarningOnly, 8 is InformationOnly, 16 is DebugOnly, and 32 is TraceOnly. Do not
+    reuse old numeric configuration without reviewing its meaning. Recheck enum-name configuration too:
+    inclusive Error accepts Error/Critical; Debug no longer means all severities. Select Trace for all six.
+- Compare emitted Error entries to `ErrorOnly`, not the inclusive `Error` mask. For selection, require
+    all requested bits; preserve composite masks rather than reducing them to one severity.
+- Supply the formerly optional required extension arguments: messages for Debug/Info/Warn and an
+    exception for Error. All three helper families now reject required nulls before dispatch, even if
+    the route rejects everything. Critical requires exception and context; Error's context and Warn's
+    exception remain optional. Empty/whitespace messages and null/default metadata remain valid.
+- Correct malformed mask strings instead of relying on the former Information fallback. Zero is valid
+    only as a destination mask; direct/raw zero is an error. Supplied direct destinations now reject
+    ineligible messages before formatting/callback/output, so a direct call no longer bypasses selection.
 
 ## Architecture And Design Decisions
 
@@ -507,20 +641,35 @@ Use this **focused selection**, sequentially on both targets, with coverage:
 
 ```powershell
 $filter = @(
-    'FullyQualifiedName~ProphetsWay.Logger.Test.SensitivityLabelTests'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.ILoggingDestinationTests'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.ConsoleDestinationTests'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.DestinationLabelPolicyTests'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.SensitivityLabelTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.DestinationLabelPolicyTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.BasicTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.GenericBasicTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.AdvancedTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.GenericAdvancedTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.LoggerTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.GenericLoggerTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.MetadataLoggerTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.ILoggingDestinationTests.'
 ) -join '|'
 
 dotnet test .\ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj -c Debug -f net48 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
 dotnet test .\ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj -c Debug -f net10.0 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
 ```
 
-The recorded Windows check on 2026-09-17 passed **110 cases per target**: 67 policy cases plus
-43 preserved cases. Coverage and copied-asset binding were checked; the portable account is in
-the [security review](docs/security/security-review.md#recorded-execution-and-integrity).
-This is a focused result, not all tests, package-consumer qualification, or Mac/Linux validation.
+The recorded native Windows check on **2026-09-17 EDT** passed **300 cases per target**,
+with zero failures/skips and unchanged same-target case identities. The recorded coverage
+exercises all seven changed implementation files plus label/policy code; the net48 test copy
+matches the built netstandard2.0 library, and net10.0 matches its dedicated library.
+FileDestination, ConsoleDestination and ConsoleWrapper have zero covered lines in this selection.
+See the portable [native assessment](docs/security/security-review.md#execution-attribution-and-integrity).
+This is a focused result, not the full suite, file/console execution, package-consumer qualification,
+or Mac/Linux validation.
+
+The earlier label-policy check on the same date recorded **110 cases per target**: 67 policy
+cases plus 43 preserved cases. Its different selection included ConsoleDestinationTests;
+the [historical account](docs/security/security-review.md#recorded-execution-and-integrity)
+is retained separately, not presented as the native check above.
 
 Do **not** substitute an unfiltered `dotnet test` as the default developer check.
 [FileDestinationTests.cs](ProphetsWay.Logger.Test/FileDestinationTests.cs) deletes a fixed-name file,
@@ -553,7 +702,4 @@ See [CHANGELOG.md](CHANGELOG.md) for unreleased changes and the existing release
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
-
-
-
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

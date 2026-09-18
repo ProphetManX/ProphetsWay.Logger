@@ -5,6 +5,10 @@ This inventory covers the fields and method-boundary carriers of `SensitivityLab
 payloads or business entities. It is a design-time handling model, not an implementation
 security verdict, built-in taxonomy, confidentiality promise or new product requirement.
 
+The separate [ON-04 M2-A extension](#on-04-m2-a-field-extension) inventories native
+severity and explicit synthetic-recipient carriers. Earlier tables retain their
+ON-03 historical scope and statuses; they are not reclassified by this extension.
+
 ## Evidence And Status
 
 Read completely: [SensitivityLabel.cs](../../ProphetsWay.Logger/SensitivityLabel.cs),
@@ -141,3 +145,136 @@ the consumer's actual inventory; consumer-specific processing and deployment que
 block only that consumer's data-handling assessment. Parent scope/trace verification and
 Security Reviewer v2's later actual-code/dependency review remain separate gates. No
 implementation, whole-system security, source-exposure or publication clearance is claimed.
+
+## ON-04 M2-A Field Extension
+
+**Design checkpoint: 2026-09-17.** This is the classification input for owner-approved
+ON-04 revision 2, native M2-A only, before the C# contract gate and source implementation.
+It extends rather than replaces the label/policy inventory. Exact operational target
+provenance is in the run report; the approved obligations are stated in the
+[threat-model extension](threat-model.md#on-04-m2-a-severity-boundaries), S1-S7.
+R-07/R-08 and D002/D007/D010 were reopened in
+[requirements.md](../requirements.md) and [decision-log.md](../decision-log.md).
+The [product brief](../product-brief.md) supplies the consumer/developer/host roles,
+not deployed users or a selected retention/compliance policy.
+
+### Source Inventory And Assumption
+
+Read the complete pre-M2-A files for this boundary:
+[LogLevels.cs](../../ProphetsWay.Logger/LogLevels.cs),
+[LoggingDestinationCore.cs](../../ProphetsWay.Logger/LoggingDestinationCore.cs),
+[Logger.cs](../../ProphetsWay.Logger/Logger.cs),
+[Generics/Logger.cs](../../ProphetsWay.Logger/Generics/Logger.cs),
+[MetadataExtensions.cs](../../ProphetsWay.Logger/Generics/MetadataExtensions.cs),
+[ILoggerMetadata.cs](../../ProphetsWay.Logger/Generics/ILoggerMetadata.cs),
+[EventDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/EventDestination.cs),
+[GenericEventDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/GenericEventDestination.cs)
+and [TextBasedDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/TextBasedDestination.cs).
+The declared types and carriers below are source-backed; target validity/guard rules are
+requirements, not evidence that those sources implement them.
+
+`ILoggerMetadata` declares no fields or members. Existing general typed Logger methods
+do not constrain `T`; convenience extensions alone use that marker. This does not
+authorize a new non-null metadata guard or mandatory interface on typed calls. The
+contract author settles helper signatures/defaults and ordinary argument exceptions;
+current optional defaults are not independent authority to permit invalid helper calls.
+
+**Assumption S-A1:** Actual message, rendered content, exception graphs, arbitrary typed
+metadata and diagnostic contents are **unbounded**. They receive provisional
+Confidential handling, not an assertion that unseen values are PII, Sensitive PII or
+Secret. Only declarations were inspected, not production values or business schemas.
+A consumer's real inventory and classification replace this assumption. Synthetic
+examples cannot establish a harmless class for future real payloads.
+
+The Public/Internal/Confidential baselines above remain analysis guidance under D013:
+fixed public vocabulary needs no confidentiality protection; consumer-specific routing
+information needs controlled readership; unbounded payloads additionally need protected
+transport/storage if a consumer exports or persists them. M2-A supplies no encryption,
+authentication, storage, retention, secure-erasure or log-redaction facility. Local
+object references are not a protected network transport or a memory-isolation boundary.
+
+### Fields And Boundary Carriers
+
+Aliases are grouped only where they carry the same value. `LoggerEventArgs` below
+means both the ordinary and generic nested classes unless a row says generic-only.
+Every declared event-argument property is included; the internal registry/lock/lifetime
+state is not a new data-model workstream. An arbitrary `T` or `Exception` graph is
+classified as an opaque whole, not as an invented list of business fields. Named
+exception subcarriers distinguish rendered detail from other reachable raw data.
+
+| Entity and field/carrier | Class and rationale | At rest | In transit | In logs | API/local response treatment |
+| --- | --- | --- | --- | --- | --- |
+| `LogLevels` fixed names and numbers | Public; approved native behavior vocabulary, not user data or clearance. | Constants only; no store. | Local enum/integer/string literals. | Fixed severity names may be rendered. | S1 defines six exact bits and inclusive masks; Security/SecurityOnly disappear, with no replacement alias. |
+| Core `reportingLevel`, `intReportingLevel`, `strReportingLevel`; retained `_reportingLevel` | Internal; consumer-selected recipient configuration, distinct from public constants. | Retained on the destination; no persistence selected here. | Constructor arguments within process. | No configuration logging is added; malformed text is not assumed a safe diagnostic. | Input-only configuration, no new public getter. Equivalent valid representations, including zero, must agree; S2 rejects malformed/unsupported input. |
+| Helper/direct `level`, validation `messageLevel`, event `LogLevel` | Internal; entry-specific routing/importance information. The combined payload retains its higher class. | Event argument may retain the value; no archive selected. | Local call and accepted callback. | Existing text record includes severity. | Exact helper bit or valid nonzero raw composite; S3/S5 withhold a rejected entry before recipient use. |
+| `ValidateMessageLevel` Boolean result | Internal; reveals a configuration/entry relationship, not an access right. | No new store. | Local return. | No audit/report record implied. | True is severity eligibility only; false is normal mismatch. Invalid message input is an argument error, not permission. |
+| Ordinary/typed registration `newDest` | Internal; consumer-selected executable recipient reference. | Existing host/route-held reference; no new ownership or lifetime policy. | Registration input only. | Not an authorized serialization/logging record. | Null rejected before registration effects; no duplicate/replacement/disposal rule is added by M2-A. |
+| Typed route's declared `T` / `typeof(T)` | Internal; consumer implementation/routing identity, not a tenant identity. | Existing route infrastructure only; not redesigned. | Implicit generic type context in local calls. | No type/route diagnostic API added. | No new reference/type exposure, route-isolation proof or mandatory interface constraint. |
+| `LoggingEvent` delegate and callback `sender` | Internal; subscriber/control references, not passive business data. | Consumer may retain references; no new lifetime promise. | In-process callback handoff only. | Neither is an approved serialized record. | Eligible callbacks intentionally execute consumer code; rejection invokes no callback. No subscriber authentication or sandbox is supplied. |
+| Helper/direct `message`; event `RawMessage` | Confidential, provisional; **unbounded** producer text, including empty/whitespace or permitted absence. | Retained in accepted event arguments; no library archive/retention selected by this slice. | Local input and accepted ordinary/generic callback. | May contribute to accepted rendered text; no content sanitization is promised. | Raw text is intentional accepted exposure. S4 helper guards do not impose non-null on permitted raw/direct calls; denied recipients receive none. |
+| Event `Message`; shared massage result | Confidential, provisional; **unbounded** text derived from message and exception detail, not a safe summary. | Accepted event arguments may retain it; no new archive. | Internal render result and accepted callback. | Intended accepted rendered content only; no new framing/redaction promise. | S6 preserves supplied context/detail for valid severities/composites without absent-exception failure. No new exact message syntax is specified. |
+| Helper/direct `ex`; event `Exception` | Confidential, provisional; **unbounded** original diagnostic graph. | Reference retained in accepted event arguments; no deep clone or erasure promise. | Raw reference to intended accepted callback; not a sanitized reporting descriptor. | Text massage accesses message/stack details; an event consumer can inspect more of the raw graph. | Permitted absence remains absent. Denial precedes rendering/callback; acceptance does not prove the graph suitable for onward export. |
+| Supplied exception `Message` | Confidential, provisional; **unbounded** diagnostic text. | Part of referenced graph or derived text. | Current massage reads it; accepted raw callback can read it. | Included as permitted detail, not redacted. | No HTTP-safe error or exact formatting contract follows. |
+| Supplied exception `StackTrace` | Confidential, provisional; **unbounded** application/location diagnostics. | Part of referenced graph or derived text. | Current massage reads it; accepted raw callback can read it. | May be included with exception detail. | Not a public diagnostic response or proof of safe source/path exposure. |
+| Supplied exception `Data` | Confidential, provisional; **unbounded** arbitrary keys/values and nested objects. | Reachable through the retained exception reference; not copied/archived by this slice. | Accessible through accepted raw `Exception`; no schema inspection was performed. | No requirement to render this dictionary is added. A callback may itself inspect/log it. | S5 gates the raw reference as well as text. Existing raw exposure is not an R-16 sanitized failure API. |
+| Supplied exception `InnerException` / nested causes | Confidential, provisional; **unbounded** recursive diagnostics. | Reachable graph and potentially derived text. | Current massage traverses nested message/stack; callback may inspect the graph. | Permitted nested detail remains content, not a safe cause summary. | No new cause schema, cloning, recursion/resource guarantee or external-response approval. |
+| Typed helper/extension/direct `metadata`; generic-only event `Metadata` | Confidential, provisional; **unbounded** arbitrary `T`, with no declared business schema in the marker interface. | Generic event arguments may retain the supplied value/reference; nested mutability is not frozen. | Local typed call and accepted generic callback. | No automatic metadata renderer or privacy filter is added. | Null/reference/value forms retain existing permitted metadata behavior. No new non-null or mandatory-interface constraint; rejection withholds metadata before callback. |
+| Event `Timestamp`; time component of current text record | Internal; entry timing can reveal activity when associated with payload. | Existing event argument/text may retain it. | Accepted callback/text only. | Current source uses local `DateTime.Now`; no UTC/capture redesign in M2-A. | Existing local time exposure, not a new timestamp format, shared-event-time guarantee or audit proof. |
+| `PrintLogEntry.message` combined text | Confidential, provisional; **unbounded** composition of timestamp, severity and massaged content. | Target uses an in-memory synthetic recorder only; actual recipient retention is consumer-owned. | Rendered text to the selected recipient after eligibility. | It is intended log content; this run authorizes no file/console recipient execution. | No print call on denial. The accepted string is not guaranteed single-line, redacted or suitable for a public response. |
+| Future native argument-error type and `ParamName` | Public for fixed C# contract identifiers, not supplied values; exact selections remain pending. | No error archive selected. | Ordinary exceptional completion to caller. | No new reporting mechanism. | Contract author/reviewer chooses exact types/names. This table chooses no precedence, wrapping or message syntax. |
+| Possible native argument-error diagnostic content | Confidential, provisional; **unbounded** if it contains consumer-supplied values. No concrete new exception contents were inspected. | No archive selected. | Caller receives whatever the reviewed ordinary argument contract defines. | No safe-reporting or input-echo guarantee is newly imposed here. | Do not serialize errors as known-safe responses. Existing label-error non-echo rules stay scoped to labels; R-16 is separate later work. |
+
+### Exposure, Ownership And Minimization
+
+SV1 is configuration/message-mask validation; SV2 is helper/registration input before
+dispatch; SV3 is supplied direct/dispatched recipient rendering and callback/print.
+All three are covered above and in the threat model. No network, database, API DTO,
+tenant row, password store or soft-delete field is added. There is consequently no
+server-only column or authenticated row-retrieval rule to invent. D013 assigns any
+recipient access and onward export to the consuming host.
+
+Configuration representation and destination registration are input-only; accepted event
+properties are deliberate local readback/callback data. For a rejected entry, the whole
+raw/rendered payload is withheld from recipient rendering, callback and print, including
+the raw exception graph and typed metadata. Producer/custom code already holding those
+references is not isolated. Blanket serialization of event arguments would include
+unbounded raw data and is not authorized merely by a valid severity or a label.
+
+Data not supplied cannot leak through this path. Consumers should first decide whether
+diagnostic details and each metadata field are needed, and whether a non-identifying
+category/token or externally sanitized value suffices. Synthetic canaries are sufficient
+for this slice's guard/content checks. This is D013 consumer-side minimization, not
+permission for Logger to truncate, hash, redact or silently discard supplied content
+contrary to S6. No new classifier, credential-handling or privacy API is required.
+
+If a consumer later persists Confidential content, encryption at rest addresses stolen
+disks/backups, not a compromised application, an over-permissive read or an accepted raw
+callback. Protected network transport would address interception only at a real export
+boundary. Neither control substitutes for S5's pre-handoff guard. Field-level encryption
+and its search/sort trade-offs are not selected for this synthetic in-process slice.
+
+### Coverage And Remaining Decisions
+
+Coverage is complete for the declared native configuration/argument carriers, all five
+ordinary event-argument properties, the same five plus generic `Metadata`, text-record
+handoff, marker-interface absence of fields, and SV1-SV3. Arbitrary business members
+inside `T`/exception data were not inspected or falsely assigned individual classes;
+their whole carrier remains unbounded under S-A1. Earlier label/policy history stays
+unchanged, not freshly verified by this extension.
+
+No exact retention duration, consent basis, erasure mechanism, real-data inventory or
+deployment was supplied or selected. Those consumer choices block only a real consumer
+data assessment. If actual logged values identify natural persons and territorial or
+organizational facts bring processing within GDPR/UK GDPR, those facts would trigger
+that consumer's legal assessment; the settling question is which persons' data, which
+jurisdictions and which processing role. No such factual trigger was inspected, and no
+compliance obligation is asserted. A record's absence from one denied recipient is not
+erasure from the producer or other copies.
+
+**Open Questions proposed for ON-04 M2-A:** None. Exact signatures/defaults and ordinary
+argument exception details remain delegated C# contract work, not new product questions.
+No additional metadata restriction, validation-priority rule or whole-v4 security
+control is introduced. Label integration, registry/snapshots/lifetime, file/fallback/
+recovery/framing, failure reporting, bridges and public-product qualification remain
+outside this input. Independent implementation review and fresh scoped evidence are
+still required later; this author ran no build/test and issues no security verdict.

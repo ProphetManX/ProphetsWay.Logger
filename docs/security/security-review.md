@@ -1,4 +1,14 @@
-# Security Review - ON-03 Label Policy
+# Security Review - Scoped Logger Assessments
+
+The ON-03 assessment below retains its **2026-09-17 historical scope and evidence**,
+including its then-fresh public dependency scan and 110-case-per-leg execution.
+The separate [ON-04 assessment](#on-04-native-m2-a) adds the eight native M2-A source
+files and offline identity checks only. It records 300 cases per leg from the parent,
+not a replacement count for ON-03. No fresh advisory, license, SDK/runtime or bundled
+component clearance is supplied by ON-04. Neither assessment is whole-Logger or
+full-v4 security certification.
+
+## ON-03 Label Policy
 
 _Reviewed 2026-09-17 against [threat-model.md](threat-model.md) and
 [data-classification.md](data-classification.md), including their complete scope,
@@ -234,3 +244,199 @@ the repository or its history contains none. Pipeline/infrastructure permissions
 belong to their separate reviewers and were not reviewed. **No security review is
 exhaustive.** A clean advisory result is a dated observation, not proof of the absence
 of vulnerabilities.
+
+## ON-04 Native M2-A
+
+_Reviewed 2026-09-17 EDT against both complete canonical security documents, including
+[S1-S7 and SV1-SV3](threat-model.md#on-04-m2-a-severity-boundaries) and the
+[native field classification](data-classification.md#on-04-m2-a-field-extension).
+Source and offline evidence inspection only; no product execution or fresh scan._
+
+### Scoped Verdict
+
+**Accept: no blocking issues found in the assigned native implementation scope.**
+The eight complete source files and their diff against the approved starting commit
+`5c5dc5a` implement the scoped validity, all-bits selection, pre-effect argument
+guards and pre-recipient withholding controls. All S1-S7 source obligations were
+reached; none was found unmet. The parent evidence corroborates those paths but is
+not the sole basis for this verdict.
+
+**Findings: Critical 0, High 0, Medium 0, Low 0, Informational 0.** No corrective
+patch, new policy question or additional security requirement is proposed. Accepted
+breaking changes, intentional raw exposure after acceptance and excluded future
+features are not reclassified as vulnerabilities merely to populate findings.
+
+This completes only the assigned source/identity assessment. It does not clear
+independent correctness or specification-quality reviews, remaining documentation,
+combined target acceptance, full-v4 gates, publication or deployment. It supplies
+no Git authority and makes no assertion that Logger is secure.
+
+### Scope And Trust Boundaries
+
+Read all eight files linked in the control table completely, including both private
+dispatch loops, recipient carriers, protected rendering and exception-detail paths.
+Also read the current repository instructions, shared conventions/protocol, approved
+target revision 2 with its inherited proposal, the entire reviewed B01-B33 contract,
+contract review 05, threat input 03, TA-01 re-audit 09 and implementation report 11.
+The contract's historical report-formatting status is not an open semantic finding;
+the current parent record documents the mechanical correction and Ready disposition.
+
+Reopened actual [D002](../decision-log.md#L49), [D007](../decision-log.md#L108),
+[D010](../decision-log.md#L144) and [D013](../decision-log.md#L181). Ordinary argument
+errors and exact public details are the approved contract choices. Their Message,
+ActualValue, cause shape and competing-invalid precedence are not new security
+requirements; the existing label-specific non-echo rule remains separately scoped.
+
+- **SV1:** consumer configuration enters mask parsing/capture; a raw mask enters
+  validation. The result is severity eligibility, not authentication or authorization.
+- **SV2:** helpers forward severity, message, exception and optional typed metadata
+  to host-selected recipients. Required-null checks precede route mutation, eligibility
+  calls and fallback setup. Registration is controlled by code in the same process.
+- **SV3:** supplied direct or dispatched event/text entrypoints decide validity and
+  eligibility before any virtual massage, callback or print. Accepted raw event
+  references and rendered text intentionally cross to the selected recipient.
+
+There is no caller identity, tenant/row lookup, endpoint or external access-control
+layer in these eight files. No consumer application was supplied to certify. A custom
+recipient, renderer, exception implementation or callback is executable host code,
+not sandboxed by a mask. Direct custom overrides and callers already holding payloads
+remain outside the supplied-recipient withholding guarantee.
+
+### Control Assessment
+
+| Obligation | Reviewed control and source location | Result and limit |
+| --- | --- | --- |
+| S1; B01-B03/B11-B12 | [LogLevels](../../ProphetsWay.Logger/LogLevels.cs#L10), [ordinary helpers](../../ProphetsWay.Logger/Logger.cs#L70), [typed helpers](../../ProphetsWay.Logger/Generics/Logger.cs#L73), [extensions](../../ProphetsWay.Logger/Generics/MetadataExtensions.cs#L13) | Exactly six bits 1/2/4/8/16/32 and inclusive masks 1/3/7/15/31/63. Error emits ErrorOnly=2. Security/SecurityOnly and all three Security helper forms are removed; no replacement alias or public raw Logger entrypoint. Intentional breaks are not patch-safe compatibility claims. |
+| S2; B04-B07/B22 | [Enum constructor](../../ProphetsWay.Logger/LoggingDestinationCore.cs#L16), [integer constructor](../../ProphetsWay.Logger/LoggingDestinationCore.cs#L38), [parser](../../ProphetsWay.Logger/LoggingDestinationCore.cs#L46) | Complement-of-63 validation accepts all masks 0-63, including unnamed combinations; rejects negative/unsupported bits. Integer input no longer depends on Enum.GetName. Case-sensitive Enum.TryParse retains approved decimal/name-list grammar, followed by bit validation, with no Information fallback. Null/invalid string and typed-mask errors use the reviewed exact exception types and parameter names. |
+| S3; B08-B10/B20/B33 | [ValidateMessageLevel](../../ProphetsWay.Logger/LoggingDestinationCore.cs#L109), [ordinary dispatch](../../ProphetsWay.Logger/Logger.cs#L53), [typed dispatch](../../ProphetsWay.Logger/Generics/Logger.cs#L54) | Raw zero/negative/unknown bits throw before comparison. Validity is distinct from false eligibility; `(messageLevel & _reportingLevel) == messageLevel` requires every bit. Thus 9 reaches 15, not 8. The readonly mask and non-mutating query preserve repeated results. A registered zero-mask recipient remains counted, so rejection does not activate fallback. Registry redesign is not certified. |
+| S4; B11-B20 | [Ordinary registration](../../ProphetsWay.Logger/Logger.cs#L17), [typed registration](../../ProphetsWay.Logger/Generics/Logger.cs#L18), helper families linked above | Both registration guards precede dictionary/list effects. All twelve direct helpers guard required message/exception before calling private dispatch; all six extensions immediately forward unchanged arguments to those guards. Empty/whitespace text and permitted absent Error context remain valid. The unchecked-route fallback is not executed by this review or by a null-guard probe. |
+| S5; B23-B24 | [Event Log](../../ProphetsWay.Logger/LoggerDestinations/EventDestination.cs#L31), [generic event Log](../../ProphetsWay.Logger/LoggerDestinations/GenericEventDestination.cs#L35), [text Log](../../ProphetsWay.Logger/LoggerDestinations/TextBasedDestination.cs#L17) | Each first rejects invalid level with ArgumentOutOfRangeException naming level, then returns on false eligibility, before MassageLogStatement, event construction/callback, text composition or PrintLogEntry. Validation does not depend on subscriber presence. Both Logger loops separately condition custom raw Log calls on the recipient's Boolean; supplied direct guards do not conceal a custom-handoff bypass. |
+| S6; B21/B25-B32 | [MassageLogStatement](../../ProphetsWay.Logger/LoggingDestinationCore.cs#L72), [ExceptionDetailer](../../ProphetsWay.Logger/LoggingDestinationCore.cs#L84), recipient sources above | Absent exception returns the original message, including null. A present exception contributes its current/nested messages and available stacks at every valid mask, without a severity-name branch erasing context. Accepted carriers retain the complete mask, original RawMessage/Exception and generic Metadata; no clone, fabricated raw value or lowest-bit reduction. Existing timestamp/text composition remains unchanged, not framing or redaction. |
+| S7; B18/B21/B26-B27 and preservation | [Typed helpers](../../ProphetsWay.Logger/Generics/Logger.cs#L73), [extensions](../../ProphetsWay.Logger/Generics/MetadataExtensions.cs#L13), protected-input comparison | General T stays unconstrained; only extensions retain the existing marker constraint. Null/default metadata remains permitted. Label/policy sources and specifications match their protected hashes; their earlier review remains dated, not freshly re-audited here. No label integration, registry/lifetime, failure-reporting, privacy, bridge or scope-origin guarantee is added. |
+
+### Data Exposure And Diagnostics
+
+The classification model's S-A1 applies: actual message text, exception graphs,
+metadata and derived text are unbounded and provisionally Confidential, not observed
+PII or credentials. Only synthetic evidence was inspected. Severity names/constants
+are public vocabulary; consumer-specific masks, timing and routing remain context.
+
+After acceptance, event subscribers intentionally receive Message, RawMessage,
+Exception, LogLevel and local Timestamp; generic subscribers also receive Metadata.
+The raw exception exposes Data and nested causes even though shared massage renders
+message/stack detail rather than serializing Data. Text recipients receive composed
+content. None is a sanitized reporting DTO, safe HTTP response or authorization for
+blanket serialization. D013 leaves onward readership, classification, sanitization,
+retention and storage with the consumer; withholding from one denied recipient is
+not secure erasure from all copies.
+
+The current native guards use fixed text or parameter-only ordinary errors, without
+attaching the rejected payload. That is a source observation, not a new promise about
+exact diagnostic text or every exception thrown by host code. Exception getters,
+virtual massage and callbacks can execute consumer code after acceptance. No safe
+failure-reporting channel, recursion bound, execution deadline or hostile-code
+isolation was selected or assessed by this slice.
+
+### Offline Dependency Review
+
+**No fresh vulnerability scan was run.** The approved no-network/no-restore envelope
+expressly limits this gate to source assessment and offline graph identity. The
+September 17 **04:09:17-04:09:19 UTC** public scan in the ON-03 section was reopened
+with its actual recorded JSON, exit 0 and no returned advisory matches, solely as
+dated context. Its result is not relabeled current.
+
+Opened all three current projects and parsed all target/package/dependency dictionaries
+in their restored assets using a structured JSON parser. The three project files and
+three asset files byte-match the ON-03 parent build-input manifest. There are still
+seven graphs and 41 distinct package/version identities, with no identity drift;
+both RID graphs match their base graph's package identities and dependency edges.
+The earlier graph table and seven test pins therefore describe the same resolutions,
+not a new advisory query. Both test-runner switches remain false.
+
+Historical S01-S04 package/edge absences remain graph observations, not claims about
+every embedded binary. ON-02's September 16 license/bundle record, including bundled
+Newtonsoft and the distinct Build.Tasks.Git producer-manifest observation, remains
+dated and unrefreshed. No package files, signatures, supplemental advisory ranges,
+native/private instrumentation, exact redistribution notices or license texts were
+re-audited. `PrivateAssets` does not sandbox developer/CI tools. Installed OS,
+SDK/runtime and shared-framework servicing are outside the NuGet identity comparison.
+**No fresh advisory, license, SDK, runtime, bundle or publication clearance follows.**
+
+### Execution Attribution And Integrity
+
+The parent's independently generated summary is dated **2026-09-18 03:29:38 UTC**
+(September 17 EDT). Its two no-restore builds passed; its focused Windows net48 and
+net10.0 runs each record **300 executed, 300 passed, 0 failed, 0 skipped**. This is
+ON-04 evidence, not the historical ON-03 110-case selection above, and not the full suite.
+
+This reviewer freshly checked the immutable 19-entry specification/authority manifest,
+29 protected existing inputs and all 42 parent build inputs: no added, removed or
+changed entry, and no rebaseline. The actual two TRXs match their recorded hashes and
+contain 300 passed identities each, equal ordinally to the same target's audited
+specification identities and parent result records. The recorded dotnet executable
+hash matches; no dotnet command or product assembly was executed by this reviewer.
+
+Both actual TRX-linked Cobertura attachments retain their hashes and real Logger
+module. Per-leg hit-line observations are core 47, ordinary Logger 51, typed Logger
+50, extensions 18, event 24, generic event 26, text 12, label 26 and policy 48.
+FileDestination, ConsoleDestination and ConsoleWrapper have zero hit lines. Actual
+collector logs name the test-copy module, and its bytes match the recorded built
+netstandard2.0 library for net48 and net10.0 library for net10.0. This is fresh offline
+verification of attributed execution, not new execution or a security proof by coverage.
+
+The [ordinary custom-handoff case](../../ProphetsWay.Logger.Test/LoggerTests.cs#L279)
+and [typed case](../../ProphetsWay.Logger.Test/GenericLoggerTests.cs#L253) were read
+with their unconditional recorders. A rejected call would capture raw payload even
+if a built-in could self-filter; accepted controls also check original references.
+The [invalid direct-mask probes](../../ProphetsWay.Logger.Test/BasicTests.cs#L245),
+[rejected direct calls](../../ProphetsWay.Logger.Test/BasicTests.cs#L269) and their
+accepted controls count actual virtual massage/callback/print work. Their passing
+identities are present in both parent TRXs. This corroborates S4/S5; it does not
+replace Test Auditor's separate specification-quality gate or claim mutation testing.
+
+All 25 historical task definitions retain their order/content. The only three added
+task labels are ON-04 validation entries, unchanged from the parent green inputs;
+none was executed here. The implementation author's recorded 50-input comparison
+identifies only its seven granted source changes, without additions/removals; the
+fresh eight-file diff also includes the separately owned enum change. No project,
+package, source, specification, task or version was changed by this reviewer.
+
+### Checklist Coverage
+
+| Area | Reviewed | Notes |
+| --- | --- | --- |
+| Access control and trust | Complete for SV1-SV3 | Severity selection and pre-handoff withholding only; no authentication, tenant or row authorization claim. Consumer access control is not an unimplemented native requirement. |
+| Mask/input handling | Complete for S1-S4 | Every scoped constructor/helper/registration/query path read; exact validity, reject-all and before-effects ordering checked. |
+| Disclosure and direct handoff | Complete for S5-S7 | All three supplied direct paths, both custom dispatch paths and accepted raw/event/text carriers read. Classification responsibility and diagnostic limits retained. |
+| Injection, serialization, cryptography, secrets | Scoped source inspection | No SQL, command, LDAP, XPath, HTTP-fetch, deserialization, credential or cryptographic mechanism found in the eight files. Existing text composition is not output encoding or record-framing clearance. No repository/history secret scan. |
+| Authentication, sessions, external APIs | Not present in this surface | No endpoint, cookie, token, CORS or CSRF control to certify; no invented external deployment. |
+| Availability | Scoped assessment | Null misuse is rejected before dispatch and permitted absence is safe. Unbounded accepted content, exception recursion and consumer execution remain explicit limits, not newly imposed quotas or a denial-of-service clearance. |
+| Audit, compliance and retention | Responsibility boundary only | No audit trail, durable delivery, erasure or compliance assurance. Synthetic evidence cannot settle consumer data/jurisdiction facts. |
+| Dependencies and evidence integrity | Offline checks complete | Seven unchanged graphs, three project/asset pairs, 19/29/42 manifest comparisons, same-leg case identities, actual coverage/binding and preserved tasks. No fresh advisory/license/bundle/runtime scan. |
+| Label/policy | Preservation only in ON-04 | Earlier ON-03 verdict and scan remain historical; current matching hashes do not recertify all prior or future behavior. |
+| Other code and integration | Excluded, not passed | Full-v4/G1-G6, label transport, registry/snapshots/concurrency/lifetime, scopes, reporting/privacy, file/fallback/recovery, framing/UTC, bridges, Microsoft conversion, non-Windows, package/release and deployed consumer assessments. |
+
+### Limits And Handoff
+
+No unresolved in-scope suspicion or new product question was found. No secret value
+was encountered in the selected source/metadata; that is not a repository/history
+absence claim. No real data, file-output fixture, network, cloud or database was used.
+No-setup Trace delivery and all-six automatic-file behavior remain unclaimed.
+
+- **Code Reviewer v2:** independent correctness assessment remains separate; no
+  correctness verdict is substituted here.
+- **Test Auditor v2:** the Ready TA-01 re-audit remains its own gate; this supporting
+  evidence read does not replace or reopen it.
+- **README Author v2 / Changelog Author v2:** document the approved native breaks and
+  limited implemented scope; neither full-v4 completion nor fresh package clearance.
+- **Repo Analyst v2:** the historical AGENTS target/dependency inventory is not current
+  package evidence; no unrelated cleanup is requested.
+- **Pipeline Auditor v2 / Azure Deployment Reviewer v2:** their respective secrets,
+  permissions and isolation surfaces were not reviewed.
+- **Parent:** combine this source-gate pass with the independent code review, remaining
+  document/example gates and final preservation/scope checks under the same target.
+  Any eventual checkpoint still requires the designated verification and sole operator.
+
+Later consumer and release reviews retain the previously stated classification,
+advisory/license/bundle/runtime and integration limits. They are not new M2-A blockers
+or permission for an excluded operation. **No security review is exhaustive.**

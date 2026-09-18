@@ -5,6 +5,10 @@ label policy. It translates accepted obligations into threats and review expecta
 it creates no new product requirements and passes no implementation security verdict.
 It is not a whole-Logger assessment, dependency audit, deployment assessment or release clearance.
 
+The [ON-04 M2-A extension](#on-04-m2-a-severity-boundaries) below adds native severity
+and argument-boundary design input. The preceding label/policy model retains its
+ON-03 historical checkpoint and statuses; this extension does not re-grade that work.
+
 ## Basis And Scope
 
 Opened sources are [SensitivityLabel.cs](../../ProphetsWay.Logger/SensitivityLabel.cs),
@@ -189,3 +193,134 @@ need separate implementation/evidence for the future crossings above. API Design
 has no HTTP workstream here; an exposure table would need revisiting only if a real
 external API is subsequently selected. No execution, dependency clearance or security
 verdict is established by authoring this document.
+
+## ON-04 M2-A Severity Boundaries
+
+**Design checkpoint: 2026-09-17.** This additive section supplies the owner-approved
+ON-04 revision-2 native M2-A input for independent C# contract review. Revision 2
+inherits revision 1 and the exact proposal's behavior; its task-path amendment grants
+this author no task or execution authority. Exact external provenance is in the run
+report. This is requirements input, not source approval, completed implementation,
+whole-v4 qualification or permission to publish the product.
+
+Reopened authority: [decision-log.md](../decision-log.md), D002, D007 and D010, and
+[requirements.md](../requirements.md), R-07/R-08. The owner ratification reads:
+"Accept all recommendations for items P01 thru P12, all of them as recommended."
+D002 also records: "for Critical we should require both an exception and message
+(where warn is optional exception, and error is optional message)". The native
+severity-only part of R-06/AC-06.2 and the narrow null/content compatibility from
+R-12/AC-12.1 apply; their remaining integration/rendering requirements are not imported.
+
+Opened source for the local controlling path:
+[LogLevels.cs](../../ProphetsWay.Logger/LogLevels.cs),
+[LoggingDestinationCore.cs](../../ProphetsWay.Logger/LoggingDestinationCore.cs),
+[Logger.cs](../../ProphetsWay.Logger/Logger.cs),
+[EventDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/EventDestination.cs),
+[GenericEventDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/GenericEventDestination.cs)
+and [TextBasedDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/TextBasedDestination.cs).
+These are pre-M2-A source observations, not evidence that the target is implemented:
+the core contains mask parsing, all-bits comparison and message/exception massage;
+ordinary Logger dispatch checks a destination before calling it; supplied event/text
+entrypoints independently reach massage and callback/print. The guard must therefore
+cover the supplied direct path as well as the Logger path. The matching
+[classification extension](data-classification.md#on-04-m2-a-field-extension) inventories
+the complete ordinary, typed, metadata and direct-recipient carriers.
+
+### Scoped Interview And Trust
+
+| Question | Answer for M2-A |
+| --- | --- |
+| Actors and authority | D013 places classification, recipient access/authentication and storage with the consuming developer/host. Synthetic producers, configurators and recording recipients exercise the selected boundary; an upstream-influenced producer is an abuse scenario, not an invented deployed principal. |
+| Tenancy and ownership | No tenant, business row or ownership lookup is added. Possession of a destination/event-argument reference permits its existing local operations; severity is not row authorization. Consumer-specific tenancy remains outside this slice. |
+| Topology and trust | Synchronous in-process library calls into consumer-selected recipients. A renderer, subscriber or custom implementation is executable code with host privileges, not a separate security sandbox. No server, transport, database or deployment is selected. |
+| Retention, erasure, consent and compliance | No new store or duration is selected; only synthetic evidence is authorized. D013 leaves real consumer duties undecided by this library. Those unknowns block consumer deployment/data certification, not native bit/argument contract review. |
+
+**Assumption S-A1:** Actual message, exception and metadata contents remain unbounded;
+provisional Confidential handling is precautionary, not identification of unseen PII
+or permission to log real data. A consumer's actual inventory/classification replaces
+it. No other actor, tenancy or topology assumption is needed for this in-process slice.
+Labels and severity values are neither authentication nor a sensitivity clearance.
+
+### Exact Contract Obligations
+
+Priority expresses consequence within this slice, not a finding against source.
+
+| Priority / ID | Required property and threat defended against | Trace |
+| --- | --- | --- |
+| 1 / S1 | Exact message bits are Critical=1, ErrorOnly=2, WarningOnly=4, InformationOnly=8, DebugOnly=16, TraceOnly=32. Inclusive masks Critical/Error/Warning/Information/Debug/Trace are 1/3/7/15/31/63. Remove Security/SecurityOnly; no CriticalOnly alias, replacement concern or compatibility wrapper. This prevents old numeric/name meaning from silently selecting different recipients. | D002; AC-07.1; ON-04 target 1. |
+| 1 / S2 | Destination masks accept every combination of known bits, including zero; accepted enum, integer, numeric-string and recognized case-sensitive name combinations have identical eligibility. Reject negatives, unsupported bits and malformed names with ordinary argument errors, never Information fallback. Named-enum membership is not bit validation. This prevents representation-dependent permission or permissive recovery. | D007; AC-08.1; target 2. |
+| 1 / S3 | Raw message masks are nonzero known-bit combinations; zero, negatives and unknown bits are argument errors. For valid masks, all requested bits must be present: `(messageMask & destinationMask) == messageMask`. Message 9 reaches 15, not 8. Destination zero is active reject-all, not a missing route or reason to restore fallback. This prevents invalid/overlap-only selection or bypass through denial recovery. | D002/D007; AC-07.2/AC-08.1; target 3. |
+| 1 / S4 | Ordinary, typed and metadata helpers emit the same exact bits and apply the same guards: Trace/Debug/Info/Warn reject null message; Error rejects null exception but permits absent message; Critical requires both. Empty/whitespace messages remain valid. Reject null destination registration inputs before side effects. Guards precede dispatch/fallback side effects. This prevents invalid calls from handing off payloads or reaching fallback setup. | D007; AC-08.2/AC-08.3; target 4. |
+| 1 / S5 | Supplied event, generic-event and text direct entrypoints validate the message mask and enforce destination eligibility before `MassageLogStatement`, recipient rendering, event callback or `PrintLogEntry`. A valid mismatch invokes none of them. This prevents a direct caller from bypassing the ordinary Logger check and exposing raw or rendered payloads. Arbitrary direct custom implementations are not sandboxed. | D010; AC-06.2, severity-only; target 3. |
+| 2 / S6 | Preserve permitted raw/direct absent message/exception values without fabricating content or dereferencing an absent exception. Supplied message and exception detail/context survive the changed ErrorOnly bit, warnings and valid composites. This prevents null-triggered failure or severity-dependent loss on otherwise permitted input. No new framing, timestamp or formatter system follows. | D007; narrow AC-08.2/AC-12.1; target 5. |
+| 2 / S7 | Typed metadata receives no new non-null restriction or mandatory metadata-interface constraint. Preserve existing label/policy contracts and namespaces; add no label integration, registry/snapshot/lifetime, failure-reporting/privacy API or bridge behavior. This prevents a severity correction from silently changing unrelated calling or exposure contracts. | D010; target 4 and preservation/exclusions. |
+
+Exact helper signatures, defaults, exception types and parameter names belong to the
+Interface Architect's bounded inventory and independent Contract Reviewer. This model
+sets no competing-error priority, exception-message syntax, string grammar beyond the
+approved recognized representations, payload content restriction or new security policy.
+Rejection-before-effects is an ordering obligation, not a priority among invalid arguments.
+
+### Crossings And Exposure
+
+| Boundary | Data flow | Required ownership/exposure rule |
+| --- | --- | --- |
+| SV1 | Configurator supplies a destination mask representation to the core; caller supplies a message mask to validation. | S2/S3 distinguish valid configuration, invalid input and normal mismatch. A validity/eligibility result proves neither identity nor authorization. |
+| SV2 | Ordinary/typed/metadata helper supplies exact severity, message, exception and optional typed value to dispatch; registration supplies a destination reference. | S4 applies before dispatch/fallback effects. The host selects who may configure recipients. Explicit reject-all remains present; denial does not authorize another output. No new registry policy is selected. |
+| SV3 | Logger or direct caller enters supplied event/generic-event/text `Log`, then massage, event arguments/callback or rendered text/`PrintLogEntry`. | S5 gates all recipient work before payload observation. After acceptance, the existing recipient may intentionally receive raw message/exception and typed metadata or rendered text; no redaction, deep clone, recipient authentication or downstream durability is promised. |
+
+| Entity/carrier | Permitted accepted exposure | Input-only or withheld part |
+| --- | --- | --- |
+| Destination configuration and message severity | Existing eligibility result and event `LogLevel`; approved severity names may appear in rendered text. | Constructor representation is configuration input, not a new exported property. Invalid input does not become eligible. |
+| Ordinary and generic `LoggerEventArgs` | `Message`, `RawMessage`, `Exception`, `LogLevel`, `Timestamp`; generic events also expose `Metadata` to their intended callback. Exception references can expose `Data` and nested causes even when massage only renders message/stack. | A rejected entry supplies none of these payloads through callback or recipient rendering. The caller already holding the originals is not deprived of them. |
+| Text record | Existing combined timestamp/level/message/exception text to the selected in-memory recording recipient. | No text reaches `PrintLogEntry` on rejection. No file/console output, framing promise or public API response is introduced. |
+
+No HTTP response, authenticated retrieval or server-only field exists here. Do not treat
+blanket serialization of event arguments as authorized: it would export raw diagnostics
+and arbitrary metadata as well as rendered text. D013 assigns such onward access to the
+consumer; an eligible severity does not establish that its contents are suitable for it.
+
+### Abuse Cases And STRIDE
+
+| Actor and goal | Path | Required defense or accepted limit |
+| --- | --- | --- |
+| Faulty or upstream-influenced configurator seeks a more permissive recipient. | Invalid name/negative/unknown bits or an unnamed valid composite at SV1. | S2 rejects invalid input consistently and accepts valid bit combinations without named-value or Information fallback. |
+| Caller seeks a recipient excluding part of the entry. | Message 9 against mask 8, zero raw mask, or direct `Log` avoiding Logger at SV1/SV3. | S3/S5 require valid nonzero message masks and all-bits permission before rendering/callback; zero destination rejects all. |
+| Producer causes work from a malformed helper/registration call. | Null required message/exception/destination reaches SV2, including an otherwise empty route. | S4 rejects before dispatch/fallback or registration effects. Tests must use explicit synthetic routes; the parent review checks ordering without executing fallback. |
+| Producer supplies a permitted absent exception or composite with content. | Shared massage at SV3 assumes an exception or only handles an old cumulative name. | S6 preserves supplied content and permitted absence; arbitrary consumer code remains executable and unbounded. |
+
+| Crossing | Spoofing | Tampering | Repudiation | Information disclosure | Denial of service | Elevation of privilege |
+| --- | --- | --- | --- | --- | --- | --- |
+| SV1 | A severity name is not an identity. | Equivalent bit validation; no permissive parse recovery. | Argument/result is not an audit record. | Configuration/results can reveal routing; no safe external diagnostic API. | Reject invalid masks; no new rate or size limit. | A valid mask grants no host, tenant or row privilege. |
+| SV2 | Helpers do not authenticate producers/recipients. | Exact bits and consistent argument guards precede effects. | No receipt, audit trail or durability promise. | Invalid arguments must not cause payload dispatch/fallback effects; metadata remains unbounded. | Do not turn null misuse into dispatch work; custom recursion/registry concurrency is outside this slice. | Selecting a route is not access authorization; no label-derived rights. |
+| SV3 | Callback identity is host-selected, not proven by eligibility. | Direct and dispatched calls apply the same all-bits rule before recipient work. | Callback/print return is not tamper-proof evidence. | Denied recipients get no raw/rendered entry; accepted callbacks retain deliberate raw exposure. | Null-safe compatibility avoids accidental absence failure; accepted renderers/subscribers are not sandboxed or time-bounded. | Direct custom overrides remain application responsibility; supplied guards do not isolate hostile in-process code. |
+
+The highest-consequence modeled exposure is an excluded direct recipient observing an
+unbounded raw exception graph or typed payload before severity rejection. The first
+required control is S5: validate and decide all-bits eligibility before any supplied
+recipient rendering/callback. This is a design risk, not a discovered exploit or a
+security verdict. Numeric validity cannot establish payload sensitivity or correctness.
+
+### Limits And Next Gate
+
+Breaking Security removal is accepted, as are composites, active reject-all, optional
+raw/direct content and unbounded consumer metadata. D013 assigns real-data classification
+and recipient/storage access to consumers; no further risk is accepted here. Existing
+label/policy facts and their ON-03 statuses above are not rewritten or re-certified.
+
+No file, fallback/recovery redesign, framing/UTC, failure reporting, privacy API, bridge,
+new collection/encoding input family or Microsoft conversion/None/ordinal work is included.
+No-setup Trace delivery and all-six automatic-file coverage remain unclaimed. Real user
+data, deployment, retention/erasure implementation and compliance certification remain
+out of scope. No new compliance obligation is inferred; the conditional consumer-data
+triggers described above still require actual data and jurisdictional/organizational facts.
+
+**Open Questions proposed for ON-04 M2-A:** None. Public helper signatures and ordinary
+argument exception details are the next contract author's bounded work, not new product
+questions. Consumer data/topology/retention decisions block only a later consumer assessment.
+
+Next: Interface Architect supplies the exact C# inventory, then independent Contract
+Reviewer checks it against S1-S7. Security Reviewer reviews actual implementation and
+fresh scoped evidence later, without transferring full-v4 requirements into this slice.
+No HTTP API Designer handoff is needed. This model ran no build/test and supplies no
+dependency, implementation, public-product or release clearance.

@@ -9,28 +9,49 @@ namespace ProphetsWay.Utilities
 	/// </summary>
 	public abstract class LoggingDestinationCore : IDestination
 	{
+		/// <summary>Creates a destination with the supplied severity mask.</summary>
+		/// <param name="reportingLevel">Any combination of known severity bits, from 0 through 63.</param>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="reportingLevel"/> contains an unknown bit or is negative.</exception>
+		/// <remarks>Zero is an active reject-all mask. Unnamed known-bit combinations are valid.</remarks>
 		public LoggingDestinationCore(LogLevels reportingLevel)
 		{
+			if ((reportingLevel & ~LogLevels.Trace) != 0)
+				throw new ArgumentOutOfRangeException(nameof(reportingLevel));
+
 			_reportingLevel = reportingLevel;
 		}
 
+		/// <summary>Creates a destination by parsing a case-sensitive severity mask.</summary>
+		/// <param name="strReportingLevel">A decimal integer or comma-separated recognized severity names.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="strReportingLevel"/> is null.</exception>
+		/// <exception cref="ArgumentException"><paramref name="strReportingLevel"/> cannot be parsed or represents a mask outside 0 through 63.</exception>
+		/// <remarks>Uses the case-sensitive Enum.TryParse grammar, including its whitespace handling. Zero rejects all messages; unnamed known-bit combinations are valid.</remarks>
 		public LoggingDestinationCore(string strReportingLevel)
 		{
-			_reportingLevel = ParseReportingLevel(strReportingLevel);   
+			_reportingLevel = ParseReportingLevel(strReportingLevel);
 		}
 
+		/// <summary>Creates a destination with the supplied integer severity mask.</summary>
+		/// <param name="intReportingLevel">Any combination of known severity bits, from 0 through 63.</param>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="intReportingLevel"/> contains an unknown bit or is negative.</exception>
+		/// <remarks>Zero is an active reject-all mask. No named enum constant is required.</remarks>
 		public LoggingDestinationCore(int intReportingLevel)
 		{
-			var strReportingLevel = Enum.GetName(typeof(LogLevels), intReportingLevel);
-			_reportingLevel = ParseReportingLevel(strReportingLevel);
+			if ((intReportingLevel & ~(int)LogLevels.Trace) != 0)
+				throw new ArgumentOutOfRangeException(nameof(intReportingLevel));
+
+			_reportingLevel = (LogLevels)intReportingLevel;
 		}
 
 		private LogLevels ParseReportingLevel(string strReportingLevel)
 		{
-			if (Enum.TryParse(strReportingLevel, out LogLevels reportinglevel))
-				return reportinglevel;
-			else
-				return LogLevels.Information;
+			if (strReportingLevel == null)
+				throw new ArgumentNullException(nameof(strReportingLevel));
+
+			if (!Enum.TryParse(strReportingLevel, out LogLevels reportingLevel) || (reportingLevel & ~LogLevels.Trace) != 0)
+				throw new ArgumentException("The reporting level must be a mask of known severity bits.", nameof(strReportingLevel));
+
+			return reportingLevel;
 		}
 
 		/// <summary>
@@ -41,36 +62,20 @@ namespace ProphetsWay.Utilities
 		private readonly LogLevels _reportingLevel;
 
 		/// <summary>
-		/// This method is meant to massage the statement to be logged, before it goes to the WriteLogEntry method.
-		/// It will extract the details from an exception and add them to the end of the message.
-		/// It is Virtual and can be overridden if you wish to customize how you handle writing the raw Log method call.
-		/// This method calls WriteLogEntry.
+		/// Combines the supplied context with exception messages and available stack traces.
 		/// </summary>
+		/// <param name="level">The validated, eligible message mask.</param>
+		/// <param name="message">Optional context, preserved without trimming or substitution.</param>
+		/// <param name="ex">Optional exception whose nested messages and available stacks are included.</param>
+		/// <returns>The original message, including null, when no exception is supplied; otherwise context and exception detail.</returns>
+		/// <remarks>Applies to every valid mask. This hook neither dispatches nor prints and does not add an independent mask guard.</remarks>
 		protected virtual string MassageLogStatement(LogLevels level, string message = null, Exception ex = null)
 		{
-			string exMessage, exStackTrace, massagedMessage = null;
+			if (ex == null)
+				return message;
 
-			switch (level)
-			{
-				case LogLevels.Error:
-					ExceptionDetailer(ex, out exMessage, out exStackTrace);
-					massagedMessage = $"{message}{Environment.NewLine}{exMessage}{Environment.NewLine}{exStackTrace}";
-					break;
-
-				case LogLevels.Warning:
-					if (ex != null)
-					{
-						ExceptionDetailer(ex, out exMessage, out exStackTrace);
-						massagedMessage = $"{message}{Environment.NewLine}{exMessage}{Environment.NewLine}{exStackTrace}";
-					}
-					break;
-
-				default:
-					massagedMessage = message;
-					break;
-			}
-
-			return massagedMessage;
+			ExceptionDetailer(ex, out string exceptionMessage, out string exceptionStackTrace);
+			return $"{message}{Environment.NewLine}{exceptionMessage}{Environment.NewLine}{exceptionStackTrace}";
 		}
 
 		/// <summary>
@@ -95,11 +100,17 @@ namespace ProphetsWay.Utilities
 
 
 		/// <summary>
-		/// Returns true if the messageLevel matches the level specified when the Destination was created.
+		/// Tests whether the destination includes every requested message bit.
 		/// </summary>
+		/// <param name="messageLevel">A nonzero combination of known severity bits, from 1 through 63.</param>
+		/// <returns>True when all message bits are accepted; false for a valid mismatch, including any message against destination mask zero.</returns>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="messageLevel"/> is zero, negative or contains an unknown bit.</exception>
+		/// <remarks>This query does not dispatch or change the captured mask or registration.</remarks>
 		public bool ValidateMessageLevel(LogLevels messageLevel)
 		{
-			//if the level of the message being passed is lower than the ReportingLevel set on the Destination, then return and don't log the message
+			if (messageLevel == 0 || (messageLevel & ~LogLevels.Trace) != 0)
+				throw new ArgumentOutOfRangeException(nameof(messageLevel));
+
 			return (messageLevel & _reportingLevel) == messageLevel;
 		}
 	}

@@ -11,6 +11,38 @@ that require one of the removed assets must move to a compatible `netstandard2.0
 The test project now exercises `net48` and `net10.0` with the refreshed xUnit v3 tooling. This changes
 the verification matrix, not the Logger runtime behavior.
 
+## Native severity and destination validation
+
+The native Logger severity model now has six exact bits: `Critical = 1`, `ErrorOnly = 2`,
+`WarningOnly = 4`, `InformationOnly = 8`, `DebugOnly = 16`, and `TraceOnly = 32`. Inclusive
+destination masks are `Error = 3`, `Warning = 7`, `Information = 15`, `Debug = 31`, and
+`Trace = 63`; a destination accepts a composite message only when it contains every requested bit.
+The three public `Security` helper forms have been removed. The Logger's internal `Log` helpers remain
+private, while `Log` on destination interfaces remains public for direct destination calls. There is
+no compatibility replacement for the removed `Security` names, so callers must select the new severity
+helper that matches their intent.
+
+The ordinary, metadata-typed, and metadata extension helper families now expose the six severity
+operations with exact-bit delivery and explicit argument requirements: `Trace`, `Debug`, `Info`, and
+`Warn` require a message; `Error` requires an exception and permits a missing message; `Critical`
+requires both. Existing callers should update removed helpers and any calls that relied on omitted
+arguments or on the former cumulative severity values.
+
+Destination masks supplied as enum values, integers, or recognized case-sensitive strings are now
+validated strictly. Values from 0 through 63 are representable, including unnamed combinations such
+as `9`; zero is a valid active reject-all destination mask. The new validation rejects invalid, negative,
+unsupported, malformed, or null inputs with argument errors; it does not imply that all such invalid
+forms previously shared one `Information` fallback. Destination eligibility continues to require every
+requested message bit, while the new raw and direct destination guards require a nonzero mask from 1
+through 63 and validate before callbacks or output. Valid calls preserve the original composite mask,
+message, metadata, and exception. Exception details are included for valid warnings and composites as
+well as errors, including when the raw message is null; no synthetic message or exception is fabricated.
+
+This is breaking for consumers that compile against the removed `Security` members or depend on the
+old enum numbers, permissive helper arguments, or inputs now rejected by strict validation. The current
+tree is an unreleased v4-direction change; this entry does not claim that the full v4 integration,
+automatic Trace/file behavior, Microsoft bridge, framing, or output-failure policy is complete.
+
 ## Sensitivity labels
 
 A new immutable `SensitivityLabel` reference type is available in `ProphetsWay.Utilities`. Create one
@@ -35,7 +67,8 @@ and null labels or undeclared modes are rejected with argument errors.
 
 This is a standalone policy API. It does not yet dispatch Logger entries, render or redact content,
 select fallback destinations, or provide confidentiality or security guarantees; callers must apply
-the Boolean result themselves. Existing Logger and destination behavior is unchanged.
+the Boolean result themselves. Because this is a standalone predicate, creating or evaluating it does
+not alter Logger or destination behavior.
 
 # v3.0.1
 ### Build target for Net 6.0

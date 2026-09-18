@@ -11,9 +11,15 @@ namespace ProphetsWay.Utilities
 		/// <summary>
 		/// Will add a new LoggingDestination to the pool of targets.  
 		/// </summary>
+		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
 		/// <param name="newDest">Either an existing or a custom Destination that implements the ILoggingDestination interface.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="newDest"/> is null.</exception>
+		/// <remarks>Null is rejected before registration effects. A reject-all destination remains an active registration.</remarks>
 		public static void AddDestination<T>(ILoggingDestination<T> newDest)
 		{
+			if (newDest == null)
+				throw new ArgumentNullException(nameof(newDest));
+
 			if (!Destinations.ContainsKey(typeof(T)))
 				Destinations.Add(typeof(T), new List<IDestination>());
 
@@ -58,52 +64,93 @@ namespace ProphetsWay.Utilities
 					dest.Log(level, metadata, message, ex);
 		}
 
-		/// <summary>
-		/// Shortcut method to Log a message with a LogLevel of 'Debug'
-		/// </summary>
-		/// <param name="message">The message you wish to convey in the log entry.</param>
+		/// <summary>Logs a typed message with the exact TraceOnly severity bit.</summary>
+		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
+		/// <param name="message">The required, non-null message.</param>
+		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> is null.</exception>
+		/// <remarks>Validates before dispatch or fallback effects. Empty and whitespace-only messages are preserved; metadata is not validated or transformed.</remarks>
+		public static void Trace<T>(string message, T metadata)
+		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			Log(LogLevels.TraceOnly, metadata, message);
+		}
+
+		/// <summary>Logs a typed message with the exact DebugOnly severity bit.</summary>
+		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
+		/// <param name="message">The required, non-null message.</param>
+		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> is null.</exception>
+		/// <remarks>Validates before dispatch or fallback effects. Empty and whitespace-only messages are preserved; metadata is not validated or transformed.</remarks>
 		public static void Debug<T>(string message, T metadata)
 		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
 			Log(LogLevels.DebugOnly, metadata, message);
 		}
 
-		/// <summary>
-		/// Shortcut method to Log a message with a LogLevel of 'Information'
-		/// </summary>
-		/// <param name="message">The message you wish to convey in the log entry.</param>
+		/// <summary>Logs a typed message with the exact InformationOnly severity bit.</summary>
+		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
+		/// <param name="message">The required, non-null message.</param>
+		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> is null.</exception>
+		/// <remarks>Validates before dispatch or fallback effects. Empty and whitespace-only messages are preserved; metadata is not validated or transformed.</remarks>
 		public static void Info<T>(string message, T metadata)
 		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
 			Log(LogLevels.InformationOnly, metadata, message);
 		}
 
-		/// <summary>
-		/// Shortcut method to Log a message with a LogLevel of 'Security'
-		/// </summary>
-		/// <param name="message">The message you wish to convey in the log entry.</param>
-		public static void Security<T>(string message, T metadata)
-		{
-			Log(LogLevels.SecurityOnly, metadata, message);
-		}
-
-		/// <summary>
-		/// Shortcut method to Log a message with a LogLevel of 'Warning'
-		/// </summary>
-		/// <param name="message">The message you wish to convey in the log entry.</param>
-		/// <param name="ex">Optional, pass if you have an exception you want to add to the log entry.</param>
+		/// <summary>Logs a typed message with the exact WarningOnly severity bit.</summary>
+		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
+		/// <param name="message">The required, non-null message.</param>
+		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
+		/// <param name="ex">Optional exception; omitted or null is valid.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> is null.</exception>
+		/// <remarks>Validates before dispatch or fallback effects. Empty and whitespace-only messages and supplied references are preserved; metadata is not validated or transformed.</remarks>
 		public static void Warn<T>(string message, T metadata, Exception ex = null)
 		{
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
 			Log(LogLevels.WarningOnly, metadata, message, ex);
 		}
 
-		/// <summary>
-		/// Shortcut method to Log a message with a LogLevel of 'Error'
-		/// </summary>
-		/// <param name="ex">Required, pass the exception you want to convey in the log entry.</param>
-		/// <param name="message">Optional, if no message is passed, the Exception message will still be written to the log.  
-		/// If you want to add more context to the error, you can enter it in the message.</param>
+		/// <summary>Logs a typed exception with the exact ErrorOnly severity bit.</summary>
+		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
+		/// <param name="ex">The required, non-null exception.</param>
+		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
+		/// <param name="message">Optional context; omitted or null is valid.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="ex"/> is null.</exception>
+		/// <remarks>Validates before dispatch or fallback effects. Absent raw context stays null; supplied text and references are preserved without metadata validation or transformation.</remarks>
 		public static void Error<T>(Exception ex, T metadata, string message = null)
 		{
-			Log(LogLevels.Error, metadata, message, ex);
+			if (ex == null)
+				throw new ArgumentNullException(nameof(ex));
+
+			Log(LogLevels.ErrorOnly, metadata, message, ex);
+		}
+
+		/// <summary>Logs a typed exception and context with the exact Critical severity bit.</summary>
+		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
+		/// <param name="ex">The required, non-null exception.</param>
+		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
+		/// <param name="message">The required, non-null context.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="ex"/> or <paramref name="message"/> is null.</exception>
+		/// <remarks>Validates before dispatch or fallback effects. Empty and whitespace-only context and supplied references are preserved without metadata validation or transformation. No priority is promised when both required values are null.</remarks>
+		public static void Critical<T>(Exception ex, T metadata, string message)
+		{
+			if (ex == null)
+				throw new ArgumentNullException(nameof(ex));
+			if (message == null)
+				throw new ArgumentNullException(nameof(message));
+
+			Log(LogLevels.Critical, metadata, message, ex);
 		}
 	}
 }

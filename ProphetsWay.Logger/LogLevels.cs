@@ -1,53 +1,35 @@
-using System;
-
 namespace ProphetsWay.Utilities
 {
-    [Flags]
-    public enum LogLevels{
-        //The original levels are meant to be used and allow for fall-thru of log messages
-        /// <summary>
-        /// Only 'Error' level messages will log to destinations with this setting.
-        /// </summary>
-        Error           = 0b000001,     //1
-
-        /// <summary>
-        /// 'Warning' and 'Error' level messages will log to destinations with this setting.
-        /// </summary>
-        Warning         = 0b000011,     //3,
-
-        /// <summary>
-        /// 'Security', 'Warning', and 'Error' level messages will log to destinations with this setting.
-        /// </summary>
-        Security        = 0b000111,     //7,
-
-        /// <summary>
-        /// 'Information', 'Security', 'Warning', and 'Error' level messages will log to destinations with this setting.
-        /// </summary>
-        Information     = 0b001111,     //15,
-
-        /// <summary>
-        /// All message levels will log to destinations with this setting.
-        /// </summary>
-        Debug           = 0b011111,     //31
-
-        /// <summary>
-        /// Only 'Debug' level messages will log to destinations with this setting.
-        /// </summary>
-        DebugOnly       = 0b010000,     //16
-
-        /// <summary>
-        /// Only 'Information' level messages will log to destinations with this setting.
-        /// </summary>
-        InformationOnly = 0b001000,     //8
-
-        /// <summary>
-        /// Only 'Security' level messages will log to destinations with this setting.
-        /// </summary>
-        SecurityOnly    = 0b000100,     //4
-
-        /// <summary>
-        /// Only 'Warning' level messages will log to destinations with this setting.
-        /// </summary>
-        WarningOnly     = 0b000010      //2
-    }
+	/// <summary>Identifies native message severity bits and destination masks.</summary>
+	/// <remarks>
+	/// Helpers emit one exact bit. Raw messages may combine known bits but cannot be zero.
+	/// Destination masks may combine known bits, including zero to reject every message.
+	/// Eligibility requires every message bit, not merely an overlapping bit.
+	/// </remarks>
+	[System.Flags]
+	public enum LogLevels : int
+	{
+		/// <summary>Exact Critical bit; destination accepts Critical only.</summary>
+		Critical = 1,
+		/// <summary>Exact Error bit; destination accepts Error only.</summary>
+		ErrorOnly = 2,
+		/// <summary>Exact Warning bit; destination accepts Warning only.</summary>
+		WarningOnly = 4,
+		/// <summary>Exact Information bit; destination accepts Information only.</summary>
+		InformationOnly = 8,
+		/// <summary>Exact Debug bit; destination accepts Debug only.</summary>
+		DebugOnly = 16,
+		/// <summary>Exact Trace bit; destination accepts Trace only.</summary>
+		TraceOnly = 32,
+		/// <summary>Destination accepts Critical and Error bits.</summary>
+		Error = 3,
+		/// <summary>Destination accepts Critical, Error and Warning bits.</summary>
+		Warning = 7,
+		/// <summary>Destination accepts Critical through Information bits.</summary>
+		Information = 15,
+		/// <summary>Destination accepts Critical through Debug bits.</summary>
+		Debug = 31,
+		/// <summary>Destination accepts all six severity bits.</summary>
+		Trace = 63
+	}
 }
