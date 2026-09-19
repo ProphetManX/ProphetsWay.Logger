@@ -324,3 +324,120 @@ Reviewer checks it against S1-S7. Security Reviewer reviews actual implementatio
 fresh scoped evidence later, without transferring full-v4 requirements into this slice.
 No HTTP API Designer handoff is needed. This model ran no build/test and supplies no
 dependency, implementation, public-product or release clearance.
+
+## M2-B Explicit Registration Membership
+
+**Design checkpoint: 2026-09-18. Stage: SHAPE.** Additive input for independent C#
+contract review against M2-B revision 2, inheriting revision 1. The setup amendment
+changes no behavior; approved task setup is not an unexplained baseline change or
+authority for this author to execute tasks. Earlier ON-03/ON-04 assessments retain
+their dates and scope. No implementation verdict or acceptance expansion follows.
+
+Reopened [decision-log.md](../decision-log.md), D005/D006/D010/D013, and
+[requirements.md](../requirements.md), AC-09.1, AC-10.1-3 and the borrowed-resource
+part of AC-11.1. D005 states "Ordinary and exact declared-metadata-type routes are
+independent" and "Reject duplicate same-instance registration on one route; allow
+the same object on distinct compatible routes". D006 states "Explicitly supplied
+destinations, factories and loggers are borrowed. Removal never disposes them".
+Only explicit destination membership is modeled here, not factories or bridges.
+
+Read completely for this boundary: [Logger.cs](../../ProphetsWay.Logger/Logger.cs),
+[Generics/Logger.cs](../../ProphetsWay.Logger/Generics/Logger.cs),
+[LoggingDestinationCore.cs](../../ProphetsWay.Logger/LoggingDestinationCore.cs),
+[IDestination.cs](../../ProphetsWay.Logger/IDestination.cs),
+[ILoggingDestination.cs](../../ProphetsWay.Logger/ILoggingDestination.cs) and
+[Generics/ILoggingDestination.cs](../../ProphetsWay.Logger/Generics/ILoggingDestination.cs).
+They establish the registration, eligibility and raw-callback carriers, not proof
+that M2-B is implemented. The ordinary route key and typed `typeof(T)` selection
+make metadata declared as `ILoggingDestination` an explicit review case. Source
+also forwards an unconfigured typed route to ordinary logging: that fallback is
+excluded and unqualified, not evidence of whole-route independence.
+
+### Interview And Boundary Flows
+
+Actors are the consuming configurator/host, producers and selected destination
+implementations. D013 assigns recipient access/authentication and real-data handling
+to consumers. Custom eligibility/callback code runs with host-process privileges;
+it is not sandboxed. Topology is synchronous in-process registration and dispatch.
+No tenant, authenticated principal, business row, endpoint or deployment is added.
+Consumer tenancy, retention, erasure, consent and compliance decisions block only
+a future consumer assessment, not this membership contract. No such decision is
+invented. **Assumption M-B1:** opaque message/exception/metadata contents remain
+unbounded and provisionally Confidential; an actual consumer inventory replaces
+this precaution, not a benign synthetic example.
+
+| Boundary | Flow and authorization/exposure responsibility |
+| --- | --- |
+| MB1 | Host adds/removes a recipient reference or clears one explicit route. Private registry membership is selected by ordinary route kind or exact declared `T`. Host controls who may configure it; reference possession is not authentication. No public registry retrieval/serialization API is added. |
+| MB2 | A producer call captures the route's complete ordered membership before executing eligibility. That membership, not a mutable live list, controls this call. The captured reference holder may still attempt a recipient removed afterward; this is not an access-revocation barrier. |
+| MB3 | Dispatch supplies severity to `ValidateMessageLevel`; after accepted eligibility it hands original message/exception and, for typed calls, metadata to `Log`. Eligibility/callback code may mutate MB1 or recursively enter MB2 as a new call. Host controls recipient trust and quiesces users before disposing borrowed resources. |
+
+### Required Membership Obligations
+
+Priority ranks modeled consequence, not current-code findings. These obligations
+specialize accepted behavior only; exact ordinary exception details remain D010's
+contract-author/reviewer work.
+
+| Priority / ID | Required property and threat defended against | Trace |
+| --- | --- | --- |
+| 1 / MB-R1 | Keep ordinary membership distinct from every exact declared metadata type, including `ILoggingDestination` and other destination-contract types. Neither runtime subtype nor assignability redirects a typed call. Prevents raw payload handoff to a different explicit route through identity aliasing. | D005; AC-09.1; target r1 independent-route rule, inherited by r2. |
+| 1 / MB-R2 | Atomically publish and capture one complete ordered membership: concurrent captures see a complete old or new state, never a partly changed list. Capture finishes before the first eligibility/callback invocation; later iteration uses that membership in insertion order, synchronously. Prevents torn selection, skipped/added recipients within one call and mutation-invalidated iteration. | D005; AC-10.1/AC-10.2; target complete-snapshot rule. |
+| 1 / MB-R3 | Coordinate registry writers without retaining registry locks across eligibility or callbacks. Registry identity operations must not invoke user equality/hashing at all. Prevents caller-controlled blocking/reentry from holding registry coordination or changing the identity decision. This does not constrain destination-owned locks. | D005; R-10; target lock and reference-identity rules. |
+| 1 / MB-R4 | Add/remove use reference identity. Refuse the same instance twice on one route before mutation; distinct equal-valued objects remain distinct, and the same object may occupy distinct compatible routes. Absent removal is a no-op; clear is route-scoped. Prevents equality-based substitution/removal and duplicate fanout on one route, without inventing cross-route deduplication. | D005; AC-10.3; target duplicate/removal rules. |
+| 1 / MB-R5 | Mutation returns after publication, not after old calls drain. Add/remove/clear/self-removal from eligibility/callback code affects later captures only; the current call keeps its captured membership. Recursive user logging captures anew and is not blanket-suppressed. Prevents self-wait and mid-call membership rewriting. No total order across threads or serialized callers is promised. | D005; AC-10.1-3; target callback/recursion rules. |
+| 1 / MB-R6 | Removal and clear never dispose borrowed recipients, including objects shared across routes. Captured calls may finish after removal returns; hosts stop producers and await synchronous calls before disposal. Prevents invalidating a still-used or independently owned recipient. No public drain, immediate revocation, owned-resource retirement or asynchronous completion guarantee is added. | D006; borrowed part of AC-11.1; target non-disposal rule. |
+| 2 / MB-R7 | Preserve severity/helper validation, rejection of null add before effects, existing null-removal behavior and original payload identity. Supplied destination masks remain immutable. Membership immutability does not freeze arbitrary custom state, metadata or exception graphs; add no public settings/replacement API. Prevents a registry change from silently changing payload or guard contracts. | Target preservation rules; D010; existing ON-04 obligations remain separately dated. |
+
+### Exposure And Abuse Cases
+
+| Carrier | Permitted local response/handoff | Input-only or non-exposure limit |
+| --- | --- | --- |
+| Route identity and recipient registration | Existing eligibility result; intentional execution of the selected recipient. | Add/remove references and declared type are control inputs, not new response fields. Mutable registry backing and lock objects must not escape as public state. |
+| Ordered captured membership | Internal dispatch retains the selected borrowed references for the call. | No public snapshot/list API; removal is neither payload erasure nor cancellation of that captured handoff. |
+| Severity, message, exception graph and typed metadata | The selected eligible callback intentionally receives the original permitted values/references. | Eligibility receives severity, not a new payload-inspection API. Preserve existing severity guards; no label gate, redaction or external response contract is introduced. |
+
+No authenticated row retrieval or server-only entity exists. Blanket serialization
+of a recipient, metadata object or exception graph is not authorized by registration;
+it can expose unbounded contents. The [field extension](data-classification.md#m2-b-membership-field-extension)
+records the control carriers and unchanged raw-data boundary.
+
+| Actor and goal | Abuse path | Required defense or accepted limit |
+| --- | --- | --- |
+| Faulty or motivated in-process configurator seeks cross-route delivery. | Uses destination-interface metadata or a runtime subtype to alias another explicit route at MB1/MB2. | MB-R1 separates route kind/exact declared type; no tenant-isolation claim. |
+| Custom recipient seeks to substitute/remove another instance or multiply attempts. | Overrides equality/hash or repeats its reference at MB1. | MB-R3/MB-R4 avoid user equality, refuse same-route duplicate references and remove only the named instance. |
+| Recipient mutates membership during delivery to affect the remaining call. | Adds/removes/clears itself or another recipient, or recursively logs, at MB3. | MB-R2/MB-R5 preserve the old complete capture and give new calls fresh captures. |
+| Blocking/reentrant eligibility or callback code stalls registry changes. | Waits for another writer or reenters registration while MB3 executes. | MB-R3 releases registry coordination first. Arbitrary code may still block its own caller or recurse without bound; no sandbox, timeout or quota is added. |
+| Host treats removal as immediate revocation/disposal permission. | Disposes a recipient while an older MB2 capture still holds it, including on another route. | MB-R6 requires host quiescence and library non-disposal; old captured delivery remains deliberately permitted. |
+
+### STRIDE And Review Limits
+
+| Crossing | Spoofing | Tampering | Repudiation | Information disclosure | Denial of service | Elevation of privilege |
+| --- | --- | --- | --- | --- | --- | --- |
+| MB1 | Reference identity is not principal proof. | MB-R1/MB-R4 prevent route/equality substitution. | No registration audit trail added. | Registry topology is Internal, not approved export. | No user equality under or outside registry coordination. No quota promised. | Configurator already has host access; no new permission system. |
+| MB2 | Declared type is routing, not caller identity. | MB-R2 captures complete ordered membership. | Snapshot/order is not a delivery receipt or tamper-proof audit. | A removed recipient in an old capture may still receive data. | Brief writer coordination; no drain wait or serialized callers. | No row or tenant authorization follows from route selection. |
+| MB3 | Host selects callback code; severity does not authenticate it. | Preserve guards and payload identity; custom state is not frozen. | Callback return proves no remote durability. | Raw graphs remain intentionally readable by eligible recipients, not redacted. | MB-R3/MB-R5 avoid registry-lock/self-drain coupling; custom blocking/recursion remains unbounded. | Same-process consumer code is not isolated or deprived of references it already holds. |
+
+Highest-consequence modeled exposure: route aliasing or torn membership directs an
+unbounded raw payload to an unintended explicit recipient. The first required control
+is MB-R1's distinct ordinary/exact-type identity, exercised together with MB-R2's
+complete capture before user code. This is a design risk, not an implementation finding.
+
+D005 accepts captured-call completion, synchronous reentry and no cross-thread order;
+D006 leaves borrowed-resource quiescence with the host; D013 leaves consumer access,
+classification and storage with that consumer. No additional risk is accepted here.
+Unconfigured typed-to-ordinary fallback is explicitly unqualified and must not be
+exercised by this slice's tests. Label integration, settings APIs, owned retirement,
+files/fallback operations, bridges, reporting redesign and full-route independence
+remain deferred. No real data, release or whole-system assurance is claimed.
+
+No compliance regime is inferred. Actual identifiable-person payloads plus applicable
+jurisdictional/organizational facts would require a consumer privacy assessment;
+which persons' data, jurisdictions and processing role are involved would settle it.
+Removal is not erasure of retained recipient/producer copies. Data minimization and
+consumer storage protections cannot be replaced by registration identity.
+
+**Open Questions proposed for M2-B:** None. No actor, tenancy or policy unknown blocks
+this in-process slice. Next gate is independent Contract Reviewer against MB-R1-7
+after the contract author fixes the mechanical C# details. Security Reviewer compares
+actual implementation and fresh scoped evidence later. No HTTP API Designer work is
+introduced, and no test execution or implementation verdict is supplied here.

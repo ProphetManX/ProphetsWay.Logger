@@ -6,43 +6,76 @@ namespace ProphetsWay.Utilities
 {
 	public static partial class Logger
 	{
-		private static readonly IDictionary<Type, IList<IDestination>> Destinations = new Dictionary<Type, IList<IDestination>>();
+		private static readonly IDictionary<Type, List<IDestination>> Destinations = new Dictionary<Type, List<IDestination>>();
 
 		/// <summary>
-		/// Will add a new LoggingDestination to the pool of targets.  
+		/// Registers a borrowed destination at the end of the explicit route for exactly T.
 		/// </summary>
-		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
-		/// <param name="newDest">Either an existing or a custom Destination that implements the ILoggingDestination interface.</param>
+		/// <typeparam name="T">The unconstrained declared metadata type identifying this route.</typeparam>
+		/// <param name="newDest">The non-null compatible destination instance to register.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="newDest"/> is null.</exception>
-		/// <remarks>Null is rejected before registration effects. A reject-all destination remains an active registration.</remarks>
+		/// <exception cref="ArgumentException">The same reference is already registered on this exact route; ParamName is "newDest".</exception>
+		/// <remarks>
+		/// Null and duplicate rejection leave membership unchanged. Identity never uses user equality or hashing.
+		/// Ordinary and other declared-type routes are independent; compatible cross-route reuse is allowed.
+		/// Publication completes before return without draining captured calls or invoking recipient code.
+		/// A reject-all destination remains an active registration; custom recipient state is not frozen.
+		/// </remarks>
 		public static void AddDestination<T>(ILoggingDestination<T> newDest)
 		{
 			if (newDest == null)
 				throw new ArgumentNullException(nameof(newDest));
 
-			if (!Destinations.ContainsKey(typeof(T)))
-				Destinations.Add(typeof(T), new List<IDestination>());
+			lock (DestinationLock)
+			{
+				if (!Destinations.TryGetValue(typeof(T), out var destinations))
+				{
+					destinations = new List<IDestination>();
+					Destinations.Add(typeof(T), destinations);
+				}
 
-			Destinations[typeof(T)].Add(newDest);
+				if (destinations.Exists(destination => ReferenceEquals(destination, newDest)))
+					throw new ArgumentException("The destination is already registered on this route.", nameof(newDest));
+
+				destinations.Add(newDest);
+			}
 		}
 
 		/// <summary>
-		/// If you retain a reference to your LoggingDestination, you can remove it from the pool of targets.
+		/// Removes a borrowed destination reference from the explicit route for exactly T.
 		/// </summary>
-		/// <param name="destToRemove">Either an existing or a custom Destination that implements the ILoggingDestination interface; must have already been added to the pool via "AddDestination".</param>
+		/// <typeparam name="T">The unconstrained declared metadata type identifying this route.</typeparam>
+		/// <param name="destToRemove">The exact instance to remove. Null or an absent instance is a no-op.</param>
+		/// <remarks>
+		/// Uses reference identity, preserves survivor order and leaves every other route unchanged.
+		/// Never invokes or disposes the recipient. Returns after publication, not draining older captures.
+		/// Hosts must stop producers and await synchronous calls before disposing borrowed recipients.
+		/// </remarks>
 		public static void RemoveDestination<T>(ILoggingDestination<T> destToRemove)
 		{
-			if (Destinations.ContainsKey(typeof(T)))
-				Destinations[typeof(T)].Remove(destToRemove);
+			lock (DestinationLock)
+			{
+				if (Destinations.TryGetValue(typeof(T), out var destinations))
+					destinations.RemoveAll(destination => ReferenceEquals(destination, destToRemove));
+			}
 		}
 
 		/// <summary>
-		/// Resets the pool of targets, removes any/all Destinations that have been added.
+		/// Clears explicit membership for exactly T without changing any other route.
 		/// </summary>
+		/// <typeparam name="T">The unconstrained declared metadata type identifying this route.</typeparam>
+		/// <remarks>
+		/// An unconfigured or empty route is a no-op. Never invokes or disposes borrowed recipients.
+		/// Older captures retain their ordered references and may finish after publication returns.
+		/// This is not a drain or a guarantee about subsequent unconfigured-route logging.
+		/// </remarks>
 		public static void ClearDestinations<T>()
 		{
-			if (Destinations.ContainsKey(typeof(T)))
-				Destinations[typeof(T)].Clear();
+			lock (DestinationLock)
+			{
+				if (Destinations.TryGetValue(typeof(T), out var destinations))
+					destinations.Clear();
+			}
 		}
 
 		/// <summary>
@@ -51,15 +84,28 @@ namespace ProphetsWay.Utilities
 		/// <param name="level">The severity level of the log statement.</param>
 		/// <param name="message">The message you wish to convey in the log entry.</param>
 		/// <param name="ex">Optional, pass if you have an exception you want to add to the log entry.</param>
+		/// <remarks>
+		/// Captures complete ordered membership for declared T before eligibility, never by runtime metadata type.
+		/// User code runs outside registry coordination; mutations affect later captures and recursion captures anew.
+		/// Payloads and custom recipient state are not cloned. Existing unconfigured fallback remains unqualified.
+		/// </remarks>
 		private static void Log<T>(LogLevels level, T metadata, string message, Exception ex = null)
 		{
-			if (!Destinations.ContainsKey(typeof(T)) || Destinations[typeof(T)].Count == 0)
+			IDestination[] destinations;
+			lock (DestinationLock)
+			{
+				destinations = Destinations.TryGetValue(typeof(T), out var route)
+					? route.ToArray()
+					: Array.Empty<IDestination>();
+			}
+
+			if (destinations.Length == 0)
 			{
 				Log(level, message, ex);
 				return;
 			}
 
-			foreach (ILoggingDestination<T> dest in Destinations[typeof(T)])
+			foreach (ILoggingDestination<T> dest in destinations)
 				if (dest.ValidateMessageLevel(level))
 					dest.Log(level, metadata, message, ex);
 		}

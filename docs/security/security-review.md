@@ -440,3 +440,93 @@ No-setup Trace delivery and all-six automatic-file behavior remain unclaimed.
 Later consumer and release reviews retain the previously stated classification,
 advisory/license/bundle/runtime and integration limits. They are not new M2-A blockers
 or permission for an excluded operation. **No security review is exhaustive.**
+
+## M2-B Explicit Membership
+
+_Reviewed 2026-09-18 EDT against [MB-R1-7](threat-model.md#m2-b-explicit-registration-membership)
+and the [membership classification](data-classification.md#m2-b-membership-field-extension).
+Acceptance revision 2 inherits revision 1 unchanged. Earlier assessments retain their dates._
+
+### Scoped Verdict And Findings
+
+**Accept: no blocking issues found in the two-partial explicit-membership implementation.**
+All seven assigned threat obligations were reached; none was found unmet. **Critical 0,
+High 0, Medium 0, Low 0, Informational 0.** No correction, waiver or new policy is proposed.
+This is a source-security verdict, not whole-Logger, dependency, full-v4 or release clearance.
+
+Read both complete production partials below, the generated implementation diff and
+before/after comparisons, reviewed S1-S6/B01-B22 contract and independent contract review,
+test re-audit/frozen binding, relevant synthetic tests, and the parent's independently
+rerun final records. The core mask declaration was reopened for preservation evidence.
+No command, test, hash computation, advisory query, live operation or subagent ran here.
+
+### Control Assessment
+
+| Obligation | Source evidence and assessment |
+| --- | --- |
+| MB-R1: explicit recipient isolation | [Logger.cs](../../ProphetsWay.Logger/Logger.cs#L9) owns a separate ordinary list; [Generics/Logger.cs](../../ProphetsWay.Logger/Generics/Logger.cs#L31) uses only `typeof(T)` keys. Destination-interface metadata cannot alias the ordinary list. No runtime metadata inspection or assignability search selects another explicit route. |
+| MB-R2: complete ordered capture | [Ordinary capture](../../ProphetsWay.Logger/Logger.cs#L84) and [typed capture](../../ProphetsWay.Logger/Generics/Logger.cs#L95) call `ToArray()` under the same private lock used by every writer. Iteration reads the detached array, not a live list, before/after mutations. Append and reference-removal preserve insertion/survivor order. |
+| MB-R3: no user code under registry coordination | [Ordinary loop](../../ProphetsWay.Logger/Logger.cs#L98) and [typed loop](../../ProphetsWay.Logger/Generics/Logger.cs#L108) invoke eligibility and callbacks after leaving the lock. Writer predicates call only `ReferenceEquals`; no recipient equality, hashing, formatting, eligibility or callback executes inside registry operations. Runtime `typeof(T)` keys do not invoke recipient-defined identity. |
+| MB-R4: reference identity and route-scoped mutation | [Ordinary add/remove](../../ProphetsWay.Logger/Logger.cs#L24) and [typed add/remove](../../ProphetsWay.Logger/Generics/Logger.cs#L24) coordinate duplicate detection and mutation under one lock. Exact `ArgumentException` naming `newDest` precedes duplicate insertion; equal-but-distinct references coexist. Null/absent remove is a no-op. Each clear touches only its selected list; no cross-route deduplication or disposal appears. |
+| MB-R5: publication, reentry and old captures | [Ordinary dispatch](../../ProphetsWay.Logger/Logger.cs#L81) and [typed dispatch](../../ProphetsWay.Logger/Generics/Logger.cs#L92) retain their local arrays while callbacks mutate membership. Mutations never wait for delivery to drain. Recursive logging enters a new capture; no blanket recursion suppression, caller serialization or global delivery order is introduced. |
+| MB-R6: borrowed lifetime | [Ordinary removal/clear](../../ProphetsWay.Logger/Logger.cs#L47) and [typed removal/clear](../../ProphetsWay.Logger/Generics/Logger.cs#L54) only change membership. They never call `Dispose`, including for shared recipients. Older captures can still hand off after removal returns. The host must quiesce synchronous users before disposal; removal is not immediate revocation or erasure. |
+| MB-R7: preserved raw-data gates | Both complete helper families retain required-null guards and exact severity forwarding. Both loops test `ValidateMessageLevel` before passing original message/exception/metadata to `Log`; rejected explicit membership does not become an empty route. Null add precedes mutation. [Core mask](../../ProphetsWay.Logger/LoggingDestinationCore.cs#L62) remains readonly. No public settings API, payload clone, redaction or arbitrary custom-state freeze is added. |
+
+MB1 configuration and MB2 topology remain private process state, not authentication.
+MB3 intentionally exposes original permitted payloads to the selected eligible callback.
+The model's provisional Confidential classification for unbounded message, exception
+and metadata contents remains applicable; synthetic examples do not downgrade it.
+Duplicate errors use fixed text/parameter names without serializing the recipient.
+Consumer callbacks can still block, recurse, throw, retain or export payloads with
+host-process privileges. D005/D006/D013 accept these boundaries, not a sandbox guarantee.
+
+### Supporting Evidence
+
+Opened [identity and capture tests](../../ProphetsWay.Logger.Test/LoggerTests.cs#L312),
+including hostile equality, callback clear, recursive capture, paused user code and
+competing writers; and [cross-route tests](../../ProphetsWay.Logger.Test/GenericLoggerTests.cs#L288),
+including the repaired typed-removal witness and declared-type routing. Existing
+[ordinary raw-handoff](../../ProphetsWay.Logger.Test/LoggerTests.cs#L279) and
+[typed raw-handoff](../../ProphetsWay.Logger.Test/GenericLoggerTests.cs#L253) cases use
+unconditional recorders, so built-in self-filtering cannot conceal a dispatch bypass.
+
+The parent's final summary at **2026-09-19 01:56:29 UTC** and corresponding input,
+net48 and net10.0 records report **320 executed/passed, 0 failed/skipped per Windows
+leg**, original 300 outcomes preserved, frozen 320 identities unchanged, and 69/69
+inputs stable during execution. The before/after comparisons identify only the two
+permitted production changes, unchanged helper tails and public signatures. Source
+hashes in those records agree with the parent's final manifest. This leaf consumed
+those generated comparisons; it did not independently recompute hashes or parse TRXs.
+The parent's recorded asset binding and ten in-memory README compilations are supporting
+execution evidence, not proof of every interleaving or later documentation content.
+
+### Dependencies And Coverage
+
+**No fresh vulnerability scan ran:** commands/network are outside this bounded target.
+The supplied offline comparisons include unchanged project and restored package inputs;
+input equality is not advisory freshness. ON-03's dated scan and historical S01-S04
+dispositions above remain unchanged, as do the dated bundled-component/license limits.
+No new package, advisory, license, runtime or publication clearance is claimed.
+
+| Area | Reviewed | Limit |
+| --- | --- | --- |
+| Misrouting, substitution and access boundary | Complete MB-R1/3/4 source assessment | Exact explicit routes only; no principal, tenant, endpoint or consumer authorization certification. |
+| Captures, races and user-code coordination | Complete MB-R2/3/5 source assessment | Bounded supporting tests, not exhaustive schedules, fairness, quotas or hostile-code isolation. |
+| Borrowed resources and raw disclosure | Complete MB-R6/7 source assessment | No drain, revocation, erasure, custom-state immutability or permission to export raw graphs. |
+| Injection, secrets, cryptography and deserialization | Changed registration/dispatch paths inspected | No new such sink/mechanism or secret literal found; no repository/history scan or downstream sink assessment. |
+| Sessions, audit and compliance | Boundary assessed; no new mechanism present | No auth/session, durable audit, retention or real-data compliance claim. |
+| Dependency and execution evidence | Supplied offline records read | No fresh scan, command execution or independently recomputed content/binary binding. |
+| Other implementation and integration | Excluded, not passed | Unconfigured typed-to-ordinary and automatic-file paths, label integration, reporting, files/fallback, bridges, owned retirement, full-v4 and release. |
+
+### Limits And Handoff
+
+No unresolved in-scope suspicion or secret value was found in the inspected slice.
+No new owner question is needed. Existing unconfigured forwarding at
+[typed empty-route dispatch](../../ProphetsWay.Logger/Generics/Logger.cs#L102) and
+[ordinary automatic-file setup](../../ProphetsWay.Logger/Logger.cs#L89) remains expressly
+excluded and unqualified, not certified by the explicit-route verdict.
+Code Reviewer v2 retains correctness/concurrency review; Test Auditor v2 retains
+specification quality. The parent must verify the combined document scope and final
+preservation checks; this verdict substitutes for neither those gates nor publication
+authority. Later consumer/release reviews retain advisory, data-handling and integration
+work outside this target. **No security review is exhaustive.**

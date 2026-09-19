@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
@@ -282,6 +283,129 @@ namespace ProphetsWay.Logger.Test
                 Utilities.Logger.RemoveDestination(rejected);
                 Utilities.Logger.RemoveDestination(accepted);
             }
+        }
+
+        [Fact]
+        public void ShouldKeepDestinationContractRouteIndependentAndBorrowCrossRouteRecipients()
+        {
+            var shared = new RouteRecipient<ILoggingDestination>();
+            var ordinarySentinel = new RouteRecipient<ILoggingDestination>();
+            var typedSentinel = new RouteRecipient<ILoggingDestination>();
+            try
+            {
+                Utilities.Logger.ClearDestinations();
+                Utilities.Logger.ClearDestinations<ILoggingDestination>();
+                Utilities.Logger.AddDestination((ILoggingDestination)shared);
+                Utilities.Logger.AddDestination<ILoggingDestination>(shared);
+                shared.ValidationCalls.ShouldBe(0);
+                Utilities.Logger.Debug("ordinary");
+                Utilities.Logger.Debug<ILoggingDestination>("typed", shared);
+                shared.Ordinary.ShouldBe(new[] { "ordinary" });
+                shared.Typed.ShouldBe(new[] { "typed" });
+                shared.Metadata.ShouldBeSameAs(shared);
+                Utilities.Logger.RemoveDestination((ILoggingDestination)shared);
+                Utilities.Logger.AddDestination((ILoggingDestination)ordinarySentinel);
+                Utilities.Logger.Debug("removed ordinary");
+                Utilities.Logger.Debug<ILoggingDestination>("retained typed", shared);
+                shared.Ordinary.ShouldBe(new[] { "ordinary" });
+                shared.Typed.ShouldBe(new[] { "typed", "retained typed" });
+                Utilities.Logger.AddDestination((ILoggingDestination)shared);
+                Utilities.Logger.ClearDestinations<ILoggingDestination>();
+                Utilities.Logger.AddDestination<ILoggingDestination>(typedSentinel);
+                Utilities.Logger.Debug("ordinary survives typed clear");
+                Utilities.Logger.Debug<ILoggingDestination>("cleared typed", shared);
+                shared.Ordinary.ShouldBe(new[] { "ordinary", "ordinary survives typed clear" });
+                shared.Typed.ShouldBe(new[] { "typed", "retained typed" });
+                Utilities.Logger.AddDestination<ILoggingDestination>(shared);
+                Utilities.Logger.ClearDestinations();
+                Utilities.Logger.AddDestination((ILoggingDestination)ordinarySentinel);
+                Utilities.Logger.Debug("cleared ordinary");
+                Utilities.Logger.Debug<ILoggingDestination>("typed survives ordinary clear", shared);
+                shared.Ordinary.ShouldBe(new[] { "ordinary", "ordinary survives typed clear" });
+                shared.Typed.ShouldBe(new[] { "typed", "retained typed", "typed survives ordinary clear" });
+                Utilities.Logger.AddDestination((ILoggingDestination)shared);
+                Utilities.Logger.RemoveDestination<ILoggingDestination>(shared);
+                Utilities.Logger.Debug("ordinary survives typed remove");
+                Utilities.Logger.Debug<ILoggingDestination>("removed typed", shared);
+                shared.Ordinary.ShouldBe(new[] { "ordinary", "ordinary survives typed clear", "ordinary survives typed remove" });
+                shared.Typed.ShouldBe(new[] { "typed", "retained typed", "typed survives ordinary clear" });
+                ordinarySentinel.Ordinary.ShouldBe(new[] { "removed ordinary", "ordinary survives typed clear", "cleared ordinary", "ordinary survives typed remove" });
+                typedSentinel.Typed.ShouldBe(new[] { "cleared typed", "typed survives ordinary clear", "removed typed" });
+                shared.Disposals.ShouldBe(0);
+                ordinarySentinel.Disposals.ShouldBe(0);
+                typedSentinel.Disposals.ShouldBe(0);
+            }
+            finally
+            {
+                Utilities.Logger.ClearDestinations<ILoggingDestination>();
+                Utilities.Logger.ClearDestinations();
+            }
+        }
+
+        [Fact]
+        public void ShouldRouteByDeclaredTypeInsteadOfRuntimeSubtypeOrAssignability()
+        {
+            var ordinary = new RouteRecipient<RouteBase>();
+            var baseRecipient = new RouteRecipient<RouteBase>();
+            var derivedRecipient = new RouteRecipient<RouteDerived>();
+            var baseSentinel = new RouteRecipient<RouteBase>();
+            var derivedSentinel = new RouteRecipient<RouteDerived>();
+            var metadata = new RouteDerived();
+            try
+            {
+                Utilities.Logger.ClearDestinations();
+                Utilities.Logger.ClearDestinations<RouteBase>();
+                Utilities.Logger.ClearDestinations<RouteDerived>();
+                Utilities.Logger.AddDestination((ILoggingDestination)ordinary);
+                Utilities.Logger.AddDestination<RouteBase>(baseRecipient);
+                Utilities.Logger.AddDestination<RouteDerived>(derivedRecipient);
+                Utilities.Logger.Debug<RouteBase>("declared base", metadata);
+                Utilities.Logger.Debug<RouteDerived>("declared derived", metadata);
+                baseRecipient.Typed.ShouldBe(new[] { "declared base" });
+                derivedRecipient.Typed.ShouldBe(new[] { "declared derived" });
+                baseRecipient.Metadata.ShouldBeSameAs(metadata);
+                derivedRecipient.Metadata.ShouldBeSameAs(metadata);
+                Utilities.Logger.ClearDestinations<RouteBase>();
+                Utilities.Logger.AddDestination<RouteBase>(baseSentinel);
+                Utilities.Logger.Debug<RouteDerived>("derived survives", metadata);
+                Utilities.Logger.Debug<RouteBase>("base cleared", metadata);
+                derivedRecipient.Typed.ShouldBe(new[] { "declared derived", "derived survives" });
+                baseRecipient.Typed.ShouldBe(new[] { "declared base" });
+                baseSentinel.Typed.ShouldBe(new[] { "base cleared" });
+                Utilities.Logger.AddDestination<RouteBase>(baseRecipient);
+                Utilities.Logger.ClearDestinations<RouteDerived>();
+                Utilities.Logger.AddDestination<RouteDerived>(derivedSentinel);
+                Utilities.Logger.Debug<RouteBase>("base survives", metadata);
+                Utilities.Logger.Debug<RouteDerived>("derived cleared", metadata);
+                baseRecipient.Typed.ShouldBe(new[] { "declared base", "base survives" });
+                derivedRecipient.Typed.ShouldBe(new[] { "declared derived", "derived survives" });
+                derivedSentinel.Typed.ShouldBe(new[] { "derived cleared" });
+                ordinary.Ordinary.ShouldBeEmpty();
+                baseRecipient.Disposals.ShouldBe(0);
+                derivedRecipient.Disposals.ShouldBe(0);
+            }
+            finally
+            {
+                Utilities.Logger.ClearDestinations<RouteBase>();
+                Utilities.Logger.ClearDestinations<RouteDerived>();
+                Utilities.Logger.ClearDestinations();
+            }
+        }
+
+        private class RouteBase { }
+        private sealed class RouteDerived : RouteBase { }
+
+        private sealed class RouteRecipient<T> : ILoggingDestination, Utilities.Generics.ILoggingDestination<T>, IDisposable
+        {
+            public List<string> Ordinary { get; } = new List<string>();
+            public List<string> Typed { get; } = new List<string>();
+            public T Metadata { get; private set; }
+            public int ValidationCalls { get; private set; }
+            public int Disposals { get; private set; }
+            public bool ValidateMessageLevel(LogLevels level) { ValidationCalls++; return true; }
+            public void Log(LogLevels level, string message = null, Exception ex = null) { Ordinary.Add(message); }
+            public void Log(LogLevels level, T metadata, string message = null, Exception ex = null) { Metadata = metadata; Typed.Add(message); }
+            public void Dispose() { Disposals++; }
         }
 
         private sealed class HandoffDestination : Utilities.Generics.ILoggingDestination<object>

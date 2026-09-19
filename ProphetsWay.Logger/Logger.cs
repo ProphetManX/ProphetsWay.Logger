@@ -6,42 +6,66 @@ namespace ProphetsWay.Utilities
 {
 	public static partial class Logger
 	{
-		//private static readonly IList<ILoggingDestination> Destinations = new List<ILoggingDestination>();
-		private static readonly Type _nonGenericTypDestination = typeof(ILoggingDestination);
+		private static readonly object DestinationLock = new object();
+		private static readonly List<ILoggingDestination> OrdinaryDestinations = new List<ILoggingDestination>();
+
 		/// <summary>
-		/// Will add a new LoggingDestination to the pool of targets.  
+		/// Registers a borrowed destination at the end of the ordinary explicit route.
 		/// </summary>
-		/// <param name="newDest">Either an existing or a custom Destination that implements the ILoggingDestination interface.</param>
+		/// <param name="newDest">The non-null destination instance to register.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="newDest"/> is null.</exception>
-		/// <remarks>Null is rejected before registration effects. A reject-all destination remains an active registration.</remarks>
+		/// <exception cref="ArgumentException">The same reference is already registered on the ordinary route; ParamName is "newDest".</exception>
+		/// <remarks>
+		/// Null and duplicate rejection leave membership unchanged. Identity never uses user equality or hashing.
+		/// Typed routes are independent, and the same instance may register on other compatible routes.
+		/// Publication completes before return without draining captured calls or invoking recipient code.
+		/// A reject-all destination remains an active registration; custom recipient state is not frozen.
+		/// </remarks>
 		public static void AddDestination(ILoggingDestination newDest)
 		{
 			if (newDest == null)
 				throw new ArgumentNullException(nameof(newDest));
 
-			if (!Destinations.ContainsKey(_nonGenericTypDestination))
-				Destinations.Add(_nonGenericTypDestination, new List<IDestination>());
+			lock (DestinationLock)
+			{
+				if (OrdinaryDestinations.Exists(destination => ReferenceEquals(destination, newDest)))
+					throw new ArgumentException("The destination is already registered on this route.", nameof(newDest));
 
-			Destinations[_nonGenericTypDestination].Add(newDest);
+				OrdinaryDestinations.Add(newDest);
+			}
 		}
 
 		/// <summary>
-		/// If you retain a reference to your LoggingDestination, you can remove it from the pool of targets.
+		/// Removes a borrowed destination reference from the ordinary explicit route only.
 		/// </summary>
-		/// <param name="destToRemove">Either an existing or a custom Destination that implements the ILoggingDestination interface; must have already been added to the pool via "AddDestination".</param>
+		/// <param name="destToRemove">The exact instance to remove. Null or an absent instance is a no-op.</param>
+		/// <remarks>
+		/// Uses reference identity and preserves survivor order. Never invokes or disposes the recipient.
+		/// Returns after publication, not draining; older captures may still call the removed recipient.
+		/// Hosts must stop producers and await synchronous calls before disposing borrowed recipients.
+		/// </remarks>
 		public static void RemoveDestination(ILoggingDestination destToRemove)
 		{
-			if (Destinations.ContainsKey(_nonGenericTypDestination))
-				Destinations[_nonGenericTypDestination].Remove(destToRemove);
+			lock (DestinationLock)
+			{
+				OrdinaryDestinations.RemoveAll(destination => ReferenceEquals(destination, destToRemove));
+			}
 		}
 
 		/// <summary>
-		/// Resets the pool of targets, removes any/all Destinations that have been added.
+		/// Clears ordinary explicit membership without changing any typed route.
 		/// </summary>
+		/// <remarks>
+		/// An empty route is a no-op. Publishes empty membership without invoking or disposing recipients.
+		/// Older captures retain their ordered references and may finish after this method returns.
+		/// This is not a drain or a guarantee about subsequent unconfigured-route logging.
+		/// </remarks>
 		public static void ClearDestinations()
 		{
-			if (Destinations.ContainsKey(_nonGenericTypDestination))
-				Destinations[_nonGenericTypDestination].Clear();
+			lock (DestinationLock)
+			{
+				OrdinaryDestinations.Clear();
+			}
 		}
 
 		/// <summary>
@@ -50,15 +74,28 @@ namespace ProphetsWay.Utilities
 		/// <param name="level">The severity level of the log statement.</param>
 		/// <param name="message">The message you wish to convey in the log entry.</param>
 		/// <param name="ex">Optional, pass if you have an exception you want to add to the log entry.</param>
+		/// <remarks>
+		/// Captures complete ordered membership before eligibility. User code runs outside registry coordination.
+		/// Mutations affect later captures only; recursive logging captures anew. Payloads and custom state are not cloned.
+		/// </remarks>
 		private static void Log(LogLevels level, string message, Exception ex = null)
 		{
-			if (!Destinations.ContainsKey(_nonGenericTypDestination))
-				Destinations.Add(_nonGenericTypDestination, new List<IDestination>());
+			ILoggingDestination[] destinations;
+			lock (DestinationLock)
+			{
+				destinations = OrdinaryDestinations.ToArray();
+			}
 
-			if (Destinations[_nonGenericTypDestination].Count == 0)
+			if (destinations.Length == 0)
+			{
 				AddDestination(new FileDestination($"Default Log {DateTime.Now:yyyy-MM-dd hh-mm}.log"));
+				lock (DestinationLock)
+				{
+					destinations = OrdinaryDestinations.ToArray();
+				}
+			}
 
-			foreach (ILoggingDestination dest in Destinations[_nonGenericTypDestination])
+			foreach (ILoggingDestination dest in destinations)
 				if (dest.ValidateMessageLevel(level))
 					dest.Log(level, message, ex);
 		}

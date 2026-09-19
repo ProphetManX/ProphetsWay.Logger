@@ -297,6 +297,54 @@
 				"$msCompile"
 			],
 			"group": "test"
+		},
+		{
+			"label": "M2-B protected Windows baseline",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260918-1922-logger-m2b\\validate-m2b.ps1' -Stage Baseline",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "M2-B candidate Windows checks",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260918-1922-logger-m2b\\validate-m2b.ps1' -Stage Candidate",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "M2-B freeze audited specifications",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260918-1922-logger-m2b\\validate-m2b.ps1' -Stage Freeze",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "M2-B final scope and Windows verification",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260918-1922-logger-m2b\\validate-m2b.ps1' -Stage Final",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "M2-B compile README examples",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260918-1922-logger-m2b\\validate-m2b.ps1' -Stage Examples",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "M2-B validate task setup",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260918-1922-logger-m2b\\validate-m2b.ps1' -Stage Setup",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
 		}
 	]
 }

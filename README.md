@@ -3,6 +3,7 @@
 Route log messages to console, file, event, or custom destinations with per-destination severity selection.
 
 > **Current tree: unreleased v4 work.** The version file still reads `3.0.1`.
+> Explicit-registration route isolation and ordered membership snapshots (M2-B) are implemented.
 > Six native severities, strict mask validation, and severity checks before supplied
 > destination rendering are implemented. `SensitivityLabel`, `LabelFilterMode`, and
 > `DestinationLabelPolicy` also exist in source, but the label policy remains a standalone
@@ -447,10 +448,13 @@ what to print. See the real call patterns in
 [GenericLoggerTests.cs](ProphetsWay.Logger.Test/GenericLoggerTests.cs) and
 [MetadataLoggerTests.cs](ProphetsWay.Logger.Test/MetadataLoggerTests.cs).
 
-Registration is keyed by the generic argument `T`, not the object's runtime subtype.
-If that type has no registered destination, current typed logging falls back to plain logging
-**without the metadata**. Register the typed destination to retain it; typed calls do not
-automatically broadcast to the plain destinations when a typed registration exists.
+Ordinary explicit registrations and every exact declared-`T` route are independent, including
+interface types such as `T = ILoggingDestination`. Typed routing does not search base types,
+implemented interfaces, or the metadata object's runtime subtype. If that exact type has no
+registered destination, current typed logging still falls back to plain logging **without the
+metadata**. Register the typed destination to retain it; typed calls do not automatically broadcast
+to plain destinations when a typed registration exists. M2-B does not qualify unconfigured
+fallback or provide independent automatic routes.
 
 ## Behavior And Limitations
 
@@ -469,6 +473,7 @@ and supplied direct `Log` implementations, as indicated. Valid rejection is not 
 | Raw mask outside 1-63 passed to a supplied destination's `Log` | `ArgumentOutOfRangeException` | `level` |
 | Null required helper message or exception | `ArgumentNullException` | `message` or `ex` |
 | Null ordinary or typed `AddDestination` argument | `ArgumentNullException` | `newDest` |
+| Same object reference added again on the same ordinary or exact-`T` route | `ArgumentException` | `newDest` |
 
 No competing-error priority is promised when both Critical arguments are null. Exception
 message text is not a configuration contract. Equivalent valid mask representations have
@@ -528,8 +533,20 @@ Mutation through readback collection interfaces throws `NotSupportedException`.
     same-name file. Its `Debug` mask excludes Trace: **no-setup Trace delivery is not provided**.
     Configure an explicit `Trace` destination for all six severities, and use `resetFile: false`
     for append behavior.
-- Registration uses mutable global collections. Do not assume concurrent registration or callback
-  add/remove/clear is safe; atomic route snapshots are unfinished work.
+- Explicit registration uses reference identity, never recipient equality or hashing. Distinct
+    equal objects remain distinct; the same instance may register on different compatible routes.
+    Duplicate same-route adds leave membership unchanged. Removal targets only the exact reference;
+    null/absent removal is a no-op, and clear affects only the selected route. After removal/clear,
+    a successful re-add goes last.
+- For a route with explicit recipients, mutations and captures are atomic: each call captures
+    one complete insertion-ordered membership before the first eligibility check. Registry locks
+    span neither `ValidateMessageLevel` nor `Log`. Callback or eligibility add/remove/clear,
+    including self-removal, affects later captures only; an older capture can still call a removed
+    recipient after mutation returns. Recursive logging is a new call with a fresh capture.
+- Explicit destinations are borrowed: removal/clear never dispose them and do not drain calls.
+    Stop producers and await synchronous calls before disposing your recipients. Membership capture
+    does not serialize callers or shared recipients, impose cross-thread delivery order, or freeze
+    custom recipient state, eligibility results, metadata or exception graphs.
 - Current dispatch can stop at a throwing destination. The planned independent-attempt and safe
     failure-reporting behavior is not implemented by the native severity changes or label policy.
 - Console/file formatting uses local, culture-dependent timestamps and pads severity names to 12
@@ -558,14 +575,17 @@ This is a specific Exception Message and will contain a stack trace.
 ### Unfinished Integration And Security Boundaries
 
 Native severity/mask/helper validation and supplied-recipient **severity** withholding are implemented,
-alongside the standalone labels and membership predicate. This completes neither the full dispatch
-foundation (M2) nor v4. Label registration/filter integration and entry/scope origin collection remain
-future work; a label policy does not yet withhold Logger payloads.
+alongside the standalone labels and membership predicate. M2-B adds independent explicit routes,
+atomic ordered membership capture and borrowed-recipient lifetime rules. This completes neither the
+full dispatch foundation (M2) nor v4. Label registration/filter integration and entry/scope origin
+collection remain future work; a label policy does not yet withhold Logger payloads.
 
-Independent route-key isolation, atomic snapshots/concurrency and lifetime work, record framing,
-invariant rendering/shared UTC timestamps, safe failure reporting and independent recipient attempts,
-fixed automatic-file recovery/reuse and remembered initialization failure, append-by-default explicit
-files, and both Microsoft logging bridges remain unfinished. Microsoft severity conversion/None
+Registration-level settings replacement, owned-resource lifetime work, record framing, invariant
+rendering/shared UTC timestamps, safe failure reporting and independent recipient attempts, fixed
+automatic-file recovery/reuse and remembered initialization failure, append-by-default explicit files,
+and both Microsoft logging bridges remain unfinished. Unconfigured typed fallback still forwards to
+ordinary logging; the existing default-file path is unexercised by this focused validation. Explicit
+membership safety is not a guarantee of all concurrency safety. Microsoft severity conversion/None
 handling is not supplied by this native enum. The new file/fallback/failure policies in
 [docs/requirements.md](docs/requirements.md) are **future behavior**, not current runtime promises.
 Requirements readiness is not delivery.
@@ -606,6 +626,10 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
 - Correct malformed mask strings instead of relying on the former Information fallback. Zero is valid
     only as a destination mask; direct/raw zero is an error. Supplied direct destinations now reject
     ineligible messages before formatting/callback/output, so a direct call no longer bypasses selection.
+- Deduplicate setup by object reference per route: a repeated add now throws `ArgumentException`
+    with `ParamName` `newDest`, rather than adding another delivery. Retain the exact reference for
+    removal; an equal but distinct object no longer removes it. Do not treat removal/clear as a drain
+    or immediate revocation: already captured calls may still use that borrowed recipient.
 
 ## Architecture And Design Decisions
 
@@ -657,7 +681,13 @@ dotnet test .\ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj -c Debug -f
 dotnet test .\ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj -c Debug -f net10.0 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
 ```
 
-The recorded native Windows check on **2026-09-17 EDT** passed **300 cases per target**,
+The recorded M2-B Windows check on **2026-09-18 EDT** passed **320/320 cases on each of
+`net48` and `net10.0`**, with zero failures/skips: **20 new registration cases** plus the
+**original 300 preserved cases** per target. Library and example builds also passed; the
+example was not executed. This is focused explicit-registration evidence, not full-suite or
+full-v4 certification, fallback/file qualification, independent review approval, or release clearance.
+
+The earlier native Windows check on **2026-09-17 EDT** passed **300 cases per target**,
 with zero failures/skips and unchanged same-target case identities. The recorded coverage
 exercises all seven changed implementation files plus label/policy code; the net48 test copy
 matches the built netstandard2.0 library, and net10.0 matches its dedicated library.

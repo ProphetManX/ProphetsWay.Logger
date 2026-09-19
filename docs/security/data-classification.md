@@ -278,3 +278,92 @@ control is introduced. Label integration, registry/snapshots/lifetime, file/fall
 recovery/framing, failure reporting, bridges and public-product qualification remain
 outside this input. Independent implementation review and fresh scoped evidence are
 still required later; this author ran no build/test and issues no security verdict.
+
+## M2-B Membership Field Extension
+
+**Design checkpoint: 2026-09-18. Stage: SHAPE.** This additive inventory supports
+M2-B revision 2, inheriting revision 1, before independent C# contract review.
+It covers explicit registration membership only; older ON-03/ON-04 inventories retain
+their dates and status. The [membership model](threat-model.md#m2-b-explicit-registration-membership)
+defines MB1-MB3 and MB-R1-7. Reopened authority is D005/D006/D010/D013 in
+[decision-log.md](../decision-log.md) and AC-09.1, AC-10.1-3 and the borrowed part of
+AC-11.1 in [requirements.md](../requirements.md).
+
+Read completely: [Logger.cs](../../ProphetsWay.Logger/Logger.cs),
+[Generics/Logger.cs](../../ProphetsWay.Logger/Generics/Logger.cs),
+[LoggingDestinationCore.cs](../../ProphetsWay.Logger/LoggingDestinationCore.cs),
+[IDestination.cs](../../ProphetsWay.Logger/IDestination.cs),
+[ILoggingDestination.cs](../../ProphetsWay.Logger/ILoggingDestination.cs) and
+[Generics/ILoggingDestination.cs](../../ProphetsWay.Logger/Generics/ILoggingDestination.cs).
+These are the actual control and payload contracts, not evidence of M2-B completion.
+The two destination interfaces add methods, not a business-field schema; `T` remains
+unconstrained. Snapshot/route rows below describe required private logical state,
+not new public types, fields or settings APIs.
+
+**Assumption M-B1:** message, exception and arbitrary metadata contents are unbounded,
+provisionally Confidential, not inspected PII, Sensitive PII or Secret. A consumer's
+real inventory/classification replaces this assumption. Arbitrary recipient internals
+are not inspected or assigned invented field classes. An Internal control reference
+does not classify its reachable object graph as harmless.
+
+### Membership And Handoff Inventory
+
+Internal means consumer-controlled access to configuration/decision data. Provisional
+Confidential additionally means protected transport and encrypted storage if the
+consumer exports/persists it, defending against interception and stolen media. No
+library encryption, access-control system or persistence is selected by this slice.
+All crossings here are in-process; references are not memory-isolation controls.
+
+| Field/carrier | Class and rationale | At rest | In transit | In logs | Local response/exposure |
+| --- | --- | --- | --- | --- | --- |
+| Ordinary route identity | Internal; consumer routing selection, not a principal. | Private process state only. | Ordinary registration/call selection. | No route diagnostic record added. | Must not alias any typed route; no new identity getter. |
+| Typed declared `T` / `typeof(T)` | Internal; exact consumer routing/type information. | Private route state only. | Generic call/registration context; never runtime-subtype routing. | No type-name export added. | Control input, not tenant authorization; includes `ILoggingDestination` as legal metadata type. |
+| Add `newDest` | Internal as a control reference; executable recipient choice. | Route/capture may retain the borrowed reference. | Registration input. | No object serialization or implicit identity formatting required. | Reject null and same-reference same-route duplicate before mutation; no ownership transfer. |
+| Remove `destToRemove` | Internal as a control reference; exact instance to remove. | No removal archive added; older captures may retain it. | Removal input. | No equality/hash/diagnostic code is needed for identity. | Reference identity only; absent removal no-op, existing null-removal behavior preserved. |
+| Route membership and insertion order | Internal; recipient topology and attempt ordering. | Private atomically published membership; no persistent store. | Complete old/new capture before eligibility/callback. | No membership dump or audit record added. | Internal-only snapshot; writable registry backing must not escape. Clear affects only the selected route. |
+| Captured recipient references | Internal as control handles; payload sensitivity is separate. | Held for the captured call even after removal; no secure-erasure or exact GC deadline. | Synchronous iteration of fixed membership. | No retained-recipient report added. | Borrowed, not disposed by removal/clear; same instance may occur on distinct compatible routes. |
+| Core `_reportingLevel` | Internal; selected supplied-destination severity configuration. | Existing immutable destination field. | Used in eligibility, not replaced by a new settings API. | No mask report introduced. | Membership capture does not freeze arbitrary custom recipient state. |
+| `ValidateMessageLevel.messageLevel` and callback `Log.level` | Internal; entry-specific severity and eligibility input. | No new archive. | Severity to eligibility, then permitted callback. | Existing accepted severity behavior preserved. | Guard semantics unchanged; eligibility does not receive a new raw-payload parameter. |
+| `ValidateMessageLevel` result | Internal; reveals a configuration/entry relationship. | No decision store added. | Local Boolean. | No receipt or audit implied. | Eligibility only, not authentication, label permission or data suitability. |
+| `Log.message` | Confidential, provisional; unbounded producer text. | Recipient may retain it under consumer policy. | Original permitted string to the selected eligible recipient. | Existing accepted output is intentional; no redaction added. | No new external response contract or content restriction. |
+| `Log.ex` | Confidential, provisional; unbounded raw exception graph. | Recipient can retain original reference; no deep clone/erasure. | Original permitted reference, including permitted absence. | Not a sanitized reporting descriptor. | Reachable Message/StackTrace/Data/InnerException carriers retain the earlier unbounded classification; no unseen values were inspected. |
+| Typed `Log.metadata` | Confidential, provisional; unbounded arbitrary `T`. | Recipient can retain the original value/reference. | Original permitted typed payload; no new non-null/interface constraint. | No metadata renderer or automatic classification added. | Nested values are not frozen by membership capture. Public serialization is not authorized. |
+
+### Exposure, Lifetime And Minimization
+
+MB1 registration/removal references and route selection are input-only control data;
+MB2's ordered membership stays private. MB3 exposes severity to eligibility and the
+original permitted payload to the selected eligible callback. There is no server,
+HTTP response, authenticated row retrieval or new server-only business field here.
+Do not blanket-serialize destinations or payload graphs as a consequence of registering
+them. D013 assigns readership and onward export to the consuming host.
+
+Immutable membership is neither immutable payload nor immutable recipient state.
+Removal/clear publishes future membership without draining or disposing borrowed
+recipients; it neither revokes an earlier capture's handoff nor erases copies held
+by producers/recipients. D006 requires hosts to stop producers and await synchronous
+calls before disposal. No new lifetime lease, retirement mechanism or public drain
+is selected. Recursive user logging is a new capture, not proof of deduplication.
+
+Data not supplied cannot leak through this handoff. Consumers should decide whether
+each message detail/metadata field is needed, or a non-identifying token would suffice,
+before calling Logger; synthetic canaries suffice for this slice. Logger must not
+silently truncate, hash or clone payloads, nor use user equality to identify recipients.
+Encryption at rest addresses stolen storage/backups, not an unintended raw callback
+or compromised host. Transport encryption addresses a later real network export,
+not local route aliasing. No field-level encryption/search/sort redesign is selected.
+
+All declared membership/control carriers and raw callback parameters in the six read
+files are covered. No custom business fields, actual exception values, production
+data, retention duration, consent basis, deployment or compliance regime were inspected
+or invented. Actual personal data and applicable territorial/organizational facts
+would require a consumer privacy assessment; which data, jurisdictions and processing
+role are involved would settle applicability. These consumer decisions do not block
+the explicit in-process membership slice.
+
+**Open Questions proposed for M2-B:** None. Label integration, settings replacement,
+file/fallback behavior, owned resources, bridges and reporting remain deferred.
+Unconfigured typed-to-ordinary fallback is unqualified and excluded from tests here;
+the inventory establishes no whole-route independence or tenant/authentication
+guarantee. Contract review and later independent implementation security review remain
+separate. No real-data, implementation or release verdict is issued.

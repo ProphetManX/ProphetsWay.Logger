@@ -70,6 +70,26 @@ select fallback destinations, or provide confidentiality or security guarantees;
 the Boolean result themselves. Because this is a standalone predicate, creating or evaluating it does
 not alter Logger or destination behavior.
 
+## Explicit destination registration
+
+The existing ordinary and metadata-typed registration methods now maintain separate, exact routes. A
+typed registration is selected by its declared `T`, not by runtime metadata assignability, and a
+destination-contract type does not alias the ordinary route. The same compatible destination reference
+may be registered on distinct routes, but adding that same reference twice to one route now throws
+`ArgumentException` with `ParamName` `newDest`. Removal is reference-only, so an equal but distinct
+destination remains registered, survivor order is preserved, and remove/clear affect only their selected
+route. These are breaking behavior changes for callers that relied on duplicate registration, equality-
+based removal, or ordinary/typed route sharing; no method signature or public type was added, and callers
+should register each intended route explicitly and retain the reference they intend to remove.
+
+Registration and dispatch now publish complete ordered membership captures before user eligibility or
+callbacks run. Mutations from those callbacks affect later captures, recursive dispatch captures again,
+and an older capture may still invoke a removed or cleared destination after the mutation returns.
+Registration does not invoke recipients, and remove/clear never dispose borrowed destinations; hosts
+must quiesce producers and await synchronous calls before disposing them. This corrects the prior live-
+enumeration and ownership hazards without promising a drain, immediate revocation, automatic fallback,
+or a broader concurrency/failure policy.
+
 # v3.0.1
 ### Build target for Net 6.0
 Library now targets .Net 6.0
