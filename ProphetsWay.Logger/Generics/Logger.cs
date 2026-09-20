@@ -105,17 +105,42 @@ namespace ProphetsWay.Utilities
 				return;
 			}
 
-			foreach (ILoggingDestination<T> dest in destinations)
-				if (dest.ValidateMessageLevel(level))
-					dest.Log(level, metadata, message, ex);
+			List<LogFailureDescriptor> failures = null;
+			var overflowCount = 0;
+			for (var index = 0; index < destinations.Length; index++)
+			{
+				var destination = (ILoggingDestination<T>)destinations[index];
+				try
+				{
+					if (!destination.ValidateMessageLevel(level))
+						continue;
+				}
+				catch (Exception)
+				{
+					RecordFailure(ref failures, ref overflowCount, index + 1, LogFailureStage.Eligibility);
+					continue;
+				}
+
+				try
+				{
+					destination.Log(level, metadata, message, ex);
+				}
+				catch (Exception)
+				{
+					RecordFailure(ref failures, ref overflowCount, index + 1, LogFailureStage.Output);
+				}
+			}
+
+			ThrowDispatchFailure(failures, overflowCount);
 		}
 
-		/// <summary>Logs a typed message with the exact TraceOnly severity bit.</summary>
-		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
-		/// <param name="message">The required, non-null message.</param>
-		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
-		/// <exception cref="ArgumentNullException"><paramref name="message"/> is null.</exception>
-		/// <remarks>Validates before dispatch or fallback effects. Empty and whitespace-only messages are preserved; metadata is not validated or transformed.</remarks>
+		/// <summary>Logs typed context with the exact TraceOnly bit.</summary>
+		/// <typeparam name="T">Unconstrained declared route type, not the runtime metadata type.</typeparam>
+		/// <param name="message">Required non-null text; empty and whitespace are preserved.</param>
+		/// <param name="metadata">Original value/reference, including null or default(T); not validated or transformed.</param>
+		/// <exception cref="ArgumentNullException">message is null, before dispatch effects.</exception>
+		/// <exception cref="LogDispatchException">A configured eligibility/output callback failed.</exception>
+		/// <remarks>B02-B07: follows Logger's configured exact-T attempt/report/throw contract.</remarks>
 		public static void Trace<T>(string message, T metadata)
 		{
 			if (message == null)
@@ -124,12 +149,13 @@ namespace ProphetsWay.Utilities
 			Log(LogLevels.TraceOnly, metadata, message);
 		}
 
-		/// <summary>Logs a typed message with the exact DebugOnly severity bit.</summary>
-		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
-		/// <param name="message">The required, non-null message.</param>
-		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
-		/// <exception cref="ArgumentNullException"><paramref name="message"/> is null.</exception>
-		/// <remarks>Validates before dispatch or fallback effects. Empty and whitespace-only messages are preserved; metadata is not validated or transformed.</remarks>
+		/// <summary>Logs typed context with the exact DebugOnly bit.</summary>
+		/// <typeparam name="T">Unconstrained declared route type, not the runtime metadata type.</typeparam>
+		/// <param name="message">Required non-null text; empty and whitespace are preserved.</param>
+		/// <param name="metadata">Original value/reference, including null or default(T); not validated or transformed.</param>
+		/// <exception cref="ArgumentNullException">message is null, before dispatch effects.</exception>
+		/// <exception cref="LogDispatchException">A configured eligibility/output callback failed.</exception>
+		/// <remarks>B02-B07: follows Logger's configured exact-T attempt/report/throw contract.</remarks>
 		public static void Debug<T>(string message, T metadata)
 		{
 			if (message == null)
@@ -138,12 +164,13 @@ namespace ProphetsWay.Utilities
 			Log(LogLevels.DebugOnly, metadata, message);
 		}
 
-		/// <summary>Logs a typed message with the exact InformationOnly severity bit.</summary>
-		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
-		/// <param name="message">The required, non-null message.</param>
-		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
-		/// <exception cref="ArgumentNullException"><paramref name="message"/> is null.</exception>
-		/// <remarks>Validates before dispatch or fallback effects. Empty and whitespace-only messages are preserved; metadata is not validated or transformed.</remarks>
+		/// <summary>Logs typed context with the exact InformationOnly bit.</summary>
+		/// <typeparam name="T">Unconstrained declared route type, not the runtime metadata type.</typeparam>
+		/// <param name="message">Required non-null text; empty and whitespace are preserved.</param>
+		/// <param name="metadata">Original value/reference, including null or default(T); not validated or transformed.</param>
+		/// <exception cref="ArgumentNullException">message is null, before dispatch effects.</exception>
+		/// <exception cref="LogDispatchException">A configured eligibility/output callback failed.</exception>
+		/// <remarks>B02-B07: follows Logger's configured exact-T attempt/report/throw contract.</remarks>
 		public static void Info<T>(string message, T metadata)
 		{
 			if (message == null)
@@ -152,13 +179,14 @@ namespace ProphetsWay.Utilities
 			Log(LogLevels.InformationOnly, metadata, message);
 		}
 
-		/// <summary>Logs a typed message with the exact WarningOnly severity bit.</summary>
-		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
-		/// <param name="message">The required, non-null message.</param>
-		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
-		/// <param name="ex">Optional exception; omitted or null is valid.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="message"/> is null.</exception>
-		/// <remarks>Validates before dispatch or fallback effects. Empty and whitespace-only messages and supplied references are preserved; metadata is not validated or transformed.</remarks>
+		/// <summary>Logs typed context with the exact WarningOnly bit.</summary>
+		/// <typeparam name="T">Unconstrained declared route type, not the runtime metadata type.</typeparam>
+		/// <param name="message">Required non-null text; empty and whitespace are preserved.</param>
+		/// <param name="metadata">Original value/reference, including null or default(T); not validated or transformed.</param>
+		/// <param name="ex">Optional original exception reference; null is valid.</param>
+		/// <exception cref="ArgumentNullException">message is null, before dispatch effects.</exception>
+		/// <exception cref="LogDispatchException">A configured eligibility/output callback failed.</exception>
+		/// <remarks>B02-B07: follows Logger's configured exact-T attempt/report/throw contract.</remarks>
 		public static void Warn<T>(string message, T metadata, Exception ex = null)
 		{
 			if (message == null)
@@ -167,13 +195,14 @@ namespace ProphetsWay.Utilities
 			Log(LogLevels.WarningOnly, metadata, message, ex);
 		}
 
-		/// <summary>Logs a typed exception with the exact ErrorOnly severity bit.</summary>
-		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
-		/// <param name="ex">The required, non-null exception.</param>
-		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
-		/// <param name="message">Optional context; omitted or null is valid.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="ex"/> is null.</exception>
-		/// <remarks>Validates before dispatch or fallback effects. Absent raw context stays null; supplied text and references are preserved without metadata validation or transformation.</remarks>
+		/// <summary>Logs a typed exception with the exact ErrorOnly bit.</summary>
+		/// <typeparam name="T">Unconstrained declared route type, not the runtime metadata type.</typeparam>
+		/// <param name="ex">Required non-null original exception reference.</param>
+		/// <param name="metadata">Original value/reference, including null or default(T); not validated or transformed.</param>
+		/// <param name="message">Optional original text, including null, empty or whitespace.</param>
+		/// <exception cref="ArgumentNullException">ex is null, before dispatch effects.</exception>
+		/// <exception cref="LogDispatchException">A configured eligibility/output callback failed.</exception>
+		/// <remarks>B02-B07: absent context stays null; follows Logger's configured exact-T contract.</remarks>
 		public static void Error<T>(Exception ex, T metadata, string message = null)
 		{
 			if (ex == null)
@@ -182,13 +211,14 @@ namespace ProphetsWay.Utilities
 			Log(LogLevels.ErrorOnly, metadata, message, ex);
 		}
 
-		/// <summary>Logs a typed exception and context with the exact Critical severity bit.</summary>
-		/// <typeparam name="T">The unconstrained metadata type.</typeparam>
-		/// <param name="ex">The required, non-null exception.</param>
-		/// <param name="metadata">The original metadata value or reference, including null or default(T).</param>
-		/// <param name="message">The required, non-null context.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="ex"/> or <paramref name="message"/> is null.</exception>
-		/// <remarks>Validates before dispatch or fallback effects. Empty and whitespace-only context and supplied references are preserved without metadata validation or transformation. No priority is promised when both required values are null.</remarks>
+		/// <summary>Logs a typed exception and context with the exact Critical bit.</summary>
+		/// <typeparam name="T">Unconstrained declared route type, not the runtime metadata type.</typeparam>
+		/// <param name="ex">Required non-null original exception reference.</param>
+		/// <param name="metadata">Original value/reference, including null or default(T); not validated or transformed.</param>
+		/// <param name="message">Required non-null text; empty and whitespace are preserved.</param>
+		/// <exception cref="ArgumentNullException">ex or message is null, before dispatch effects.</exception>
+		/// <exception cref="LogDispatchException">A configured eligibility/output callback failed.</exception>
+		/// <remarks>B02-B07: no priority between invalid arguments; follows Logger's configured exact-T contract.</remarks>
 		public static void Critical<T>(Exception ex, T metadata, string message)
 		{
 			if (ex == null)

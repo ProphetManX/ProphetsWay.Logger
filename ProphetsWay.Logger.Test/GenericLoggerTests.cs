@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using FluentAssertions;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
@@ -389,6 +391,419 @@ namespace ProphetsWay.Logger.Test
                 Utilities.Logger.ClearDestinations<RouteBase>();
                 Utilities.Logger.ClearDestinations<RouteDerived>();
                 Utilities.Logger.ClearDestinations();
+            }
+        }
+
+        [Theory]
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public void ShouldContinueOnlyTheDeclaredTypedRouteBeforeReportingEitherCallbackFailure(bool eligibilityFailure, bool failingFirst)
+        {
+            var attempts = new List<string>();
+            var failing = new FailureDestination<RouteBase>("failing", attempts);
+            var healthy = new FailureDestination<RouteBase>("healthy", attempts);
+            var ordinary = new RouteRecipient<RouteBase>();
+            var runtimeRoute = new RouteRecipient<RouteDerived>();
+            var cause = new InvalidOperationException("synthetic typed callback failure");
+            if (eligibilityFailure) failing.OnEligibility = () => { throw cause; };
+            else failing.OnLog = () => { throw cause; };
+            var reports = new List<LogFailureReport>();
+            Action<LogFailureReport> observer = report => { attempts.Add("notice"); reports.Add(report); };
+            var originalError = Console.Error;
+            using (var stderr = new StringWriter())
+            {
+                try
+                {
+                    Console.SetError(stderr);
+                    Utilities.Logger.ClearDestinations();
+                    Utilities.Logger.ClearDestinations<RouteBase>();
+                    Utilities.Logger.ClearDestinations<RouteDerived>();
+                    Utilities.Logger.AddDestination((ILoggingDestination)ordinary);
+                    Utilities.Logger.AddDestination<RouteDerived>(runtimeRoute);
+                    Utilities.Logger.AddDestination<RouteBase>(failingFirst ? failing : healthy);
+                    Utilities.Logger.AddDestination<RouteBase>(failingFirst ? healthy : failing);
+                    Utilities.Logger.DispatchFailed += observer;
+                    var metadata = new RouteDerived();
+                    var payload = new Exception("synthetic typed payload");
+                    var failure = Record.Exception(() => Utilities.Logger.Warn<RouteBase>("unchanged typed context", metadata, payload));
+                    var failedAttempts = eligibilityFailure ? new[] { "failing:eligibility" } : new[] { "failing:eligibility", "failing:log" };
+                    var healthyAttempts = new[] { "healthy:eligibility", "healthy:log" };
+                    attempts.ShouldBe((failingFirst ? failedAttempts.Concat(healthyAttempts) : healthyAttempts.Concat(failedAttempts)).Concat(new[] { "notice" }));
+                    failing.ValidationCalls.ShouldBe(1);
+                    failing.LogCalls.ShouldBe(eligibilityFailure ? 0 : 1);
+                    if (eligibilityFailure)
+                    {
+                        failing.ReceivedMessage.ShouldBeNull();
+                        failing.ReceivedException.ShouldBeNull();
+                        failing.ReceivedMetadata.ShouldBeNull();
+                    }
+                    healthy.ValidationCalls.ShouldBe(1);
+                    healthy.LogCalls.ShouldBe(1);
+                    healthy.ReceivedLevel.ShouldBe(LogLevels.WarningOnly);
+                    healthy.ReceivedMessage.ShouldBe("unchanged typed context");
+                    healthy.ReceivedException.ShouldBeSameAs(payload);
+                    healthy.ReceivedMetadata.ShouldBeSameAs(metadata);
+                    ordinary.ValidationCalls.ShouldBe(0);
+                    ordinary.Ordinary.ShouldBeEmpty();
+                    runtimeRoute.ValidationCalls.ShouldBe(0);
+                    runtimeRoute.Typed.ShouldBeEmpty();
+                    (failure is LogDispatchException).ShouldBeTrue("B07 applies to the exact declared-T route without a strict opt-in");
+                    reports.Count.ShouldBe(1);
+                    LoggerTests.AssertFailureReport(reports[0], new[] { failingFirst ? 1 : 2 }, new[] { eligibilityFailure ? LogFailureStage.Eligibility : LogFailureStage.Output }, 0);
+                    LoggerTests.AssertEquivalentFailureReports(reports[0], ((LogDispatchException)failure).Report);
+                    stderr.ToString().Length.ShouldBeInRange(1, 512);
+                }
+                finally
+                {
+                    Utilities.Logger.DispatchFailed -= observer;
+                    Utilities.Logger.ClearDestinations<RouteBase>();
+                    Utilities.Logger.ClearDestinations<RouteDerived>();
+                    Utilities.Logger.ClearDestinations();
+                    Console.SetError(originalError);
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void ShouldKeepSuccessfulOrRejectedTypedCallsAndArgumentGuardsSilent(bool accepted)
+        {
+            var destination = new FailureDestination<object>("recipient", new List<string>()) { OnEligibility = () => accepted };
+            var ordinary = new RouteRecipient<object>();
+            var notices = 0;
+            Action<LogFailureReport> observer = report => notices++;
+            var originalError = Console.Error;
+            using (var stderr = new StringWriter())
+            {
+                try
+                {
+                    Console.SetError(stderr);
+                    Utilities.Logger.ClearDestinations();
+                    Utilities.Logger.ClearDestinations<object>();
+                    Utilities.Logger.AddDestination((ILoggingDestination)ordinary);
+                    Utilities.Logger.AddDestination<object>(destination);
+                    Utilities.Logger.DispatchFailed += observer;
+                    Should.Throw<ArgumentNullException>(() => Utilities.Logger.Warn<object>(null, null));
+                    destination.ValidationCalls.ShouldBe(0);
+                    Utilities.Logger.Warn<object>("", null);
+                    destination.ValidationCalls.ShouldBe(1);
+                    destination.LogCalls.ShouldBe(accepted ? 1 : 0);
+                    destination.ReceivedMessage.ShouldBe(accepted ? "" : null);
+                    destination.ReceivedMetadata.ShouldBeNull();
+                    destination.ReceivedException.ShouldBeNull();
+                    ordinary.ValidationCalls.ShouldBe(0);
+                    notices.ShouldBe(0);
+                    stderr.ToString().ShouldBeEmpty();
+                }
+                finally
+                {
+                    Utilities.Logger.DispatchFailed -= observer;
+                    Utilities.Logger.ClearDestinations<object>();
+                    Utilities.Logger.ClearDestinations();
+                    Console.SetError(originalError);
+                }
+            }
+        }
+
+        [Fact]
+        public void ShouldClassifyAnInternalEligibilityRecheckAsOneOutputFailureAndPreserveDefaultMetadata()
+        {
+            var attempts = new List<string>();
+            var failing = new FailureDestination<int>("failing", attempts);
+            var healthy = new FailureDestination<int>("healthy", attempts);
+            failing.OnEligibility = () =>
+            {
+                if (failing.ValidationCalls > 1) throw new InvalidOperationException("synthetic internal recheck");
+                return true;
+            };
+            failing.OnLog = () => failing.ValidateMessageLevel(LogLevels.DebugOnly);
+            var originalError = Console.Error;
+            using (var stderr = new StringWriter())
+            {
+                try
+                {
+                    Console.SetError(stderr);
+                    Utilities.Logger.ClearDestinations<int>();
+                    Utilities.Logger.AddDestination<int>(failing);
+                    Utilities.Logger.AddDestination<int>(healthy);
+                    var failure = Record.Exception(() => Utilities.Logger.Debug("default metadata", default(int)));
+                    attempts.ShouldBe(new[] { "failing:eligibility", "failing:log", "failing:eligibility", "healthy:eligibility", "healthy:log" });
+                    healthy.ReceivedMetadata.ShouldBe(0);
+                    healthy.ReceivedMessage.ShouldBe("default metadata");
+                    failing.LogCalls.ShouldBe(1);
+                    (failure is LogDispatchException).ShouldBeTrue();
+                    LoggerTests.AssertFailureReport(((LogDispatchException)failure).Report, new[] { 1 }, new[] { LogFailureStage.Output }, 0);
+                }
+                finally
+                {
+                    Utilities.Logger.ClearDestinations<int>();
+                    Console.SetError(originalError);
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public void ShouldSuppressOnlySynchronousRecursiveReportingAcrossRoutesAndRestoreIt(bool typedOuter, bool fromWriter)
+        {
+            var ordinary = new EventDestination(LogLevels.Trace);
+            var ordinaryHealthy = new EventDestination(LogLevels.Trace);
+            var typed = new FailureDestination<ReentryMetadata>("typed", new List<string>());
+            var typedHealthy = new FailureDestination<ReentryMetadata>("typed-healthy", new List<string>());
+            var ordinaryMessages = new List<string>();
+            var typedMessages = new List<string>();
+            ordinary.LoggingEvent += (sender, args) => { if (args.RawMessage.EndsWith("failure", StringComparison.Ordinal)) throw new InvalidOperationException("synthetic ordinary failure"); };
+            ordinaryHealthy.LoggingEvent += (sender, args) => ordinaryMessages.Add(args.RawMessage);
+            typed.OnLog = () => { if (typed.ReceivedMessage.EndsWith("failure", StringComparison.Ordinal)) throw new InvalidOperationException("synthetic typed failure"); };
+            typedHealthy.OnLog = () => typedMessages.Add(typedHealthy.ReceivedMessage);
+            var metadata = new ReentryMetadata();
+            var reports = new List<LogFailureReport>();
+            var reentered = false;
+            var insideNestedDispatch = false;
+            var nestedWrites = 0;
+            Exception nestedFailure = null;
+            Action reenter = () =>
+            {
+                reentered = true;
+                insideNestedDispatch = true;
+                try
+                {
+                    Utilities.Logger.Debug("nested ordinary success");
+                    Utilities.Logger.Debug("nested typed success", metadata);
+                    nestedFailure = Record.Exception(() =>
+                    {
+                        if (typedOuter) Utilities.Logger.Debug("nested failure");
+                        else Utilities.Logger.Debug("nested failure", metadata);
+                    });
+                }
+                finally { insideNestedDispatch = false; }
+            };
+            Action<LogFailureReport> observer = report =>
+            {
+                reports.Add(report);
+                if (!fromWriter && !reentered) reenter();
+            };
+            var originalError = Console.Error;
+            using (var stderr = new LoggerTests.ObservingErrorWriter())
+            {
+                stderr.OnWrite = () =>
+                {
+                    if (insideNestedDispatch) nestedWrites++;
+                    else if (fromWriter && !reentered) reenter();
+                };
+                try
+                {
+                    Console.SetError(stderr);
+                    Utilities.Logger.ClearDestinations();
+                    Utilities.Logger.ClearDestinations<ReentryMetadata>();
+                    Utilities.Logger.AddDestination(ordinary);
+                    Utilities.Logger.AddDestination(ordinaryHealthy);
+                    Utilities.Logger.AddDestination<ReentryMetadata>(typed);
+                    Utilities.Logger.AddDestination<ReentryMetadata>(typedHealthy);
+                    Utilities.Logger.DispatchFailed += observer;
+                    var outerFailure = Record.Exception(() =>
+                    {
+                        if (typedOuter) Utilities.Logger.Debug("outer failure", metadata);
+                        else Utilities.Logger.Debug("outer failure");
+                    });
+                    reentered.ShouldBeTrue("B17 reports the original call before returning its mandatory failure");
+                    ordinaryMessages.ShouldBe(typedOuter ? new[] { "nested ordinary success", "nested failure" } : new[] { "outer failure", "nested ordinary success" });
+                    typedMessages.ShouldBe(typedOuter ? new[] { "outer failure", "nested typed success" } : new[] { "nested typed success", "nested failure" });
+                    typedHealthy.ReceivedMetadata.ShouldBeSameAs(metadata);
+                    (outerFailure is LogDispatchException).ShouldBeTrue();
+                    (nestedFailure is LogDispatchException).ShouldBeTrue("B17 suppresses reporting, never the nested failure");
+                    reports.Count.ShouldBe(1);
+                    nestedWrites.ShouldBe(0);
+                    var outerReport = ((LogDispatchException)outerFailure).Report;
+                    var nestedReport = ((LogDispatchException)nestedFailure).Report;
+                    LoggerTests.AssertFailureReport(outerReport, new[] { 1 }, new[] { LogFailureStage.Output }, 0);
+                    LoggerTests.AssertFailureReport(nestedReport, new[] { 1 }, new[] { LogFailureStage.Output }, 0);
+                    LoggerTests.AssertEquivalentFailureReports(reports[0], outerReport);
+                    nestedReport.CorrelationId.ShouldNotBe(outerReport.CorrelationId);
+                    var firstLength = stderr.Text.Length;
+                    firstLength.ShouldBeInRange(1, 512);
+                    var laterFailure = Record.Exception(() =>
+                    {
+                        if (typedOuter) Utilities.Logger.Debug("later failure", metadata);
+                        else Utilities.Logger.Debug("later failure");
+                    });
+                    (laterFailure is LogDispatchException).ShouldBeTrue();
+                    reports.Count.ShouldBe(2);
+                    LoggerTests.AssertEquivalentFailureReports(reports[1], ((LogDispatchException)laterFailure).Report);
+                    reports[1].CorrelationId.ShouldNotBe(outerReport.CorrelationId);
+                    (stderr.Text.Length - firstLength).ShouldBeInRange(1, 512);
+                    stderr.FlushCalls.ShouldBe(0);
+                    stderr.Disposals.ShouldBe(0);
+                }
+                finally
+                {
+                    Utilities.Logger.DispatchFailed -= observer;
+                    Utilities.Logger.ClearDestinations<ReentryMetadata>();
+                    Utilities.Logger.ClearDestinations();
+                    Console.SetError(originalError);
+                }
+            }
+        }
+
+        [Fact]
+        public void ShouldKeepTheOuterOriginalFailureWhenASubscriberLetsANestedTypedFailureEscape()
+        {
+            var ordinary = new EventDestination(LogLevels.Trace);
+            ordinary.LoggingEvent += (sender, args) => { throw new InvalidOperationException("synthetic outer output"); };
+            var healthy = new FailureDestination<ReentryMetadata>("healthy", new List<string>());
+            var failing = new FailureDestination<ReentryMetadata>("failing", new List<string>()) { OnEligibility = () => { throw new InvalidOperationException("synthetic inner eligibility"); } };
+            var reports = new List<LogFailureReport>();
+            var nestedCalls = 0;
+            Action<LogFailureReport> nested = report =>
+            {
+                nestedCalls++;
+                if (nestedCalls == 1) Utilities.Logger.Debug("nested", new ReentryMetadata());
+            };
+            Action<LogFailureReport> later = report => reports.Add(report);
+            var originalError = Console.Error;
+            using (var stderr = new StringWriter())
+            {
+                try
+                {
+                    Console.SetError(stderr);
+                    Utilities.Logger.ClearDestinations();
+                    Utilities.Logger.ClearDestinations<ReentryMetadata>();
+                    Utilities.Logger.AddDestination(ordinary);
+                    Utilities.Logger.AddDestination<ReentryMetadata>(healthy);
+                    Utilities.Logger.AddDestination<ReentryMetadata>(failing);
+                    Utilities.Logger.DispatchFailed += nested;
+                    Utilities.Logger.DispatchFailed += later;
+                    var observed = Record.Exception(() => Utilities.Logger.Debug("outer"));
+                    nestedCalls.ShouldBe(1);
+                    healthy.LogCalls.ShouldBe(1);
+                    healthy.ReceivedMessage.ShouldBe("nested");
+                    failing.ValidationCalls.ShouldBe(1);
+                    failing.LogCalls.ShouldBe(0);
+                    (observed is LogDispatchException).ShouldBeTrue();
+                    reports.Count.ShouldBe(1);
+                    LoggerTests.AssertFailureReport(((LogDispatchException)observed).Report, new[] { 1 }, new[] { LogFailureStage.Output }, 0);
+                    LoggerTests.AssertEquivalentFailureReports(reports[0], ((LogDispatchException)observed).Report);
+                    stderr.ToString().Length.ShouldBeInRange(1, 512);
+                }
+                finally
+                {
+                    Utilities.Logger.DispatchFailed -= nested;
+                    Utilities.Logger.DispatchFailed -= later;
+                    Utilities.Logger.ClearDestinations<ReentryMetadata>();
+                    Utilities.Logger.ClearDestinations();
+                    Console.SetError(originalError);
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void ShouldPreserveOpaqueOrNullTypedPayloadsAfterFailureWithoutDiagnosticInspection(bool absent)
+        {
+            var canary = "m2c-typed-private-" + Guid.NewGuid().ToString("N");
+            var metadata = absent ? null : new OpaqueMetadata(canary);
+            var payload = new LoggerTests.OpaqueFailure(canary + "-payload");
+            var cause = new LoggerTests.OpaqueFailure(canary + "-cause");
+            var failing = new FailureDestination<OpaqueMetadata>("failing", new List<string>());
+            var healthy = new FailureDestination<OpaqueMetadata>("healthy", new List<string>());
+            int? receivedValue = null;
+            failing.OnLog = () =>
+            {
+                if (failing.ReceivedMetadata != null) failing.ReceivedMetadata.Value = 7;
+                throw cause;
+            };
+            healthy.OnLog = () => receivedValue = healthy.ReceivedMetadata == null ? (int?)null : healthy.ReceivedMetadata.Value;
+            var reports = new List<LogFailureReport>();
+            Action<LogFailureReport> observer = report => reports.Add(report);
+            var originalError = Console.Error;
+            using (var stderr = new StringWriter())
+            {
+                try
+                {
+                    Console.SetError(stderr);
+                    Utilities.Logger.ClearDestinations<OpaqueMetadata>();
+                    Utilities.Logger.AddDestination<OpaqueMetadata>(failing);
+                    Utilities.Logger.AddDestination<OpaqueMetadata>(healthy);
+                    Utilities.Logger.DispatchFailed += observer;
+                    var observed = Record.Exception(() => Utilities.Logger.Critical(payload, metadata, canary));
+                    healthy.LogCalls.ShouldBe(1);
+                    healthy.ReceivedMetadata.ShouldBeSameAs(metadata);
+                    healthy.ReceivedException.ShouldBeSameAs(payload);
+                    healthy.ReceivedMessage.ShouldBe(canary);
+                    receivedValue.ShouldBe(absent ? (int?)null : 7);
+                    (observed is LogDispatchException).ShouldBeTrue();
+                    var failure = (LogDispatchException)observed;
+                    reports.Count.ShouldBe(1);
+                    LoggerTests.AssertFailureReport(failure.Report, new[] { 1 }, new[] { LogFailureStage.Output }, 0);
+                    LoggerTests.AssertEquivalentFailureReports(reports[0], failure.Report);
+                    LoggerTests.AssertNoFailureBacklinks(failure, reports[0], failing, healthy, metadata, cause, payload, observer, canary);
+                    foreach (var text in new[] { failure.Message, failure.ToString(), stderr.ToString() })
+                    {
+                        text.Contains(canary).ShouldBeFalse();
+                        text.Contains(typeof(OpaqueMetadata).FullName).ShouldBeFalse();
+                    }
+                    if (metadata != null) metadata.DiagnosticReads.ShouldBe(0);
+                    payload.DiagnosticReads.ShouldBe(0);
+                    cause.DiagnosticReads.ShouldBe(0);
+                }
+                finally
+                {
+                    Utilities.Logger.DispatchFailed -= observer;
+                    Utilities.Logger.ClearDestinations<OpaqueMetadata>();
+                    Console.SetError(originalError);
+                }
+            }
+        }
+
+        private sealed class ReentryMetadata { }
+
+        private sealed class OpaqueMetadata
+        {
+            private readonly string _canary;
+            public OpaqueMetadata(string canary) { _canary = canary; }
+            public int Value;
+            public int DiagnosticReads { get; private set; }
+            public string PrivateValue { get { DiagnosticReads++; return _canary; } }
+            public override string ToString() { DiagnosticReads++; return _canary; }
+            public override bool Equals(object other) { DiagnosticReads++; return ReferenceEquals(this, other); }
+            public override int GetHashCode() { DiagnosticReads++; return 0; }
+        }
+
+        private sealed class FailureDestination<T> : Utilities.Generics.ILoggingDestination<T>
+        {
+            private readonly string _name;
+            private readonly List<string> _attempts;
+            public FailureDestination(string name, List<string> attempts) { _name = name; _attempts = attempts; }
+            public Func<bool> OnEligibility { get; set; }
+            public Action OnLog { get; set; }
+            public int ValidationCalls { get; private set; }
+            public int LogCalls { get; private set; }
+            public LogLevels ReceivedLevel { get; private set; }
+            public string ReceivedMessage { get; private set; }
+            public Exception ReceivedException { get; private set; }
+            public T ReceivedMetadata { get; private set; }
+            public bool ValidateMessageLevel(LogLevels level)
+            {
+                ValidationCalls++;
+                _attempts.Add(_name + ":eligibility");
+                return OnEligibility == null || OnEligibility();
+            }
+            public void Log(LogLevels level, T metadata, string message = null, Exception ex = null)
+            {
+                LogCalls++;
+                ReceivedLevel = level;
+                ReceivedMessage = message;
+                ReceivedException = ex;
+                ReceivedMetadata = metadata;
+                _attempts.Add(_name + ":log");
+                OnLog?.Invoke();
             }
         }
 

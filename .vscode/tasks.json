@@ -345,6 +345,102 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "test"
+		},
+		{
+			"label": "M2-C validate task setup",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C protected Windows baseline",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C candidate Windows checks",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C freeze audited specifications",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C final scope and Windows verification",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C compile README examples",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c.ps1' -Stage Examples",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C r2 validate task setup",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c-r2.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C r2 protected Windows baseline",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c-r2.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C r2 candidate Windows checks",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c-r2.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C r2 freeze audited specifications",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c-r2.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C r2 final scope and Windows verification",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c-r2.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M2-C r2 compile README examples",
+			"type": "shell",
+			"command": "& 'C:\\Projects\\ProphetManX\\.agent-runs\\20260919-1550-logger-m2c-execution\\validate-m2c-r2.ps1' -Stage Examples",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
 		}
 	]
 }

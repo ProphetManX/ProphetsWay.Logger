@@ -350,3 +350,41 @@ by this capture. No requirements, source, test, project, configuration, task, op
 or other product document is changed here. Release/version authority, privacy rules, independent destinations
 and the approved reflection limits remain intact. D010/D011's prior reviewed delegation is unchanged;
 no new OWNER decision area is downgraded to INFER.
+
+## D022 - Custom Severity Callback Failures And Conditional Nightly Approval
+
+**Accepted and recorded:** 2026-09-19. **Owner:** G. Gordon Nasseri. **Provenance:** current owner
+acceptance of the preceding Q-C1 recommendation, captured under D015's durable-record intent.
+Sources: [current approval and capture target](../../.agent-runs/20260919-0110-logger-m2c-policy/slice-01-r1.md),
+[Q-C1 proposal](../../.agent-runs/20260919-0032-logger-m2c-preparation/01-m2c-proposal.md#questions-and-routing)
+and [independent review](../../.agent-runs/20260919-0032-logger-m2c-preparation/02-m2c-requirements-review.md#q-c1-disposition).
+
+The parent's preceding recommendation for custom `IDestination.ValidateMessageLevel` exceptions was:
+
+> withhold that recipient, attempt the others, report safely, then throw
+
+The owner accepted it:
+
+> i agree with the recommendation, if the error/throw is a misconfiguration, it should be handled by the dev, i'm not sure where or why we'd ever hide an error ourside our default file destination stuff we've already discussed
+
+- **Q-C1 is resolved:** during Logger dispatch, a configured custom `IDestination.ValidateMessageLevel` throwing for a valid message mask withholds the payload from that recipient. Finish all other independent eligible attempts, report safely, then throw to the caller, regardless of another output succeeding and without strict opt-in.
+- This is a callback-boundary rule, not a cause-classification heuristic. Do not inspect foreign exception text or payload to guess whether it is a misconfiguration before deciding to propagate. It extends D018's mandatory propagation to this specific boundary, not to every kind of check or capture failure.
+- Intentional false eligibility and active reject-all remain non-failures and do not activate fallback. Qualifying successful default-file recovery remains success; existing default-file rules are unchanged.
+- Preserve D009/D018's bounded safe reporting, privacy limits, subscriber/stderr containment and original-failure precedence. Reporting failure cannot replace the original failure or suppress required propagation. No raw-error channel, new strict switch, exception name or public signature is selected; exact public details remain D010's independently reviewed contract work.
+
+**Broader concern, not a blanket policy replacement:** the owner's objection to hidden failures is
+recorded above, but does not explicitly choose a replacement for [requirements.md](requirements.md)
+AC-14.2/AC-15.3 shared producer/collection-capture or opted-in label-check treatment, or repeal
+AC-16.3 secondary-reporting safeguards. Those separate policy changes need explicit owner disposition;
+Q-C1 does not need another answer. Label/capture features may remain outside the current configured
+severity/output slice; this approval requires no new strict mechanism for those excluded paths.
+
+The owner also said:
+
+> and you are approved for the nightly run when ready
+
+**Conditional nightly direction:** approval is when ready, with the existing no-push restriction and
+stop by **05:00 EDT (UTC-04:00), 2026-09-19** unchanged. Exact accepted scope, reviewed contracts,
+file/author grants and fresh executable validation readiness remain prerequisites, not completed gates.
+This capture starts or schedules no implementation and grants no task/validator edits, unspecified Git
+checkpoint, public API or release action. Earlier decisions and their history remain unchanged.
