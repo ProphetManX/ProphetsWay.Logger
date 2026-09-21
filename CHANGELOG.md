@@ -87,8 +87,39 @@ callbacks run. Mutations from those callbacks affect later captures, recursive d
 and an older capture may still invoke a removed or cleared destination after the mutation returns.
 Registration does not invoke recipients, and remove/clear never dispose borrowed destinations; hosts
 must quiesce producers and await synchronous calls before disposing them. This corrects the prior live-
-enumeration and ownership hazards without promising a drain, immediate revocation, automatic fallback,
-or a broader concurrency/failure policy.
+enumeration and ownership hazards without promising a drain, immediate revocation, or automatic fallback.
+
+## Log annotation occurrences
+
+The new `LogAnnotations` value captures an explicit `IEnumerable<SensitivityLabel>` through its
+constructor and exposes the successful capture through the read-only `LabelOccurrences` property.
+The constructor copies the supplied occurrences in order, preserves duplicates, accepts an empty
+sequence, and rejects null input or null elements. A failed or unsupported sequence capture does not
+publish a usable partial value; callers remain responsible for providing a finite, stable sequence.
+The returned collection is read-only, and this standalone value does not attach annotations to Logger
+dispatch, establish scopes, apply destination filters, format or redact content, or provide security
+guarantees. It is separate from the existing policy predicate's deduplicated membership behavior.
+
+## Configured dispatch failure reporting
+
+Configured ordinary and declared-typed routes now attempt each captured recipient independently. An
+eligibility or output callback failure does not stop later captured recipients; after all attempts, the
+call attempts bounded notification through `Logger.DispatchFailed` when subscribers are present and
+same-thread recursive reporting is not already suppressed, along with the ordinary stderr summary,
+then throws `LogDispatchException`. The report exposes a correlation ID, encounter-ordered failure descriptors
+with each recipient's one-based captured position and `Eligibility` or `Output` stage, and an overflow
+count when more failures occurred than the retained descriptor limit. Subscriber failures are contained,
+and the safe exception/report boundary does not retain or expose the original callback causes.
+
+Consumers that previously handled only the first raw recipient exception should instead catch
+`LogDispatchException` and inspect its `Report`, and may subscribe to `Logger.DispatchFailed` when they
+need the bounded notification. This contract applies to configured routes; unconfigured fallback
+behavior remains separately qualified, and it does not claim automatic fallback, retries, rollback,
+or full exception-graph sanitization.
+
+The configured-route failure behavior corrects the prior single-failure propagation boundary without
+claiming that the full v4 integration, automatic Trace/file behavior, Microsoft bridge, framing, or
+output-failure policy is complete.
 
 # v3.0.1
 ### Build target for Net 6.0

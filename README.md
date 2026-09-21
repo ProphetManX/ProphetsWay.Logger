@@ -7,8 +7,9 @@ Route log messages to console, file, event, or custom destinations with per-dest
 > Six native severities, strict mask validation, and severity checks before supplied
 > destination rendering are implemented. `SensitivityLabel`, `LabelFilterMode`, and
 > `DestinationLabelPolicy` also exist in source, but the label policy remains a standalone
-> predicate, not integrated into Logger registration or dispatch. These are not claims
-> about the published NuGet package or completion of v4.
+> predicate, not integrated into Logger registration or dispatch. `LogAnnotations` captures
+> ordered label occurrences as a standalone value, with no Logger, flow/scope, or filter
+> integration. These are not claims about the published NuGet package or completion of v4.
 
 Build Status:  
 [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/ProphetManX.ProphetsWay.Logger?repoName=ProphetManX%2FProphetsWay.Logger&branchName=main)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=25&repoName=ProphetManX%2FProphetsWay.Logger&branchName=main)
@@ -170,7 +171,7 @@ The package and assembly are `ProphetsWay.Logger`; the utility namespace deliber
 
 | Import | Use |
 | --- | --- |
-| `ProphetsWay.Utilities` | `Logger`, `LogLevels`, plain destination contracts/bases, and all three label/policy types. |
+| `ProphetsWay.Utilities` | `Logger`, `LogLevels`, plain destination contracts/bases, all three label/policy types, and `LogAnnotations`. |
 | `ProphetsWay.Utilities.LoggerDestinations` | `ConsoleDestination`, `FileDestination`, `EventDestination`, `GenericEventDestination<T>`, `TextBasedDestination`. |
 | `ProphetsWay.Utilities.Generics` | `ILoggingDestination<T>`, `BaseLoggingDestination<T>`, `ILoggerMetadata`, and metadata extension methods. |
 
@@ -221,6 +222,21 @@ are equal; `PII` and `pii` are distinct. No value-equality `==` operator is supp
 have equal hashes, but hashes are neither unique nor a persistent or cryptographic identity.
 See [SensitivityLabelTests.cs](ProphetsWay.Logger.Test/SensitivityLabelTests.cs).
 
+### Annotation Occurrences
+
+[LogAnnotations.cs](ProphetsWay.Logger/LogAnnotations.cs) provides a sealed standalone value
+for one explicit label attachment. Construct it with
+`LogAnnotations(IEnumerable<SensitivityLabel> labels)` and read its getter-only
+`ReadOnlyCollection<SensitivityLabel> LabelOccurrences`. Construction copies the complete
+finite sequence before returning: empty is valid, order and every repeated occurrence survive,
+and later source additions, removals or replacements cannot change the captured value.
+
+These are occurrences, not the deduplicated membership used by `DestinationLabelPolicy`.
+Labels retain `SensitivityLabel`'s ordinal value equality; `LogAnnotations` does not define
+annotation-value equality. Reusing a value does not combine attachments or merge their origins.
+It does not attach anything to Logger calls or implement flow/scope propagation or filtering.
+See [LogAnnotationsTests.cs](ProphetsWay.Logger.Test/LogAnnotationsTests.cs).
+
 ### Policy Membership
 
 `LabelFilterMode` is **not** a flags enum. Construct a policy with exactly one mode and a
@@ -246,6 +262,8 @@ The tables summarize the current declarations, not proposed APIs.
 | Member | Current use |
 | --- | --- |
 | `SensitivityLabel(string identifier)` | Create an immutable identity; read `Identifier`, compare with `Equals`, use `GetHashCode` for collections. |
+| `LogAnnotations(IEnumerable<SensitivityLabel> labels)` | Copy one attachment's ordered label occurrences, including repeats; empty input is valid. |
+| `LogAnnotations.LabelOccurrences` | Getter-only `ReadOnlyCollection<SensitivityLabel>`; captured occurrence count and order stay fixed. |
 | `DestinationLabelPolicy(LabelFilterMode mode, IEnumerable<SensitivityLabel> labels)` | Required mode and configured membership; no default constructor. |
 | `DestinationLabelPolicy.Mode` / `Labels` | Read the selected mode and copied, unique, read-only membership. |
 | `DestinationLabelPolicy.Allows(IEnumerable<SensitivityLabel> effectiveLabels)` | Synchronous Boolean membership decision; no output operation. |
@@ -526,6 +544,23 @@ preserves policy state and results, but concurrent producer mutation is unsuppor
 collection-reference identity, and representative label-reference identity are unspecified.
 Mutation through readback collection interfaces throws `NotSupportedException`.
 
+### Annotation Capture And Readback
+
+Supply a finite, stable, non-null sequence of non-null labels to `LogAnnotations`.
+Null `labels` throws `ArgumentNullException`; a null element anywhere throws `ArgumentException`.
+Both name `labels` in `ParamName`; exception wording is not promised.
+
+Sequence access includes enumerator acquisition, iteration, element access and disposal.
+If any fails, construction produces no usable partial value. Foreign sequence errors are local
+construction errors, not sanitized dispatch reports; their details, competing-error precedence
+and access counts are unspecified. Caller code may have side effects: capture does not sandbox
+or roll them back, support mutation during capture, or guarantee termination for unbounded input.
+
+After successful construction, `LabelOccurrences` is non-null and supports concurrent reads.
+Writes through its collection interfaces throw `NotSupportedException`; its `ICollection.SyncRoot`
+does not expose occurrence storage. View and representative label-reference identity are unspecified.
+These readback guarantees describe `LogAnnotations` specifically.
+
 ### Current Logging And Text Output
 
 - With no plain destination, Logger adds a timestamp-named relative file destination using local
@@ -547,8 +582,21 @@ Mutation through readback collection interfaces throws `NotSupportedException`.
     Stop producers and await synchronous calls before disposing your recipients. Membership capture
     does not serialize callers or shared recipients, impose cross-thread delivery order, or freeze
     custom recipient state, eligibility results, metadata or exception graphs.
-- Current dispatch can stop at a throwing destination. The planned independent-attempt and safe
-    failure-reporting behavior is not implemented by the native severity changes or label policy.
+- On explicitly configured plain and exact-`T` routes, Logger attempts recipients independently
+        in captured order, without retries. If `ValidateMessageLevel` throws, that recipient receives no
+        payload; eligibility or output exceptions do not prevent attempts on the remaining recipients.
+        After attempts, any such failure produces a bounded `LogFailureReport` through
+        `Logger.DispatchFailed`, followed by `LogDispatchException` even if other recipients succeeded.
+        The report keeps up to eight failure descriptors in encounter order: positions in this call's
+        full registration capture and their `LogFailureStage` (`Eligibility` or `Output`), plus an
+        overflow count and generated correlation ID, not payloads, recipient references or raw causes.
+        Event subscribers and a safe stderr summary are attempted synchronously; their exceptions are
+        contained without replacing the final dispatch failure. Recursive reporting on the same
+        managed-thread stack suppresses nested event/stderr reports, not nested dispatch or its
+        exception. No callback timeout, guaranteed observation or process-fatal containment is promised.
+        This configured-route boundary does not qualify unconfigured fallback, arbitrary direct calls
+        or runtime/debugger exception inspection; it is not whole-exception-graph sanitization or a
+        guarantee that all I/O completes.
 - Console/file formatting uses local, culture-dependent timestamps and pads severity names to 12
   characters. It does not escape multiline/control input into one physical record or redact content.
 - Supplied exceptions now retain their detail for warnings, errors, critical entries and every
@@ -575,20 +623,21 @@ This is a specific Exception Message and will contain a stack trace.
 ### Unfinished Integration And Security Boundaries
 
 Native severity/mask/helper validation and supplied-recipient **severity** withholding are implemented,
-alongside the standalone labels and membership predicate. M2-B adds independent explicit routes,
-atomic ordered membership capture and borrowed-recipient lifetime rules. This completes neither the
-full dispatch foundation (M2) nor v4. Label registration/filter integration and entry/scope origin
-collection remain future work; a label policy does not yet withhold Logger payloads.
+alongside the standalone labels, membership predicate and annotation value. M2-B adds independent
+explicit routes, atomic ordered membership capture and borrowed-recipient lifetime rules. M2-C adds
+independent recipient attempts and bounded safe failure reporting with a post-attempt
+`LogDispatchException` on explicitly configured routes. This completes neither the full dispatch
+foundation (M2) nor v4. Label registration/filter integration and entry/scope origin collection
+remain future work; neither a label policy nor an annotation value yet withholds Logger payloads.
 
 Registration-level settings replacement, owned-resource lifetime work, record framing, invariant
-rendering/shared UTC timestamps, safe failure reporting and independent recipient attempts, fixed
-automatic-file recovery/reuse and remembered initialization failure, append-by-default explicit files,
-and both Microsoft logging bridges remain unfinished. Unconfigured typed fallback still forwards to
-ordinary logging; the existing default-file path is unexercised by this focused validation. Explicit
-membership safety is not a guarantee of all concurrency safety. Microsoft severity conversion/None
-handling is not supplied by this native enum. The new file/fallback/failure policies in
-[docs/requirements.md](docs/requirements.md) are **future behavior**, not current runtime promises.
-Requirements readiness is not delivery.
+rendering/shared UTC timestamps, fixed automatic-file recovery/reuse and remembered initialization
+failure, append-by-default explicit files, and both Microsoft logging bridges remain unfinished.
+Unconfigured typed fallback still forwards to ordinary logging; the existing default-file path is
+unexercised by this focused validation. Explicit membership safety is not a guarantee of all
+concurrency safety. Microsoft severity conversion/None handling is not supplied by this native enum.
+The implemented configured-route failure behavior above is not delivery of every policy in
+[docs/requirements.md](docs/requirements.md). Requirements readiness is not delivery.
 
 A false policy result is an ordinary mismatch, not an output failure or instruction to activate
 fallback. True means only membership permission, not successful delivery, correct classification,

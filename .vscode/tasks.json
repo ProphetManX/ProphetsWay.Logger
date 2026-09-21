@@ -441,6 +441,86 @@
 			"isBackground": false,
 			"group": "test",
 			"options": { "cwd": "C:\\Projects\\ProphetManX\\ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3-B validate task setup",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260920-1250-logger-m3b-annotations/validate-m3b.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3-B protected Windows baseline",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260920-1250-logger-m3b-annotations/validate-m3b.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3-B candidate Windows checks",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260920-1250-logger-m3b-annotations/validate-m3b.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3-B freeze audited specifications",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260920-1250-logger-m3b-annotations/validate-m3b.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3-B final Windows verification",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260920-1250-logger-m3b-annotations/validate-m3b.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3-B r2 validate task setup",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260920-1250-logger-m3b-annotations/validate-m3b-r2.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3-B r2 protected Windows baseline",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260920-1250-logger-m3b-annotations/validate-m3b-r2.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3-B r2 candidate Windows checks",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260920-1250-logger-m3b-annotations/validate-m3b-r2.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3-B r2 freeze audited specifications",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260920-1250-logger-m3b-annotations/validate-m3b-r2.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3-B r2 final Windows verification",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260920-1250-logger-m3b-annotations/validate-m3b-r2.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
 		}
 	]
 }
