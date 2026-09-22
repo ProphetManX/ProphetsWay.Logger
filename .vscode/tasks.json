@@ -521,6 +521,62 @@
 			"isBackground": false,
 			"group": "test",
 			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Policy ownership validate setup",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260921-0040-logger-policy-ownership/validate-policy.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Policy ownership Windows baseline",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260921-0040-logger-policy-ownership/validate-policy.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Policy ownership candidate checks",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260921-0040-logger-policy-ownership/validate-policy.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Policy ownership freeze specifications",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260921-0040-logger-policy-ownership/validate-policy.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Policy ownership final verification",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260921-0040-logger-policy-ownership/validate-policy.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Policy checkpoint r2 validate setup",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260921-2012-logger-policy-checkpoint/validate-checkpoint-r2.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Policy checkpoint r2 Windows verification",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260921-2012-logger-policy-checkpoint/validate-checkpoint-r2.ps1' -Stage Verify",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
 		}
 	]
 }

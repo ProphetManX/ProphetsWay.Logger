@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -73,7 +74,7 @@ namespace ProphetsWay.Utilities
 
 			_labels = membership;
 			Mode = mode;
-			Labels = capturedLabels.AsReadOnly();
+			Labels = new OwnedLabels(capturedLabels);
 		}
 
 		/// <summary>
@@ -164,6 +165,17 @@ namespace ProphetsWay.Utilities
 				default:
 					return true;
 			}
+		}
+
+		private sealed class OwnedLabels : ReadOnlyCollection<SensitivityLabel>, ICollection
+		{
+			private readonly object _syncRoot = new object();
+
+			internal OwnedLabels(IList<SensitivityLabel> labels) : base(labels)
+			{
+			}
+
+			object ICollection.SyncRoot => _syncRoot;
 		}
 	}
 }

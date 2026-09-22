@@ -601,5 +601,101 @@ namespace ProphetsWay.Logger.Test
 				}
 			}
 		}
+
+		[Theory]
+		[InlineData(LabelFilterMode.NoFilter, "Replace", true)]
+		[InlineData(LabelFilterMode.Exclude, "Replace", false)]
+		[InlineData(LabelFilterMode.AllowOnly, "Replace", true)]
+		[InlineData(LabelFilterMode.AllowOnly, "ReplaceWithNull", false)]
+		[InlineData(LabelFilterMode.Exclude, "Duplicate", true)]
+		[InlineData(LabelFilterMode.NoFilter, "Add", false)]
+		[InlineData(LabelFilterMode.AllowOnly, "AddNull", true)]
+		[InlineData(LabelFilterMode.Exclude, "Remove", true)]
+		[InlineData(LabelFilterMode.NoFilter, "RemoveAt", false)]
+		[InlineData(LabelFilterMode.AllowOnly, "Clear", false)]
+		public void ShouldPreserveOwnedPolicyMembershipThroughSyncRootMutationAttempts(
+			LabelFilterMode mode, string operation, bool useGeneric)
+		{
+			var contract = new PolicyContract();
+			var policy = contract.Create(mode, CreateLabels("B", "A", "A"));
+			var retainedView = contract.ReadLabels(policy);
+			var independentInputs = new[]
+			{
+				CreateLabels("A"), CreateLabels("B"), CreateLabels("replacement"), CreateLabels(),
+				CreateLabels("A", "replacement"), CreateLabels("B", "A", "A"), CreateLabels("a")
+			};
+			var expectedResults = mode == LabelFilterMode.NoFilter
+				? new[] { true, true, true, true, true, true, true }
+				: mode == LabelFilterMode.Exclude
+					? new[] { false, false, true, true, false, false, true }
+					: new[] { true, true, false, false, false, true, false };
+			Action verifyPolicyUnchanged = () =>
+			{
+				contract.ReadMode(policy).ShouldBe(mode);
+				independentInputs.Select(labels => contract.Allows(policy, labels)).ToArray().ShouldBe(expectedResults);
+				ShouldHaveMembership(retainedView, "A", "B");
+				ShouldHaveMembership(contract.ReadLabels(policy), "A", "B");
+			};
+			verifyPolicyUnchanged();
+			var syncRoot = ((ICollection)retainedView).SyncRoot;
+			var replacement = new SensitivityLabel("replacement");
+			var duplicate = new SensitivityLabel("A");
+			var mutations = new List<Action>();
+			if (useGeneric)
+			{
+				if (syncRoot is IList<SensitivityLabel> genericRoot)
+				{
+					switch (operation)
+					{
+						case "Replace":
+							if (genericRoot.Count > 0) mutations.Add(() => genericRoot[0] = replacement);
+							break;
+						case "Duplicate":
+							if (genericRoot.Count > 0) mutations.Add(() => genericRoot[0] = duplicate);
+							if (genericRoot.Count > 1) mutations.Add(() => genericRoot[1] = duplicate);
+							break;
+					}
+				}
+				if (syncRoot is ICollection<SensitivityLabel> genericCollection)
+				{
+					switch (operation)
+					{
+						case "AddNull":
+							mutations.Add(() => genericCollection.Add(null));
+							break;
+						case "Remove":
+							mutations.Add(() => genericCollection.Remove(new SensitivityLabel("A")));
+							break;
+					}
+				}
+			}
+			else if (syncRoot is IList untypedRoot)
+			{
+				switch (operation)
+				{
+					case "Replace":
+						if (untypedRoot.Count > 0) mutations.Add(() => untypedRoot[0] = replacement);
+						break;
+					case "ReplaceWithNull":
+						if (untypedRoot.Count > 0) mutations.Add(() => untypedRoot[0] = null);
+						break;
+					case "Add":
+						mutations.Add(() => untypedRoot.Add(replacement));
+						break;
+					case "RemoveAt":
+						if (untypedRoot.Count > 0) mutations.Add(() => untypedRoot.RemoveAt(0));
+						break;
+					case "Clear":
+						mutations.Add(() => untypedRoot.Clear());
+						break;
+				}
+			}
+			foreach (var mutation in mutations)
+			{
+				Record.Exception(mutation);
+				verifyPolicyUnchanged();
+			}
+			verifyPolicyUnchanged();
+		}
 	}
 }

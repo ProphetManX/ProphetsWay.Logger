@@ -70,6 +70,8 @@ select fallback destinations, or provide confidentiality or security guarantees;
 the Boolean result themselves. Because this is a standalone predicate, creating or evaluating it does
 not alter Logger or destination behavior.
 
+The pure destination-label policy now protects its configured membership readback from ordinary collection-interface mutation attempts, including the synchronization-root path that previously exposed its owned backing list on the modern runtime. Constructed policies retain the same deduplicated, ordinal membership, and `Mode`, `Allows`, and the public API remain unchanged; consumers do not need to change their calls.
+
 ## Explicit destination registration
 
 The existing ordinary and metadata-typed registration methods now maintain separate, exact routes. A
