@@ -388,3 +388,60 @@ stop by **05:00 EDT (UTC-04:00), 2026-09-19** unchanged. Exact accepted scope, r
 file/author grants and fresh executable validation readiness remain prerequisites, not completed gates.
 This capture starts or schedules no implementation and grants no task/validator edits, unspecified Git
 checkpoint, public API or release action. Earlier decisions and their history remain unchanged.
+
+## D023 - Logical-Flow Label Inheritance And Isolation
+
+**Accepted and recorded:** 2026-09-20. **Owner:** G. Gordon Nasseri. **Provenance:** current owner
+approval of the immediately preceding recommendation and explanation in the attended conversation,
+preserved in the [current acceptance target, revision 1](../../.agent-runs/20260920-1114-logger-flow-decision/slice-01-r1.md#approval-and-meaning)
+and [current run record](../../.agent-runs/20260920-1114-logger-flow-decision/run.md#owner-decision-and-boundary).
+This is a new acceptance, not an inference that an earlier recommendation was already approved.
+
+The immediately preceding policy recommendation was:
+
+> inherit labels automatically, but keep scope changes and cleanup isolated between logical flows.
+
+The owner's exact current response was:
+
+> in concur with your recommendation.  thank you for the clear example
+
+The accepted explanation establishes these consequences:
+
+- A logical flow follows asynchronous work across `await`, not one physical thread. A child inherits the active labels captured when it is queued.
+- Scope additions and cleanup affect only their logical flow. Child-only changes must not alter the parent's or a sibling's labels or interfere with their later scope cleanup.
+- In the explanation's example, a child inherits `PersonalData` and adds `Billing` in its own nested scope. That child has both labels; its parent and sibling do not acquire `Billing`. Leaving the child's `Billing` scope restores its inherited `PersonalData`. These are illustrative application labels, not a library taxonomy.
+- Ending a label scope ends that flow's scope; it does not dispose Logger or its destinations.
+- A child that outlives its parent's scope retains its captured labels. The parent ending its scope is not revocation of an already captured child context.
+
+**Preserved rules:** D006 still requires flow-local, last-in-first-out disposal, double disposal as a
+no-op, and rejection of out-of-order disposal without changing the scope stack. Ended scopes do not
+affect later outside calls or unrelated operations; the inherited child's continuing context above
+is not a new outside call by the parent. D006's resource ownership and other lifetime obligations
+remain unchanged. D004's accumulation, non-subtraction of inherited labels, preserved origins and
+optional whole-entry recipient filtering remain unchanged. Labels do not redact or encrypt content;
+D013's classification, sanitization, recipient access, retention and other consumer responsibilities
+remain with consumers. This decision does not change strict treatment or any failure policy.
+
+**Historical Q-FLOW evidence:** the earlier [contract author's Q-FLOW and U1-U4 omissions](../../.agent-runs/20260919-2330-logger-m3a-readiness/02-label-context-contract.md#unreached-contracts-and-questions),
+[independent Q-FLOW disposition](../../.agent-runs/20260919-2330-logger-m3a-readiness/03-contract-review.md#q-flow-disposition)
+and [prior proposed recommendation](../../.agent-runs/20260919-2330-logger-m3a-readiness/06-implementation-readiness.md#the-one-owner-decision)
+remain unchanged historical records. The prior recommendation proposed the same core inheritance
+and per-flow isolation; the current approval and explanation above supply its acceptance now.
+**Core Q-FLOW is resolved; do not ask for that policy again.** This supplements D004/D006/D010/D013,
+not a blanket approval of every case in the earlier compound question or of a completed contract.
+
+**Unselected details:** suppressed execution-context flow, manual handle transfer and misuse outside
+ordinary inherited flows are still named boundaries, not policies silently filled with defaults.
+No permission to dispose a transferred handle in another context is inferred. Exact callback and
+handle APIs remain D010's bounded, independently reviewed contract work; its authority is not widened.
+The explanation's `BeginLabelScope` name was explicitly illustrative and unimplemented, not a selected
+API. No implementation mechanism, body, generic constraint, exception choice or new strict selector
+is selected. U1-U4 remain unwritten and require fresh bounded authoring authority for Interface
+Architect v2, followed by independent Contract Reviewer v2 review. Policy acceptance establishes no
+complete-contract, test, implementation or release status.
+
+**Expired-window boundary:** the prior M3-A envelope expired at **2026-09-20 05:00 EDT (UTC-04:00)**;
+the parent recorded **11:14:47 EDT** for this fresh attended capture, after that cutoff. This decision
+neither continues that run nor renews its deadline. No overnight continuation, source/test/setup
+work, command execution, Git action, release action or new deadline is granted. Only the narrow
+decision capture is current authority; all earlier entries and old-run reports are preserved.
