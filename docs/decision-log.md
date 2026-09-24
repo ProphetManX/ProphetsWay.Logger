@@ -445,3 +445,44 @@ the parent recorded **11:14:47 EDT** for this fresh attended capture, after that
 neither continues that run nor renews its deadline. No overnight continuation, source/test/setup
 work, command execution, Git action, release action or new deadline is granted. Only the narrow
 decision capture is current authority; all earlier entries and old-run reports are preserved.
+
+## D024 - Conventional Scope Handles And Deliberate Flow Suppression
+
+**Accepted:** 2026-09-23 (Q05); 2026-09-22 (suppression). **Recorded:** 2026-09-23.
+**Owner:** G. Gordon Nasseri. **Provenance:**
+[current owner quote and immediately preceding final option](../../.agent-runs/20260923-0011-logger-conventional-scopes/run.md#exact-owner-decision),
+[acceptance target, revision 1](../../.agent-runs/20260923-0011-logger-conventional-scopes/slice-01-r1.md), and
+[earlier owner suppression answer](../../.agent-runs/20260922-2138-logger-overnight-preflight/owner-response-03.md#exact-owner-response).
+
+The latest owner response was:
+
+> i feel like this is a feature that we're significantly over engineering for a use case that is unlikely and potentially adding bloat to our software.  go with option 2, we want to roll this out with the basic features working.  we can't account for every use case and every possiblilty of how someone might break it, or even worse, if someone tries to break it.  this is a logging utility, it shouldn't be this complicated to trigger the events out?
+
+The immediately preceding final response defines its **option 2** as:
+
+> Conventional scope handles: handles are documented as non-transferable, with local ordering and isolation enforced, but without promising detection of every inherited-child misuse. This narrows the guarantee.
+
+This is not option 2 from the differently ordered research list; no explicit operation boundary was selected.
+
+The earlier owner suppression answer was:
+
+> I concur, no automatic inheritance when flow is deliberately suppressed, user intended actions should override any default we setup for a general use case.
+
+- **Selected guarantee (Q05):** a scope handle belongs to the operation that opened it and its normal continuation. Applications must not pass it to an independent child or unrelated operation for disposal. Local ordering and isolation remain enforced; reliable identification or automatic rejection of every indistinguishable inherited-handle misuse is not promised. Unsupported transfer is not a supported ownership-transfer feature or a security boundary.
+- **Rejected complexity:** no automatic creator-ID/fork detector, new public operation/fork/transfer boundary, tracking subsystem or speculative misuse-hardening is selected. The owner favors working basic logging features over bloat for unlikely or deliberate misuse, not over supported-use correctness.
+- **Preserved normal behavior:** labels follow ordinary continuation across `await` and normally captured children. Child-created additions and cleanup stay isolated, cannot remove parent/sibling labels or consume their legitimate cleanup, and restore inherited labels when the child's nested scope ends. A child outliving its parent's scope retains captured labels; parent scope end is not revocation. Supported child cleanup does not subtract inherited labels.
+- **Preserved cleanup:** D006's flow-local last-in-first-out cleanup, repeat-disposal no-op and non-mutating out-of-order rejection remain. Scope ending does not dispose Logger or destinations, and does not affect unrelated operations.
+- **Accepted suppression:** deliberately suppressed execution-context flow causes no new automatic label inheritance; it does not revoke already captured labels. This intentional application choice overrides the general inheritance default, not Logger's internal lifecycle obligations.
+- **Preserved data and failure boundaries:** D004's accumulation, origins and optional whole-entry filtering, D008's original-object and membership-only capture limits, safe diagnostics, resource ownership and existing failure policies remain. D013's classification, sanitization, recipient access, retention and other consumer responsibilities are unchanged; labels are not a confidentiality or sandbox guarantee.
+
+**Dated qualification:** effective 2026-09-23, this settles D023's previously unselected suppression
+and handle-transfer boundaries only as above, recording suppression accepted on 2026-09-22. Any
+universal creator-versus-inherited-child detection/rejection promise is superseded by Q05's narrower
+guarantee. D006's local cleanup and D023's supported inheritance/isolation are not withdrawn. All
+prior entries, including D023's historical wording, remain unchanged.
+
+**Authority and limits:** Q05 is answered, not replaced by a new question. Exact local mechanics,
+exceptions and public details remain D010's bounded contract-author work with independent review;
+this entry chooses none. It grants no implementation, specification changes, Git action, version or
+publication authority. "Roll this out" is not a release approval. No completed contract, full M3/Set B,
+test result, implementation or release readiness is established by this policy capture.
