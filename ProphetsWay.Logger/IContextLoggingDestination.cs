@@ -20,9 +20,16 @@ namespace ProphetsWay.Utilities
 		/// <exception cref="ArgumentOutOfRangeException">level is invalid; ParamName is "level".</exception>
 		/// <exception cref="Exception">Implementation-defined failure; independent custom errors are not automatically sanitized.</exception>
 		/// <remarks>B02-B04: validate context/mask before payload work, without competing-error
-		/// precedence. Preserve supplied facts/references, with no fabricated payload or deep clone.
+		/// precedence. Preserve supplied scope/label facts and original payload references, with no fabricated payload or deep clone.
 		/// Each call is a new attempt, not deduplicated delivery; effects can precede failure.
-		/// Full context is payload, never a reusable permission or scope-cleanup handle.</remarks>
+		/// Full context is payload, never a reusable permission or scope-cleanup handle.
+		/// <para>F01-F04/F23/F29: preserve supplied scope/label facts and original payload
+		/// references. A Logger handoff carries that call's EventTimestampUtc unchanged.
+		/// Supplied-base public direct calls follow their current-frame correspondence
+		/// contract and select a freshly stamped context without modifying the supplied
+		/// value. Independently invoked custom implementations remain application-owned;
+		/// implementing this interface alone performs no capture or guard.</para>
+		/// </remarks>
 		void LogWithContext(LogContext context, LogLevels level, string message = null, Exception ex = null);
 	}
 }

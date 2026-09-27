@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,11 +15,40 @@ namespace ProphetsWay.Utilities
 	/// to the context structure. These structural exclusions do not exclude objects retained
 	/// as original supplied property values, or the graphs reachable through those values.
 	/// Possession permits local readback, not authorization, direct-call bypass, erasure or
-	/// automatic classification. Retaining recipients own their retention and later cleanup.</remarks>
+	/// automatic classification. Retaining recipients own their retention and later cleanup.
+	/// <para>F01-F05/F23: fixed for this context, including after scope end.
+	/// Logger captures this value once before recipient callbacks and shares it
+	/// through trusted delivery; it is not a filename or recipient-output time.
+	/// A supplied-base public direct call is a new call. When LogWithContext
+	/// accepts a current supplied context, it preserves its scope/label facts in
+	/// the selected context but assigns the new call's captured UTC time there.
+	/// It never changes this retained instance. Recursive calls also capture anew.
+	/// Fresh capture does not promise distinct or increasing clock values.
+	/// Reading this property performs no capture, formatting or delivery.</para></remarks>
 	public sealed class LogContext
 	{
 		private readonly LogLabelContext _labels;
 		private readonly ReadOnlyCollection<LogScopeFrame> _scopes;
+		private readonly DateTimeOffset _eventTimestampUtc;
+
+		/// <summary>Gets the UTC event time captured for this log call.</summary>
+		/// <value>The single call-captured DateTimeOffset with offset zero.</value>
+		/// <remarks>F01-F05/F23: fixed for this context, including after scope end.
+		/// Logger captures this value once before recipient callbacks and shares it
+		/// through trusted delivery; it is not a filename or recipient-output time.
+		/// A supplied-base public direct call is a new call. When LogWithContext
+		/// accepts a current supplied context, it preserves its scope/label facts in
+		/// the selected context but assigns the new call's captured UTC time there.
+		/// It never changes this retained instance. Recursive calls also capture anew.
+		/// Fresh capture does not promise distinct or increasing clock values.
+		/// Reading this property performs no capture, formatting or delivery.</remarks>
+		public DateTimeOffset EventTimestampUtc
+		{
+			get
+			{
+				return _eventTimestampUtc;
+			}
+		}
 
 		/// <summary>Gets the entry and enclosing-scope label facts for this capture.</summary>
 		/// <value>A non-null completed LogLabelContext, including when all membership is empty.</value>
@@ -47,10 +77,18 @@ namespace ProphetsWay.Utilities
 			}
 		}
 
-		internal LogContext(IEnumerable<LogScopeFrame> scopes, LogAnnotations entryAnnotations)
+		internal LogContext(IEnumerable<LogScopeFrame> scopes, LogAnnotations entryAnnotations, DateTimeOffset eventTimestampUtc)
 		{
 			_scopes = CopyMembership(scopes);
 			_labels = new LogLabelContext(entryAnnotations, _scopes);
+			_eventTimestampUtc = eventTimestampUtc;
+		}
+
+		internal LogContext(LogContext context, DateTimeOffset eventTimestampUtc)
+		{
+			_scopes = context._scopes;
+			_labels = context._labels;
+			_eventTimestampUtc = eventTimestampUtc;
 		}
 
 		internal static ReadOnlyCollection<T> CopyMembership<T>(IEnumerable<T> source)

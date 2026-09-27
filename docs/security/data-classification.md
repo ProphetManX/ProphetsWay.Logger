@@ -9,6 +9,9 @@ The separate [ON-04 M2-A extension](#on-04-m2-a-field-extension) inventories nat
 severity and explicit synthetic-recipient carriers. Earlier tables retain their
 ON-03 historical scope and statuses; they are not reclassified by this extension.
 
+The [M4-A current carrier addendum](#m4-a-current-carrier-addendum) covers the current
+M3 structures and approved M4-A rendering boundary without re-auditing those histories.
+
 ## Evidence And Status
 
 Read completely: [SensitivityLabel.cs](../../ProphetsWay.Logger/SensitivityLabel.cs),
@@ -367,3 +370,172 @@ Unconfigured typed-to-ordinary fallback is unqualified and excluded from tests h
 the inventory establishes no whole-route independence or tenant/authentication
 guarantee. Contract review and later independent implementation security review remain
 separate. No real-data, implementation or release verdict is issued.
+
+## M4-A Current Carrier Addendum
+
+**Promotion checkpoint: 2026-09-27. SourceNoCodeVerdict.** This is the authorized canonical
+promotion of [report 02's complete data/threat addendum](../../../.agent-runs/20260926-2305-logger-m4a-preparation/02-m4a-framing-threat-input.md),
+not a new whole-Logger inventory or a restatement of its preparation-era implementation
+status. The owner's "Approve the m4-a envelope" in
+[activation 05](../../../.agent-runs/20260926-2305-logger-m4a-preparation/05-owner-activation.md)
+activates the [revision-1 promotion grant](../../../.agent-runs/20260926-2305-logger-m4a-preparation/m4a-implementation-r1.md).
+[M4A-C1 F01-F30](../../../.agent-runs/20260926-2305-logger-m4a-preparation/01-m4a-contract.md)
+and [accepted contract review 03](../../../.agent-runs/20260926-2305-logger-m4a-preparation/03-m4a-contract-review.md)
+remain authoritative. The [current threat section](threat-model.md#m4-a-native-rendering-and-framing)
+defines B1-B6 and M4-1 through M4-8; earlier sections retain their dates/scope. Report 02
+and its old EOF warning were not edited. Implementation status/green results are not a
+security verdict or I/O certification.
+
+### Opened Definitions And Treatment
+
+Current definitions read for this addendum:
+
+- Structure: [LogContext.cs](../../ProphetsWay.Logger/LogContext.cs), [LogScopeFrame.cs](../../ProphetsWay.Logger/LogScopeFrame.cs), [LogAnnotations.cs](../../ProphetsWay.Logger/LogAnnotations.cs), [LogLabelContext.cs](../../ProphetsWay.Logger/LogLabelContext.cs), [LogLabelOrigin.cs](../../ProphetsWay.Logger/LogLabelOrigin.cs).
+- Selection: [SensitivityLabel.cs](../../ProphetsWay.Logger/SensitivityLabel.cs), [DestinationLabelPolicy.cs](../../ProphetsWay.Logger/DestinationLabelPolicy.cs), [DestinationRegistrationSettings.cs](../../ProphetsWay.Logger/DestinationRegistrationSettings.cs), [LoggingDestinationCore.cs](../../ProphetsWay.Logger/LoggingDestinationCore.cs).
+- Rendering/events: [LogTextRenderer.cs](../../ProphetsWay.Logger/LogTextRenderer.cs), [TextBasedDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/TextBasedDestination.cs), [GenericTextBasedDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/GenericTextBasedDestination.cs), [EventDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/EventDestination.cs), [GenericEventDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/GenericEventDestination.cs).
+- Diagnostics: [LogFailureReport.cs](../../ProphetsWay.Logger/LogFailureReport.cs), [LogFailureDescriptor.cs](../../ProphetsWay.Logger/LogFailureDescriptor.cs), [LogFailureStage.cs](../../ProphetsWay.Logger/LogFailureStage.cs), [LogDispatchException.cs](../../ProphetsWay.Logger/LogDispatchException.cs).
+
+**M4-A1 (report 02 A1):** All unseen payload meanings, nested graphs, keys, label
+associations, explicit-hook text and dynamic type names are **unbounded**, provisionally
+Confidential (C). No real values/business schemas were inspected or guessed to be PII,
+Sensitive PII or Secret. An actual consumer inventory/classification replaces M4-A1.
+Internal (I) covers operational/control facts; Public (P) covers fixed vocabulary only.
+Reachable payload graphs do not become Internal merely because a control reference is I.
+
+The existing class baselines apply under D013: I needs consumer-controlled readership;
+C additionally needs protected transport/encrypted storage if the consumer exports or
+persists it, against interception and stolen storage. These are handling responsibilities,
+not new library guarantees. Every crossing here is local; references do not isolate memory.
+In the tables, **retained** means objects/strings or recipient copies, not an archive,
+retention duration or secure-erasure service. Every payload row is withheld before any
+rejected recipient's hooks/callbacks/print. Intended log content is never safe-report data.
+
+### Native Context Fields
+
+| Field | Class / rationale | At rest | In transit | In logs | Local response/exposure |
+| --- | --- | --- | --- | --- | --- |
+| `LogContext.EventTimestampUtc` | I; call activity time | Immutable retained fact | Selected context; trusted same-call reuse | Invariant offset-zero O prefix | Getter; fresh direct selected view does not mutate retained context; not identity/permission |
+| `LogContext.Labels` | C; associations | Same completed capture | Accepted contextual handoff | Entry attachment source | Non-null label-facts getter; not general property/handle storage |
+| `LogContext.Scopes` | C; property-bearing boundaries | Copied ordered membership | Full capture, outermost first | Every frame, including empty/unlabeled | Read-only membership; original nested objects remain accessible |
+| `LogScopeFrame.Annotations` | C; attachment association | Fixed at opening | Immutable attachment facts | Null versus present-empty preserved | Optional annotation getter; no property-derived labels |
+| `LogScopeFrame.Properties` | C; ordered associations | Copied pairs, not deep-cloned values | Captured membership, not source re-enumeration | Pair order and duplicate keys retained | Read-only list; no writable library backing |
+| Property `Key` | C; unbounded string meaning | Captured string | Direct token input, not value hook | Quote/escape null/empty/whitespace distinctly | No normalization, merge or implicit labels |
+| Property `Value` | C; unbounded graph/capabilities | Original value/reference | Accepted raw context or explicit hook | Supported scalar, marker or explicit result | Handles/delegates/enumerables within it are not stripped or frozen |
+| `LogAnnotations.LabelOccurrences` | C; ordered label associations | Copied occurrence membership | Attachment facts | Every occurrence, including repeats | Read-only list; reuse does not merge attachments |
+| `LogLabelContext.EntryAnnotations` | C; entry association | Retained immutable attachment | Context readback | Separate entryLabels field | Null differs from empty; neither subtracts inherited labels |
+| `LogLabelContext.ScopeAnnotations` | C; label-only projection | Ordered immutable membership | Context readback | Full frames govern rendering, not this projection alone | Non-null attachments only, including empty attachments |
+| `LogLabelContext.Origins` | C; occurrence relationships | Immutable ordered origins | Context readback | Preserved through attachment/frame structure | Scopes then entry; duplicates survive |
+| `LogLabelContext.EffectiveLabels` | C; derived membership | Distinct ordinal union | Eligibility input/readback | Never substitutes for origin/occurrence text | Reading is not a permission decision |
+| `LogLabelOrigin.Label` | C; one occurrence identity | Immutable label | Context readback | Original attachment token | Existing ordinal identity, no normalization |
+| `LogLabelOrigin.ScopeIndex` | C; attachment relationship | Immutable nullable index | Context readback | Structural association | Null means entry; otherwise ScopeAnnotations index, never Scopes index |
+| `LogLabelOrigin.OccurrenceIndex` | C; occurrence relationship | Immutable index | Context readback | Original order retained | Local index, not a durable ID/principal/handle |
+| `SensitivityLabel.Identifier` | C; unbounded opaque meaning | Immutable exact string | Intentional getter/token input | Quoted/escaped; validity is not encoding | Existing 1-256-unit validity/ordinal identity; no diagnostic echo |
+
+M3's structural exclusions prohibit library-added live-stack/handle/source-enumerator/
+formatter/recipient/history backlinks, not capabilities already reachable from supplied
+property values. Membership immutability is not sanitization. Arbitrary metadata, even
+annotation-shaped T, dictionaries or enumerables, remains an opaque value, not a new
+entry-property carrier, native structure or implicit label source.
+
+### Raw And Text Carriers
+
+The earlier native inventory's individual `Message`, `StackTrace`, `Data` and
+`InnerException` rows remain provisionally C. Their current treatment is reaffirmed below
+from the opened core/event declarations, not by re-dating the old assessment.
+
+| Field/component | Class / rationale | At rest | In transit | In logs | Local response/exposure |
+| --- | --- | --- | --- | --- | --- |
+| `message` / event `RawMessage` | C; unbounded original text | Raw/recipient copies | Original optional string | Massage then text-token encoding | Original null/empty/whitespace/raw escapes unchanged |
+| `ex` / event `Exception` | C; original diagnostic graph | Original reference | Intended accepted raw handoff | Existing chain messages/available stacks only by default | Data/nested causes remain reachable raw; no deep clone/redaction |
+| Massage result / event `Message` | C; derived unbounded text | Derived/event string | Text renderer or event callback | Escape only in text composition | Event Message remains unescaped, possibly multiline; no scopes added by massage |
+| `metadata` / generic event `Metadata` / metadata hook input | C; arbitrary unconstrained T | Original value/reference | Exact declared-T handoff/hook | Typed-only field even for null/default(T) | Original raw value; not a label source |
+| Ordinary/generic event `Context` | C; property/label graph | Selected retained capture | Accepted callback | Text uses native structure, not event serialization | Completed context for library delivery; public manual constructor leaves it null |
+| Ordinary/generic event `Timestamp` | I; event activity time | Retained event value | Accepted event callback | Distinct from text UTC prefix | Existing local-time DateTime; not redefined as EventTimestampUtc |
+| `level` / event `LogLevel` | I; importance/routing | Event/record value | Eligibility, then accepted handoff | Full validated mask's general spelling | No classification/identity authority |
+| `FormatValue` result | C; arbitrary extension text | Recipient-local string | Final token encoder | Always encoded as data; null result is null token | No raw-value replacement or cross-recipient cache |
+| Unsupported runtime `Type.Name` | C; dynamic name meaning | Temporary marker text | Type-name metadata only | Encoded within marker | Name intentionally visible; not FullName/member discovery or object persistence |
+| Fixed marker shell/grammar literals | P; authored syntax | Constants | Composition only | Fixed ASCII vocabulary | Dynamic content is separately C |
+| `PrintLogEntry.message` / console-wrapper input | C; complete intended record | Consumer may retain/store | One complete non-null string | No renderer terminator; sink supplies it | Not redacted, diagnostic-safe, public-response-safe or a durability receipt |
+
+Default scalar recognition and invariant formats are fixed by M4-5/F06-F11, not an
+invitation to classify numbers, Guid or times as harmless. Default formatting performs no
+arbitrary object inspection; explicit hooks may inspect, retain, mutate, throw, block or
+reenter. Hooks can overlap and own their thread safety. Existing exception-message/stack
+access is explicit executable behavior, not forbidden arbitrary discovery. No added
+Exception.Data/aggregate walk or nontext value formatter is required.
+
+### Control And Diagnostic Fields
+
+| Field/component | Class / rationale | At rest | In transit | In logs | Local response/exposure |
+| --- | --- | --- | --- | --- | --- |
+| Settings `Enabled` | I; participation choice | Immutable setting | Selection | No new export | False retains disabled registration; enabled reject-all stays active |
+| Settings `ReportingLevel` / intrinsic mask | I; selected restriction | Captured setting/fixed core mask | All-bits checks | Not new configuration output | Registration and intrinsic restrictions both apply |
+| Settings/core `LabelPolicy` / policy `Labels` | C; configured associations | Immutable policy membership; atomic core reference | Selection before payload work | Excluded from safe output | Existing local readback; no writable backing |
+| Policy `Mode` | I; filter choice | Immutable value | Selection | No new export | Existing local getter |
+| `Allows` result | C; membership relationship | No decision archive | Local gate | Not an audit receipt | Permission facet only, not payload suitability |
+| Severity result | I; control outcome | No archive | Local gate | False is not failure | No recipient authentication; all required bits, not overlap |
+| Route/exact-T identity, recipient/settings references, captured positions | I; control facts | Private snapshot/borrowed handles | Selected route only | No registry dump | Control use, not a new public registry or ownership API |
+| Sequence/scope/formatter/output/subscriber handles | I; executable/control references | Consumer/control lifetime | Local code/reference use | Not default object serialization | No sandbox or harmless classification of reachable contents |
+| Foreign failure `Message` | C; unbounded text | No library raw-failure archive | Caught boundary, not safe report | Excluded | No safe diagnostic exposure |
+| Foreign failure `StackTrace` | C; diagnostic/location text | No raw-failure archive | Same boundary | Excluded | No foreign stack handoff |
+| Foreign failure `Data` | C; arbitrary values/backlinks | No raw-failure archive | Same boundary | Excluded | No raw-data handoff |
+| Foreign failure `InnerException` / cause | C; nested graph | No raw-cause retention | Same boundary | Excluded | No inner-cause/backlink in safe report |
+| `LogFailureReport.CorrelationId` | I; generated call correlation | Immutable safe report | Observers/caller | Permitted generated ID | Non-payload-derived; not authentication/durable identity |
+| `LogFailureReport.Failures` | I; bounded ordered facts | At most eight while accumulating | Safe report | Permitted facts only | Read-only; no raw payload/control backlinks |
+| `LogFailureReport.OverflowCount` | I; excess recipient count | Immutable nonnegative count | Safe report | Permitted count | Nine failures gives eight descriptors plus one overflow |
+| `LogFailureReport.CoreCaptureFailureCount` | I; shared capture fact | Immutable zero or one | Safe report | Permitted count | Count once, not a recipient descriptor |
+| `LogFailureDescriptor.RegistrationId` | I; captured position | Immutable descriptor | Safe report | Permitted one-based position | Includes preceding disabled/rejected/successful slots; direct position 1; not lookup key |
+| `LogFailureDescriptor.Stage` | I; observed boundary | Immutable descriptor | Safe report | Eligibility/Output/LabelCheck | Not inferred from foreign cause; fixed enum vocabulary is P |
+| `LogDispatchException.Report` | I; bounded original facts | Retained safe report | Mandatory propagated error | Safe facts only | Reporter failure cannot replace original facts |
+| Authored exception `Message` / `ToString` / stderr summary | I; fixed prose plus permitted operational facts | No raw archive | Caller/report channel | Exclude payload/time/context/labels/paths/names/formatter causes; stderr <=512 UTF-16 units including terminator | Safe authored interface, not whole CLR serialization |
+| Initial exception `InnerException`, `HelpLink`, `Data`, `Source`; `StackTrace` getter | P; fixed/null/empty facts | Null/null/empty/fixed library source | Authored exception surface | No foreign diagnostic content | StackTrace returns null; not erasure of CLR state |
+| Caller-added exception contents | C; unbounded post-catch data | Consumer retention | Consumer export | Outside safe authored guarantee | Reflection/TargetSite/debugger/serialization/inherited mutation not sanitized |
+
+No event UTC, context, rendered record, dynamic marker name or formatter cause becomes a
+new safe-report field. Ordinary argument and scope/annotation construction failures retain
+their local contracts; foreign construction exceptions are not promised sanitized. Report
+bounds limit retained facts, not recipient attempts, call rate, record size or execution time.
+
+### Exposure And Consumer Duties
+
+Coverage includes every M4-A component and B1-B6: context/frame/annotation/origin fields,
+ordinary/exact-T raw/event fields, scalar/marker/hook results, completed text, selection
+controls and safe/foreign diagnostics. Opaque nested business fields remain unbounded,
+not falsely enumerated. There is no HTTP response, authenticated row retrieval, tenant
+column, password store or soft-delete record. Getters authorize local readback only;
+D013 makes consumer readership and onward export decisions necessary. Never blanket-
+serialize context/events/exceptions on the strength of a label match or escaped text.
+
+Data not submitted cannot leak through this path. Before supplying details, consumers
+should ask whether each message/stack/property/metadata field or label meaning is needed,
+or whether a non-identifying category, token or upstream-sanitized value suffices. This
+reduces unnecessary disclosure/retention; it is not authority for Logger to truncate,
+hash, normalize, redact or silently rewrite supplied content. Framing preserves content
+boundaries, not confidentiality. Unsupported markers intentionally limit representation,
+not raw access or lossless arbitrary-object persistence.
+
+Credential material should not be logged: recoverable log copies would become a credential
+store. A separate consumer password system, if present, needs salted memory-hard password
+hashing, never reversible encryption or fast general-purpose hashes. ProphetsWay.Hasher
+must never be used for credentials. No such field or hashing feature is introduced here.
+
+Consumer storage encryption protects stolen disks/backups, not a compromised application,
+over-permissive read, raw callback or explicit hook already holding data. Protected network
+transport addresses interception at a real export, not local object access. No field-level
+encryption is selected; it would require actual field requirements and changes searching/
+sorting. Actual PII would require the consumer's minimization, retention limit, erasure
+and log-redaction decisions, not an assumption that Logger supplies them.
+
+No compliance obligation is asserted. Conditional question for a future consumer data/
+deployment stream: "Which natural persons' data will be logged, in which jurisdictions
+and organizational role, and what retention, erasure and lawful-processing obligations
+apply?" Actual personal data plus applicable territorial/organizational facts could trigger
+GDPR/UK GDPR duties; no such facts, duration, legal basis or consent requirement were supplied.
+Scope disposal/removal/releasing references is not erasure of retained copies.
+
+**Open Questions proposed for M4-A:** None. Only M4-A1 is assumed; the consumer's inspected
+inventory replaces it. No new tenancy, privacy, retention, encryption, durability or
+redaction guarantee is selected. M4-B file lifecycle/recovery/termination/encoding, typed
+fallback qualification, bridges and full product/release assessment remain outside scope.
+Independent Security Reviewer v2 assesses implementation after promotion; no HTTP API
+Designer work is introduced. This inventory passes no implementation-security verdict.

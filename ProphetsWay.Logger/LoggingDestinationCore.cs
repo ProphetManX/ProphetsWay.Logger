@@ -91,6 +91,38 @@ namespace ProphetsWay.Utilities
 			}
 		}
 
+		/// <summary>Formats one metadata or scope-property value for a text recipient.</summary>
+		/// <param name="value">The original value, including null; never a deep clone.</param>
+		/// <returns>Unescaped text, or null for a null text token. The default returns
+		/// null for null and otherwise the supported scalar text or unsupported marker.</returns>
+		/// <exception cref="Exception">An explicit override can fail; the invoking
+		/// guarded delivery treats that failure as Output, not capture or LabelCheck.</exception>
+		/// <remarks>F06-F14/F26-F30: default string/char content is unchanged; Boolean
+		/// uses True/False. SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64 and
+		/// the numeric values of IntPtr/UIntPtr use invariant D; Single/Double use R,
+		/// Decimal G, Guid D, DateTime/DateTimeOffset O and TimeSpan c, all invariant.
+		/// Payload time kind/offset is preserved, not changed to event UTC. Enums use
+		/// general G names/flags or invariant underlying decimal; alias choice follows
+		/// the BCL. Nullable boxing follows the underlying value or null. BCL spellings
+		/// are those of the executing runtime, not a cross-runtime formatting promise.
+		/// Other values yield [no formatter: TypeName] using runtime Type.Name only.
+		/// Default formatting performs no arbitrary getters, object ToString,
+		/// IFormattable dispatch, equality, hashing, enumeration or object-graph walk.
+		/// An explicit override may extend rendering and call this base implementation.
+		/// Successful text rendering calls this hook once per metadata/property-value
+		/// occurrence after eligibility; a failed recipient may stop formatting values.
+		/// Keys, labels and message/exception text do not pass through it.
+		/// Order across value calls is unspecified. Its result,
+		/// including an unsupported marker, is escaped as data by the text renderer.
+		/// A null override result is a null token, not a thrown failure or fallback.
+		/// There is no cross-recipient formatted-value cache. Overrides may be called
+		/// concurrently; their effects/retained data are consumer-owned. This hook adds
+		/// no disposal, lock, registry, async work, cancellation or retry.</remarks>
+		protected virtual string FormatValue(object value)
+		{
+			return LogTextRenderer.FormatValue(value);
+		}
+
 		/// <summary>
 		/// Combines the supplied context with exception messages and available stack traces.
 		/// </summary>
@@ -98,7 +130,11 @@ namespace ProphetsWay.Utilities
 		/// <param name="message">Optional context, preserved without trimming or substitution.</param>
 		/// <param name="ex">Optional exception whose nested messages and available stacks are included.</param>
 		/// <returns>The original message, including null, when no exception is supplied; otherwise context and exception detail.</returns>
-		/// <remarks>Applies to every valid mask. This hook neither dispatches nor prints and does not add an independent mask guard.</remarks>
+		/// <remarks>Applies to every valid mask. This hook neither dispatches nor prints and does not add an independent mask guard.
+		/// <para>F15-F16: this remains unframed message/exception text. Supplied text
+		/// delivery applies single-line escaping after this hook; event delivery keeps
+		/// its existing massaged/raw distinction. This hook does not render scopes,
+		/// typed metadata, Exception.Data or arbitrary diagnostic properties.</para></remarks>
 		protected virtual string MassageLogStatement(LogLevels level, string message = null, Exception ex = null)
 		{
 			if (ex == null)

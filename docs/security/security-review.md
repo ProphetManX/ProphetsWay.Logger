@@ -1,5 +1,179 @@
 # Security Review - Scoped Logger Assessments
 
+## M4-A Native Rendering And Framing
+
+_Source reviewed 2026-09-27; daytime dependency closeout 2026-09-27 against the accepted [M4-A threat controls](threat-model.md#m4-a-native-rendering-and-framing),
+[current data classification](data-classification.md#m4-a-current-carrier-addendum), and the complete
+[M4A-C1 F01-F30 contract][m4a-contract]. [Threat input 02][m4a-threat] remains the authoritative original snapshot._
+
+### M4-A Verdict
+
+**No blocking issues found in the reviewed M4-A source. The source-security assessment is clear.**
+The supplied paths gate whole entries before payload work, quote and escape every rendered content
+component, compose locally before printing, and keep raw handoffs and safe failure facts separate.
+**Open findings: Critical 0, High 0, Medium 0, Low 0, Informational 0.**
+
+**Current reviewer outcome: COMPLETE / NONE / CONTINUE.** The [daytime closeout][m4a-daytime-scan]
+completed all three fresh public NuGet queries at **15:13:42-15:13:45 UTC on 2026-09-27**, under
+[authorization revision 1][m4a-daytime-authority]. Each returned exit 0, valid requested-project/public-source
+JSON, no query problems and no advisory matches. Protected source, specification, setup and dependency
+inputs matched before and after querying. The sole remaining scoped M4-A security-review gap is closed;
+no Critical/High waiver or source fix was needed. This is not release, merge or deployment approval.
+
+**Prior partial record, preserved:** [report 27][m4a-source-review], finalized after its
+07:27-07:32 UTC checks, remains **PARTIAL / ENVIRONMENT** because that invocation had no authority
+for a fresh scan and attempted none. Its carried S44 assessment was dated evidence only. Today's
+explicit daytime grant and new queries complete the current gate; they do not retroactively authorize
+the earlier invocation or rewrite its outcome.
+
+This covers the twelve nominated source/interface files under the [activated envelope][m4a-envelope],
+not M4-B, M5, all v4, a deployment or release. [Code review 23][m4a-code] is an independent correctness
+gate, not the basis for this security conclusion. Parent Final and README/example compilation remain
+separate. Framing is not secrecy, redaction, authentication, anti-replay or tamper-proof audit evidence.
+No security review is exhaustive; absence of a finding is not proof of security.
+
+### M4-A Findings
+
+None located in the nominated source against the accepted bar. No fix, new policy, public testing API
+or fault-injection mechanism is proposed. Native-fault and consumer-owned limits appear below rather
+than being represented as passing runtime tests. Earlier sections retain their original dates and
+findings; their historical inventories and outstanding-work statements are not reissued as current.
+
+### M4-A Scope And Evidence
+
+The source assessment and canary observations below are retained from [report 27][m4a-source-review],
+not a repeated whole-source audit. Daytime comparisons independently matched production **10/10**,
+both contextual interfaces **2/2** through the Final input manifests, surface inputs **14/14**,
+specifications **25/25**, frozen review **159/159**, frozen setup **151/151** and toolchain **4,360/4,360**.
+The [parent prescan repository manifest][m4a-daytime-repository] matched **91/91**, including the actual
+README and security-document state, before this closeout's canonical edit. No expectation was changed.
+
+Report 27 read all twelve source/interface files: [LogContext.cs](../../ProphetsWay.Logger/LogContext.cs),
+[LogScopeHandle.cs](../../ProphetsWay.Logger/LogScopeHandle.cs), [Logger.cs](../../ProphetsWay.Logger/Logger.cs),
+[typed Logger.cs](../../ProphetsWay.Logger/Generics/Logger.cs), [LoggingDestinationCore.cs](../../ProphetsWay.Logger/LoggingDestinationCore.cs),
+[LogTextRenderer.cs](../../ProphetsWay.Logger/LogTextRenderer.cs), [ordinary text](../../ProphetsWay.Logger/LoggerDestinations/TextBasedDestination.cs),
+[typed text](../../ProphetsWay.Logger/LoggerDestinations/GenericTextBasedDestination.cs),
+[ordinary base](../../ProphetsWay.Logger/BaseLoggingDestination.cs), [typed base](../../ProphetsWay.Logger/Generics/BaseLoggingDestination.cs),
+and both [ordinary](../../ProphetsWay.Logger/IContextLoggingDestination.cs) and [typed](../../ProphetsWay.Logger/Generics/IContextLoggingDestination.cs) contextual interfaces.
+Also read the deciding policy/settings, annotation/frame/label capture, reporting types, both event
+implementations, console wrapper, all current TextRenderingTests and relevant BasicTests assertions/helpers.
+The author and independent contract/specification/promotion records were read, not treated as code proof.
+
+Independent read-only comparisons at 07:27-07:29 UTC matched the [ten-file production inventory][m4a-production]
+10/10, the two interface files in the current Candidate subject 2/2, [surface inputs][m4a-surface-inputs]
+14/14, frozen specifications 25/25 and frozen review inputs 159/159. The [surface comparison][m4a-surface]
+records the author's 14 reviewed-fragment, 70 declaration/XML and 53 preserved-method checks; this reviewer
+checked source/security meaning and input identity, not a new automated signature comparison.
+No Git operation or independent HEAD/branch claim was made.
+
+The [author Candidate][m4a-green] ran at 07:08:23-07:08:32 UTC on 2026-09-27: **520 passed,
+0 failed, 0 skipped per net48/net10.0 leg**, with build enabled and no restore. This reviewer reparsed
+both TRXs within their exact recorded time bounds, matched all recorded identities/outcomes and result
+hashes, and matched each Candidate's 56 added identities to its [frozen approved set][m4a-freeze].
+The recorded membership is 464 original plus 56 audited additions. Output manifests match 3/3 and
+generated compiler inputs 67/67 per leg. These are dated author executions, not new reviewer runs.
+
+The [parent's 07:12:45 UTC verification][m4a-parent] is likewise dated. At report 27's pre-edit check,
+the Candidate subject matched 179/183 and each execution-input manifest 158/162: only README, CHANGELOG
+and the two promoted security-model documents differed, with no additions/removals. The source,
+interfaces and specifications matched. That canonical review added a fifth authorized prose difference.
+The [later parent Final][m4a-local-final] bound completed prose and recorded **520 passed, zero failed
+or skipped per framework** at 07:40:00-07:40:09 UTC. At 15:12 UTC, both original Final records were
+independently verified reusable for their recorded commands. No tests, builds or canaries ran during
+this closeout. Its canonical-only edit changes that documentation input; the parent must bind this
+new review without relabeling the earlier executions as fresh or their entire input sets as unchanged.
+
+### M4-A Control Coverage
+
+Every nominated F01-F30 group and B1-B6 crossing was reviewed. Runtime references mean the inspected
+canaries in the dated green records, not fresh execution or exhaustive scheduling/fault coverage.
+
+| Area / obligation | Reviewed | Source evidence, actual canary and limit |
+| --- | --- | --- |
+| Access control and whole-entry withholding; M4-1, F13/F26/F29, B2 | Source and dated canaries | [Ordinary dispatch](../../ProphetsWay.Logger/Logger.cs#L267) and [typed dispatch](../../ProphetsWay.Logger/Generics/Logger.cs#L155) require enabled settings, all requested mask bits, registration/intrinsic label permission and recipient severity acceptance before handoff. [Core predicate](../../ProphetsWay.Logger/LoggingDestinationCore.cs#L175) requires `(messageLevel & _reportingLevel) == messageLevel`. [Gate canaries](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L352) require zero massage/value/print calls. Rejection never enters the no-enabled-route branch. No tenant/row identity mechanism is part of this library. |
+| Strict label predicate and origins; M4-1/M4-7, F20-F23/F26 | Source; preserved M3 inputs | [Allows](../../ProphetsWay.Logger/DestinationLabelPolicy.cs#L135) validates the complete finite sequence; AllowOnly requires nonempty wholly configured membership, Exclude no intersection, NoFilter valid input. Capture owns valid sealed label membership; skipping NoFilter evaluation in dispatch is not recovery from invalid capture. [Label capture](../../ProphetsWay.Logger/LogLabelContext.cs#L72) preserves entry versus inherited origins and the complete ordinal union. |
+| One call UTC and trusted forwarding; M4-4, F01-F05, B1/B2 | Source and dated canaries; fallback static-only | Each originating ordinary/typed/direct path samples DateTimeOffset.UtcNow inside capture before callbacks. Internal LogCaptured calls do not recapture. [Typed forwarding](../../ProphetsWay.Logger/Generics/Logger.cs#L185) passes the existing context; ordinary null-coalescing capture short-circuits the clock. [Shared-time canary](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L204) delays eligibility/output and compares all recipients. No trusted clock, uniqueness or monotonicity is claimed. |
+| Direct currentness and stamped views; M4-1/M4-4, F03-F04/F23 | Source and dated canaries; allocation faults static-only | [DispatchDirect](../../ProphetsWay.Logger/Logger.cs#L373) checks ordered frame reference identity, including empty frames, then constructs the stamped view at [the capture boundary](../../ProphetsWay.Logger/Logger.cs#L404). Current mask/policy are checked anew; retained time is never permission. [View construction](../../ProphetsWay.Logger/LogContext.cs#L87) shares immutable facts without changing the retained context. [Direct tests](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L255) retain entry labels; [invalid/currentness tests](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L624) reject removed, added and equal-but-different openings before payload work. |
+| Closed scalar formatting; M4-5, F06-F11, B3 | Source and dated canaries | [FormatValue](../../ProphetsWay.Logger/LogTextRenderer.cs#L9) matches only the approved scalar types; otherwise it reads runtime Type.Name. Enum metadata/conversion is restricted to actual Enum values, not arbitrary IFormattable/IConvertible input. [InspectionCanary](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L1167) counts/throws for getters, ToString, IFormattable, enumeration, equality and hashing; counts remain zero in the recorded test. Nullable, numeric, time/offset and enum formats have explicit culture/BCL expectations. |
+| Universal one-pass encoding; M4-2, F17-F19, B4 | Source and dated canaries | Every massaged message, metadata/property formatter result, key, label identifier and unsupported marker reaches [AppendToken](../../ProphetsWay.Logger/LogTextRenderer.cs#L157). Original units are processed once: backslash/quote/CR/LF/TAB, all other controls including NEL, U+2028/U+2029; uppercase X4 for the latter group. Fixed UTC/severity vocabulary alone is unquoted prefix syntax. [Component canaries](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L102) distinguish actual/literal escapes and preserve other UTF-16; [dynamic type-name test](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L76) covers marker encoding. |
+| Explicit hooks and isolated composition; M4-6/M4-8, F12-F14/F23-F24/F30 | Source and dated canaries | [Render](../../ProphetsWay.Logger/LogTextRenderer.cs#L94) owns a local StringBuilder; no shared current-record fields/cache. One hook call per successful value occurrence, including typed null metadata; hook output always remains data. [Reentry](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L740) and [concurrent rendering](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L777) finish another call while the first formatter is active, through the same real recipient, and assert complete separate records. Thread-local test observations do not replace the production renderer. Custom hooks remain trusted executable code, not sandboxed. |
+| Native frame and occurrence boundaries; M4-7, F18-F23, B1/B4 | Source and dated canaries | Renderer iterates full captured Scopes, not ScopeAnnotations/EffectiveLabels. Null/empty attachments, all frames, duplicate/null/empty keys and duplicate labels remain ordered. [Membership test](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L137) mutates the original collection after capture, checks one producer enumeration, and deliberately observes an explicitly formatted nested object's later mutation. [Owned membership](../../ProphetsWay.Logger/LogContext.cs#L94) isolates SyncRoot; stamped views add no writable backing or live-stack backlink. |
+| Complete text and typed route; M4-8, F15-F16/F24-F26/F29 | Source and dated canaries | Both text LogCore bodies massage once, render fully and only then print once: [ordinary](../../ProphetsWay.Logger/LoggerDestinations/TextBasedDestination.cs#L42), [typed](../../ProphetsWay.Logger/LoggerDestinations/GenericTextBasedDestination.cs#L60). Null tokens and typed metadata presence remain distinct; metadata is not annotations. [All-mask test](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L474) retains nested messages/stacks. [Console wrapper test](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L715) observes one complete unterminated record, not physical output. |
+| Raw/event separation; M4-8, F15-F16/F23/F29, B5 | Source and dated canaries | [Ordinary event](../../ProphetsWay.Logger/LoggerDestinations/EventDestination.cs#L32) and [typed event](../../ProphetsWay.Logger/LoggerDestinations/GenericEventDestination.cs#L35) keep the original optional raw values, original exception/metadata references, unescaped massage result and legacy local DateTime.Now Timestamp. [Raw/event test](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L419) checks reference identity, raw stacks and separate context UTC. Exception.Data remains reachable by permitted raw recipients, not implicitly rendered or sanitized. |
+| Failure classes and independent attempts; M4-3, F27-F28, B6 | Source and dated canaries; native capture/LabelCheck faults static-only | Catch blocks retain no foreign cause. Capture/view-allocation failure reports core count one and returns; LabelCheck withholds that recipient; custom Eligibility and rendering/print Output set mandatory propagation independently of successes/overflow. [Failure-order cases](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L516) require later/earlier success and mandatory throw; failed massage/formatting has zero print attempts. No strict-policy selector or denial rescue was added. |
+| Safe reporting and containment; M4-3, F27-F28/F30, B6 | Source and dated canaries | [Accumulation](../../ProphetsWay.Logger/Logger.cs#L458) retains at most eight descriptors plus overflow; [report](../../ProphetsWay.Logger/LogFailureReport.cs#L27) stores only generated ID, positions/stages and counts, not time/payload/paths/formatter causes. [Completion](../../ProphetsWay.Logger/Logger.cs#L474) contains individual subscribers/stderr, restores its thread-static flag, and still throws when mandatory. [Bounds](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L554), [recursive reporting](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L585) and [safe assertions](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L932) check eight-plus-overflow, <=512-unit stderr and synthetic payload/cause exclusions. [Safe exception](../../ProphetsWay.Logger/LogDispatchException.cs#L14) has fixed text/source, no raw InnerException and a null StackTrace view; CLR inspection and post-catch mutation are excluded. |
+| Other injection, crypto, secrets and deserialization | All twelve nominated files inspected | No SQL/command/LDAP/XPath/HTTP-fetch, type-permissive deserializer, credential crypto or secret literal found in this delta. Log-text injection is the specific B4 assessment above. No repository/history/ignored-file secret scan, pipeline/infrastructure review or consumer export audit was performed. |
+| Availability, authentication/session, audit/compliance | Accepted limits checked | No endpoint/session/cookie/CSRF/CORS or business-row mechanism introduced. Records, native depth and selected executable code remain unbounded; no OOM/process-fatal survival, rate limit or arbitrary callback termination promised. UTC/normal return/reporting does not establish durability, exactly-once delivery, retention, erasure or nonrepudiation. D013 consumer duties remain, with provisional Confidential payload treatment. |
+
+### M4-A Dependency Vulnerabilities
+
+**Fresh scan completed:** three exact-project queries at **2026-09-27 15:13:42-15:13:45 UTC**, SDK
+**10.0.401**, using `dotnet package list --project` with `--vulnerable --include-transitive --no-restore`,
+JSON output version 1, and only `https://api.nuget.org/v3/index.json`. Each ran from the exact Logger
+repository root with a 120-second bound, exited 0 without timeout or stderr, and returned valid JSON
+identifying the requested project and source with **zero query problems and zero advisory matches**.
+The [closeout report][m4a-daytime-scan] contains exact command arrays, authentic UTC times, actual parsed
+public JSON and before/after comparisons. No restore, installation, upgrade or other network query ran.
+
+The [19-input dependency manifest][m4a-daytime-inputs] matched before and after every query: three
+project files, fifteen restored asset/cache/import files and the dotnet executable. All **91 prescan
+repository inputs** also matched after querying, before the sole authorized canonical-review edit.
+Frozen specifications, setup, source and both interfaces remain unchanged. Clean query JSON omits
+framework arrays; coverage was reconciled against the actual current asset dictionaries, not inferred
+to be zero graphs. The three projects contain **seven restored graphs and 41 distinct package/version
+identities**. No bundled-binary or runtime clearance is inferred from this resolved-package query.
+
+| Package | Version | Advisory | Severity | Direct/Transitive | Fixed in |
+| --- | --- | --- | --- | --- | --- |
+| None returned by the three fresh queries | n/a | Zero advisory matches at the recorded query time | n/a | Direct, implicit and transitive resolved graphs | n/a |
+
+The library has no direct PackageReference; its Standard2.0 graph contains two implicit package
+identities and its net10.0 graph none. Tests have 34/34/28/28 identities across their four restored
+graphs; the example's one graph has no packages. Test tooling is executable developer code, not
+isolated by PrivateAssets. Bundled/native binaries, signatures, license review, OS/SDK/shared-runtime
+servicing and advisories published after the query remain outside this assessment. No security review
+is exhaustive. [S44's scan][m3-scan] and report 27's unrun-scan limitation remain dated history, not fresh
+clearance or errors to erase.
+
+### M4-A Worth Checking And Handoff
+
+- Native clock/capture/stamped-view allocation and LabelCheck failures were inspected, not injected.
+  Allocation of diagnostic structures and runtime/static initialization can themselves fail; this is
+  not a guarantee of reporting after memory exhaustion or process-fatal errors. No OOM experiment,
+  private-object fabrication or public fault API was used.
+- M4-B remains the owner of automatic-route correction and physical file establishment, termination,
+  encoding, recovery and lifecycle. Same-call forwarding was checked only for capture/time reuse;
+  it does not certify typed fallback metadata transport. M5 bridges and consumer parsers/exports are
+  excluded. Preserve quote semantics downstream; visual confusables and non-escaped format characters
+  remain the accepted distinction between framing and all visual-spoofing prevention.
+- Test Auditor v2 owns specification adequacy: [audit 20][m4a-tests] closed the overlap gap from audit
+  18. This review read actual helpers/canaries and their dated execution, without replacing that gate
+  or reasserting historical M3 regression gaps as current. Code Reviewer v2's report 23 remains separate.
+- Vanguard must independently parse and seal [report 33][m4a-daytime-scan], confirm the exact three
+  query results and preserved inputs, and bind the new canonical review. The source assessment is
+  carried by verified identity; parent Final and README compilations remain dated separate evidence.
+  Do not invoke or modify the old time-bound validator for this closeout. Any later checkpoint still
+  requires its own authority and current state/gate checks; no merge, deployment or release permission
+  follows from this review.
+
+[m4a-contract]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/01-m4a-contract.md
+[m4a-threat]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/02-m4a-framing-threat-input.md
+[m4a-envelope]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/05-owner-activation.md
+[m4a-code]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/23-m4a-code-review.md
+[m4a-tests]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/20-m4a-overlap-specification-audit.md
+[m4a-production]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/evidence/s22-final-production-r2.json
+[m4a-surface]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/evidence/s22-surface-comparison-r2.json
+[m4a-surface-inputs]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/evidence/s22-surface-inputs-r2.json
+[m4a-green]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/evidence/m4a-candidate-20260927T070814-ffe7eeb91006474e8bf39f168e4dbf3b-candidate.json
+[m4a-freeze]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/evidence/m4a-specifications-r1.json
+[m4a-parent]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/evidence/parent-implementation-green-r1.json
+[m4a-source-review]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/27-m4a-security-review.md
+[m4a-daytime-authority]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/32-daytime-scan-authorization.md
+[m4a-daytime-scan]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/33-daytime-dependency-scan.md
+[m4a-daytime-inputs]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/evidence/daytime-dependency-inputs-r1.json
+[m4a-daytime-repository]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/evidence/daytime-prescan-source-r1.json
+[m4a-local-final]: ../../../.agent-runs/20260926-2305-logger-m4a-preparation/30-m4a-local-verification.md
+
 ## M3 Native Context And Reporting
 
 _S40 review and focused S44 re-review, 2026-09-26, against the existing [threat model](threat-model.md),

@@ -74,14 +74,14 @@ namespace ProphetsWay.Utilities
 			Current.Value = this;
 		}
 
-		internal static LogContext Capture(LogAnnotations entryAnnotations)
+		internal static LogContext Capture(LogAnnotations entryAnnotations, DateTimeOffset eventTimestampUtc)
 		{
 			var frames = new List<LogScopeFrame>();
 			for (var scope = Current.Value; scope != null; scope = scope._parent)
 				frames.Add(scope._frame);
 
 			frames.Reverse();
-			return new LogContext(frames, entryAnnotations);
+			return new LogContext(frames, entryAnnotations, eventTimestampUtc);
 		}
 	}
 }

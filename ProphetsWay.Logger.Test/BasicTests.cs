@@ -941,9 +941,32 @@ namespace ProphetsWay.Logger.Test
             destination.PrintCalls.ShouldBe(2);
             destination.Printed.ShouldContain("  Text CONTEXT  ", Case.Sensitive);
             destination.Printed.ShouldContain(exception.Message, Case.Sensitive);
-            destination.Printed.ShouldContain(exception.StackTrace, Case.Sensitive);
+            destination.Printed.ShouldContain(EscapeExpectedM4Text(exception.StackTrace), Case.Sensitive);
             destination.Printed.ShouldContain(exception.InnerException.Message, Case.Sensitive);
-            destination.Printed.ShouldContain(exception.InnerException.StackTrace, Case.Sensitive);
+            destination.Printed.ShouldContain(EscapeExpectedM4Text(exception.InnerException.StackTrace), Case.Sensitive);
+        }
+
+        private static string EscapeExpectedM4Text(string text)
+        {
+            if (text == null) return null;
+            var escaped = new System.Text.StringBuilder();
+            foreach (var unit in text)
+            {
+                switch (unit)
+                {
+                    case '\\': escaped.Append("\\\\"); break;
+                    case '"': escaped.Append("\\\""); break;
+                    case '\r': escaped.Append("\\r"); break;
+                    case '\n': escaped.Append("\\n"); break;
+                    case '\t': escaped.Append("\\t"); break;
+                    default:
+                        if (char.IsControl(unit) || unit == '\u2028' || unit == '\u2029')
+                            escaped.Append("\\u").Append(((int)unit).ToString("X4", System.Globalization.CultureInfo.InvariantCulture));
+                        else escaped.Append(unit);
+                        break;
+                }
+            }
+            return escaped.ToString();
         }
 
         [Fact]

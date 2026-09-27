@@ -7,7 +7,7 @@ namespace ProphetsWay.Utilities.Generics
 	/// <remarks>B06-B10/B18/B21: supplied public entrypoints are nonvirtual and perform all
 	/// argument validation, complete current-context capture and configured severity/label checks
 	/// before any overridable payload work. Raw Log captures active native frames with absent
-	/// entry annotations. LogWithContext preserves its supplied context only when its ordered
+	/// entry annotations. LogWithContext accepts its supplied scope/label facts only when its ordered
 	/// frames correspond to the same successful scope openings currently active here, including
 	/// empty/unlabeled frames. Both empty sequences match. Equal labels/properties from different
 	/// openings do not establish correspondence. EntryAnnotations need not be absent or empty.
@@ -37,7 +37,14 @@ namespace ProphetsWay.Utilities.Generics
 	/// custom work. Captures freeze membership, not nested objects; no registry lock spans hooks.
 	/// Borrowed resources and retaining destinations keep their existing lifetime responsibilities.
 	/// Hiding/reimplementing members or invoking hooks from consumer-written methods is arbitrary
-	/// custom code outside these supplied entrypoints, not a promised sandbox.</remarks>
+	/// custom code outside these supplied entrypoints, not a promised sandbox.
+	/// <para>F01-F04: every public direct invocation is a new call with one newly
+	/// captured UTC event time. An accepted supplied context contributes its same
+	/// immutable frames and label facts, including entry annotations, but the selected
+	/// context carries the new time. The supplied context is unchanged. Time is not
+	/// part of current-frame correspondence and cannot authorize direct delivery.
+	/// Trusted LogCaptured delivery instead keeps its original call's complete
+	/// context/time without a new sample or public direct-validation pass.</para></remarks>
 	public abstract class BaseLoggingDestination<T> : LoggingDestinationCore, ILoggingDestination<T>, IContextLoggingDestination<T>
 	{
 		protected BaseLoggingDestination(LogLevels reportingLevel) : base(reportingLevel) { }
@@ -67,7 +74,14 @@ namespace ProphetsWay.Utilities.Generics
 		/// <exception cref="ArgumentException">context is noncurrent; ParamName is "context".</exception>
 		/// <exception cref="ArgumentOutOfRangeException">level is invalid; ParamName is "level".</exception>
 		/// <exception cref="LogDispatchException">Selected direct output failed, after safe reporting.</exception>
-		/// <remarks>B02/B07-B10: common base rules apply; no competing-invalid precedence or runtime-type routing.</remarks>
+		/// <remarks>B02/B07-B10: common base rules apply; no competing-invalid precedence or runtime-type routing.
+		/// <para>F01-F04: every public direct invocation is a new call with one newly
+		/// captured UTC event time. An accepted supplied context contributes its same
+		/// immutable frames and label facts, including entry annotations, but the selected
+		/// context carries the new time. The supplied context is unchanged. Time is not
+		/// part of current-frame correspondence and cannot authorize direct delivery.
+		/// Trusted LogCaptured delivery instead keeps its original call's complete
+		/// context/time without a new sample or public direct-validation pass.</para></remarks>
 		public void LogWithContext(LogContext context, LogLevels level, T metadata, string message = null, Exception ex = null)
 		{
 			if (context == null)

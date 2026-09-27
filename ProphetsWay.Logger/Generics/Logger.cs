@@ -165,7 +165,7 @@ namespace ProphetsWay.Utilities
 						? route.ToArray()
 						: Array.Empty<TypedRegistration>();
 				}
-				context = LogScopeHandle.Capture(annotations);
+				context = LogScopeHandle.Capture(annotations, DateTimeOffset.UtcNow);
 				intrinsicPolicies = new DestinationLabelPolicy[destinations.Length];
 				for (var index = 0; index < destinations.Length; index++)
 				{
@@ -182,7 +182,7 @@ namespace ProphetsWay.Utilities
 
 			if (!Array.Exists(destinations, registration => registration.Settings.Enabled))
 			{
-				DispatchOrdinary(annotations, level, message, ex);
+				DispatchOrdinary(annotations, level, message, ex, context);
 				return;
 			}
 

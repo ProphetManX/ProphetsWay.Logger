@@ -41,7 +41,8 @@ well as errors, including when the raw message is null; no synthetic message or 
 This is breaking for consumers that compile against the removed `Security` members or depend on the
 old enum numbers, permissive helper arguments, or inputs now rejected by strict validation. The current
 tree is an unreleased v4-direction change; this entry does not claim that the full v4 integration,
-automatic Trace/file behavior, Microsoft bridge, framing, or output-failure policy is complete.
+automatic Trace/file behavior, Microsoft bridge, or output-failure policy is complete. Native text
+framing is covered by the M4-A entry below; the remaining integration and qualification work is not.
 
 ## Sensitivity labels
 
@@ -135,8 +136,10 @@ behavior remains separately qualified, and it does not claim automatic fallback,
 or full exception-graph sanitization.
 
 The configured-route failure behavior corrects the prior single-failure propagation boundary without
-claiming that the full v4 integration, automatic Trace/file behavior, Microsoft bridge, framing, or
-output-failure policy is complete.
+claiming that the full v4 integration, automatic Trace/file behavior, Microsoft bridge, or
+output-failure policy is complete. Native text framing is now implemented for the M4-A slice below;
+file lifecycle and termination, the Microsoft bridge, and the remaining v4 qualification work are
+still separate.
 
 ## Native scopes and contextual destinations
 
@@ -159,8 +162,8 @@ Supplied destinations and base classes now expose guarded direct `Log` calls and
 the public logging entrypoints are guarded and are no longer the subclass override point. This is a
 source and binary compatibility break for custom destinations that overrode the former public logging
 member. Built-in event destinations expose the selected context through their event arguments, while
-text and event delivery preserve the original payload, metadata, exception and existing rendering
-behavior.
+event delivery preserves the original payload, metadata, exception and existing event semantics. Native
+text rendering and framing are covered by the separate M4-A entry below.
 
 Failure results now distinguish a failed native capture from a destination `LabelCheck`, `Eligibility`,
 or `Output` failure. Shared capture and label-check failures report safely and return without handing
@@ -176,7 +179,33 @@ delivery, settings, and failure-report members are additive individually, but th
 overall compatibility decision a minor or patch change. The accepted local validation is green on the
 focused `net48` and `net10.0` matrix, with the library/example builds and compile-only README checks
 also passing; it is not unfiltered real-file fixture certification. The permanent report-membership
-regression and parent final gate are complete within that accepted local boundary; they are not pending release work.
+regression and parent final gate are complete within that accepted local boundary; they are not pending release work. M4-A native text rendering and framing is now implemented as a separate unreleased slice; M4-B, the Microsoft bridge, file lifecycle/termination, and broader release qualification remain open.
+
+## Native text rendering and framing
+
+Native ordinary and exact-declared-metadata text destinations now render one complete, unterminated
+single-line record from the call's captured `LogContext.EventTimestampUtc`. The prefix uses invariant
+UTC `O` formatting and the existing full severity spelling; entry labels and every captured native scope
+frame follow in their original order, including empty frames, duplicate labels, repeated or null keys,
+and null values. Message, exception, metadata, label, key, and formatted property-value content is
+escaped as data, so null, empty, whitespace, literal `null`, and embedded line boundaries remain
+distinct without being silently discarded. Raw/event transport and the existing local event timestamp
+semantics are unchanged.
+
+This changes the default text layout and is a breaking output-contract change for consumers that parse,
+snapshot, or otherwise depend on the former local-time prefix and message-only text. Update those parsers
+and fixtures to the structured record layout; custom text destinations still implement `PrintLogEntry`,
+but must treat its input as the new complete record rather than reconstructing the old layout. The new
+`LogContext.EventTimestampUtc`, protected `FormatValue(object value)` hook, and
+`GenericTextBasedDestination<T>` are additive individually. The default formatter supports the documented
+scalar set with invariant formats, returns `[no formatter: TypeName]` for unsupported values, and emits
+null as a null token; an override may extend scalar formatting, but a thrown formatter, massage, render,
+or print operation remains an output failure. Consumers overriding `FormatValue` should return unescaped
+text and leave framing/escaping to the destination.
+
+M4-A does not claim automatic Trace/file behavior, physical file termination or lifecycle, the Microsoft
+bridge, fallback completion, or publication/release qualification. This is an unreleased v4-direction
+slice; no version number is changed here.
 
 # v3.0.1
 ### Build target for Net 6.0

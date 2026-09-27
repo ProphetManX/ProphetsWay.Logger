@@ -6,6 +6,8 @@ Route log messages to console, file, event, or custom destinations with per-dest
 > Explicit-registration route isolation and ordered membership snapshots (M2-B) are implemented.
 > Native M3 scopes, entry annotations, full captured context, registration settings and
 > whole-entry label selection are now implemented alongside the six native severities.
+> M4-A adds shared UTC event time, invariant value rendering and quoted single-line text
+> with native scope boundaries. Physical file lifecycle/recovery work remains separate.
 > Supplied destinations use guarded entrypoints and protected `LogCore` hooks; subclasses
 > must migrate their old `Log` overrides. This describes current source, not the published
 > NuGet package, a completed final acceptance gate, or release certification.
@@ -44,7 +46,7 @@ Install-Package ProphetsWay.Logger
 ```
 
 These commands do not install the unreleased API merely because it is documented here.
-To use the native severity, scope/context and label-policy examples now, reference the current
+To use the native severity, scope/context, label-policy and text/formatter examples now, reference the current
 [library project](ProphetsWay.Logger/ProphetsWay.Logger.csproj) from your application.
 [app-variables.yml](app-variables.yml) still selects `3.0.1`; no v4 package or release is claimed.
 
@@ -99,7 +101,8 @@ public static class Program
 }
 ```
 
-The messages use local timestamps and exact emitted levels, `TraceOnly` and `DebugOnly`.
+The messages use invariant UTC timestamps, quoted single-line text and exact emitted levels,
+`TraceOnly` and `DebugOnly`; see [Record Layout](#record-layout).
 The explicit `Trace` destination mask accepts all six severities; the constructor's
 unchanged default `Debug` mask does not accept Trace.
 `Logger.ClearDestinations()` clears plain registrations; `Logger.ClearDestinations<T>()`
@@ -257,7 +260,7 @@ The package and assembly are `ProphetsWay.Logger`; the utility namespace deliber
 | Import | Use |
 | --- | --- |
 | `ProphetsWay.Utilities` | `Logger`, `LogLevels`, ordinary destination contracts/bases, label/policy types, `LogAnnotations`, scope/context types and `DestinationRegistrationSettings`. |
-| `ProphetsWay.Utilities.LoggerDestinations` | `ConsoleDestination`, `FileDestination`, `EventDestination`, `GenericEventDestination<T>`, `TextBasedDestination`. |
+| `ProphetsWay.Utilities.LoggerDestinations` | `ConsoleDestination`, `FileDestination`, `EventDestination`, `GenericEventDestination<T>`, `TextBasedDestination`, `GenericTextBasedDestination<T>`. |
 | `ProphetsWay.Utilities.Generics` | `ILoggingDestination<T>`, `IContextLoggingDestination<T>`, `BaseLoggingDestination<T>`, `ILoggerMetadata`, and metadata extension methods. |
 
 ### Severity Selection
@@ -334,11 +337,17 @@ Read the completed `LogContext` from a permitted event or contextual recipient:
 
 | Readback | Meaning |
 | --- | --- |
+| `context.EventTimestampUtc` | Getter-only `DateTimeOffset` with offset zero, captured once for this call before recipient callbacks. |
 | `context.Scopes` | Every frame, outermost first, including inherited, empty and unlabeled frames. Each exposes `Annotations` and `Properties`. |
 | `context.Labels.EntryAnnotations` | This entry's explicit attachment, or null. |
 | `context.Labels.ScopeAnnotations` | The ordered non-null annotation projection of `Scopes`; empty attachments and repeated uses remain separate. |
 | `context.Labels.Origins` | One record per occurrence, scope attachments first then entry; each has `Label`, `ScopeIndex` and `OccurrenceIndex`. |
 | `context.Labels.EffectiveLabels` | The complete ordinal-identity union of all origins, with duplicates removed; ordering is unspecified. |
+
+All selected contexts and supplied text records from one originating call share that UTC value,
+including same-call internal forwarding. Retained contexts keep it after scope exit. Recursive
+Logger calls and supplied-base public direct calls sample anew; distinct or increasing values
+and cross-thread ordering are not promised. This is event time, not filename or output time.
 
 `ScopeIndex` is zero-based into **ScopeAnnotations**, not **Scopes**; null identifies the entry.
 `OccurrenceIndex` is zero-based within that attachment's `LabelOccurrences`. Empty attachments
@@ -489,7 +498,10 @@ must handle the metadata values they accept; Logger does not clone or transform 
 | `GenericEventDestination<T>` | Typed callback; event arguments also expose `Metadata`. |
 | `ILoggingDestination` / `ILoggingDestination<T>` | `Log` receives severity, optional message/exception, and metadata for the generic form; `IDestination` supplies `ValidateMessageLevel`. |
 | `BaseLoggingDestination` / `BaseLoggingDestination<T>` | Pass a reporting level to the base constructor and override protected `LogCore`; public `Log` and `LogWithContext` are nonvirtual guards. |
-| `LoggingDestinationCore` / `TextBasedDestination` | Shared severity/exception handling; the text base formats then calls your overridden `PrintLogEntry(string message)`. |
+| `LoggingDestinationCore` | Shared severity/exception handling and the protected value-formatting hook. |
+| `TextBasedDestination` / `GenericTextBasedDestination<T>` | Ordinary/exact-`T` text bases; render captured context, then call your protected `PrintLogEntry(string message)` override once with no terminator. The typed base adds metadata. |
+| `LoggingDestinationCore.FormatValue(object value)` | Protected virtual `string` hook for metadata/property values; return unescaped text or null, or delegate to the closed scalar default. |
+| `LogContext.EventTimestampUtc` | Immutable call-time UTC readback; distinct from event arguments' legacy local `Timestamp`. |
 
 For a reusable application-specific destination, including a database destination, implement
 your own storage behavior behind the appropriate base. The new ordinary hook is
@@ -666,7 +678,7 @@ Ordinary explicit registrations and every exact declared-`T` route are independe
 interface types such as `T = ILoggingDestination`. Typed routing does not search base types,
 implemented interfaces, or the metadata object's runtime subtype. If that exact type has no
 enabled registered destination, current typed logging still falls back to plain logging **without
-the metadata**, preserving the explicit annotation and recapturing the current native scopes.
+the metadata**, preserving the already captured annotation, native scopes and UTC event time.
 Register an enabled typed destination to retain metadata; typed calls do not automatically broadcast
 to plain destinations when that route is enabled, even if all its recipients reject the entry.
 Independent explicit routes do not imply completed independent automatic-file routes.
@@ -739,6 +751,153 @@ default `message` and `ex` to null. `MassageLogStatement` and `PrintLogEntry` ov
 their existing signatures. Hook or callback exceptions are output failures handled by the
 invoking guarded boundary, not a request to retry or activate another output.
 
+### Capture A Text Record In Memory
+
+Override `PrintLogEntry` to receive a fully rendered ordinary record without a terminator.
+This sink stores one string; it neither opens a file nor writes to the console. Explicit
+registration avoids fallback, but any other registered recipients can still receive the call.
+Use these in-memory examples with one synchronous producer and no unrelated recipients;
+they are not concurrent storage implementations.
+
+> **Illustrative** — not currently present in the repo.
+
+```csharp
+using System.Collections.Generic;
+using ProphetsWay.Utilities;
+using ProphetsWay.Utilities.LoggerDestinations;
+
+public sealed class RecordingTextDestination : TextBasedDestination
+{
+    public RecordingTextDestination() : base(LogLevels.Trace)
+    {
+    }
+
+    public string Record { get; private set; }
+
+    protected override void PrintLogEntry(string message)
+    {
+        Record = message;
+    }
+}
+
+public static class TextRecordExample
+{
+    public static string Run()
+    {
+        var destination = new RecordingTextDestination();
+        Logger.AddDestination(destination);
+        try
+        {
+            var label = new SensitivityLabel("Internal");
+            var properties = new[]
+            {
+                new KeyValuePair<string, object>("Step", "Receive"),
+                new KeyValuePair<string, object>("Step", "Validate"),
+                new KeyValuePair<string, object>(null, null)
+            };
+            using (Logger.BeginScope(new LogAnnotations(new[] { label, label }), properties))
+            {
+                Logger.LogAnnotated(new LogAnnotations(new SensitivityLabel[0]),
+                    LogLevels.InformationOnly, message: "First line.\nSecond line.");
+            }
+            return destination.Record;
+        }
+        finally
+        {
+            Logger.RemoveDestination(destination);
+        }
+    }
+}
+```
+
+On delivery, the returned string has one escaped message token, `entryLabels=[]`, and one
+scope with `labels=["Internal","Internal"]` and
+`properties=[("Step","Receive"),("Step","Validate"),(null,null)]`. No duplicate is flattened.
+A null returned record means no print occurred; normal return alone is not proof of delivery.
+The public example types above are application code, not additional library APIs.
+
+### Extend Typed Value Formatting
+
+Derive from `GenericTextBasedDestination<T>` to retain exact-`T` routing and render metadata.
+This example explicitly reads two known application properties and delegates other values to
+the default formatter. Return ordinary text: the base quotes and escapes it afterward, including
+the newline and quotes in `Stage`. The same hook formats scope values.
+
+> **Illustrative** — not currently present in the repo.
+
+```csharp
+using System.Collections.Generic;
+using System.Globalization;
+using ProphetsWay.Utilities;
+using ProphetsWay.Utilities.LoggerDestinations;
+
+public sealed class OrderMetadata
+{
+    public int OrderId { get; set; }
+    public string Stage { get; set; }
+}
+
+public sealed class OrderTextDestination : GenericTextBasedDestination<OrderMetadata>
+{
+    public OrderTextDestination() : base(LogLevels.Trace)
+    {
+    }
+
+    public string Record { get; private set; }
+
+    protected override string FormatValue(object value)
+    {
+        var order = value as OrderMetadata;
+        if (order != null)
+            return string.Format(CultureInfo.InvariantCulture,
+                "Order {0}: {1}", order.OrderId, order.Stage);
+
+        return base.FormatValue(value);
+    }
+
+    protected override void PrintLogEntry(string message)
+    {
+        Record = message;
+    }
+}
+
+public static class FormatterExample
+{
+    public static string Run()
+    {
+        var destination = new OrderTextDestination();
+        Logger.AddDestination<OrderMetadata>(destination);
+        try
+        {
+            var metadata = new OrderMetadata { OrderId = 42, Stage = "Queued\n\"Review\"" };
+            var properties = new[]
+            {
+                new KeyValuePair<string, object>("Attempt", 2),
+                new KeyValuePair<string, object>("Unformatted", new object())
+            };
+            using (Logger.BeginScope(null, properties))
+            {
+                Logger.LogAnnotated<OrderMetadata>(null, LogLevels.InformationOnly,
+                    metadata, message: "Synthetic order.");
+            }
+            return destination.Record;
+        }
+        finally
+        {
+            Logger.RemoveDestination<OrderMetadata>(destination);
+        }
+    }
+}
+```
+
+The metadata token is `"Order 42: Queued\n\"Review\""`; the scope values are `"2"` and
+`"[no formatter: Object]"`. Without the override, this metadata would be
+`"[no formatter: OrderMetadata]"`, not an automatic property dump. These are expected tokens,
+not captured program output. The sink has the same single-producer/registration assumptions
+as the previous example. No `ILoggerMetadata` marker or formatter registration is needed.
+See [TextRenderingTests.cs](ProphetsWay.Logger.Test/TextRenderingTests.cs) for the real
+in-memory text, explicit formatter, rejection and escaping specifications.
+
 ## Behavior And Limitations
 
 ### Native Argument Errors
@@ -798,6 +957,11 @@ make the context noncurrent and cause a local argument error before output. Poss
 successful delivery is not authorization. Arbitrary independent direct implementations, hidden or
 reimplemented members, and consumer methods calling their own hooks are not sandboxed.
 
+An accepted supplied-base `LogWithContext` invocation delivers a newly stamped context with
+that direct call's UTC time and the supplied immutable scope/label facts, including entry
+annotations. It does not mutate the retained context or replace its facts with current labels.
+Timestamp equality is not part of the current-opening check and grants no delivery permission.
+
 Direct/raw content is distinct from helper preconditions: message and exception may each be
 absent, even at Critical or ErrorOnly. Typed metadata may still be null/default. For accepted
 callbacks, `RawMessage`, `Exception`, the complete `LogLevel` mask, and typed `Metadata` retain
@@ -809,7 +973,10 @@ null, empty or whitespace. With an exception, it preserves context and includes 
 nested-exception messages and available stack traces **at every valid mask**, including warnings
 and composites. It does not serialize exception `Data`, redact content, or clone raw objects.
 `Timestamp` remains each event carrier's construction-time local `DateTime.Now`, not a shared UTC
-timestamp. Accepted raw exception/metadata references are not sanitized reporting objects.
+timestamp. Use the delivered `Context.EventTimestampUtc` for shared call time instead. Event
+`Message` and `RawMessage` are not text-record tokens: message/exception text stays unescaped,
+and metadata and scope values retain original references. Accepted raw objects are not sanitized
+reporting objects; framing a neighboring text destination does not make a callback safe to export.
 
 ### Label And Policy Arguments
 
@@ -901,6 +1068,15 @@ Those branches require code review, not a fabricated report presented as executi
 Allocation/runtime faults may prevent reporting itself: **out-of-memory survival is not guaranteed**.
 Consumer callbacks and raw payloads are not made safe by these bounded reporting facts.
 
+Text rendering follows the same boundary: a throwing massage, `FormatValue` override or
+composition step causes no `PrintLogEntry` call for that recipient. Independent recipients
+continue, then an Output failure requires safe reporting and `LogDispatchException`. A print
+failure may already have effects; there is no rollback or retry. Valid rejection reaches neither
+formatter nor print, and a null formatter result is valid text absence, not a failure.
+Neither rendered content, event time, original values nor the formatter's raw exception is
+added to `LogFailureReport`. Intended log records are unbounded, potentially sensitive content;
+they are not the bounded diagnostic channel. Custom inspection and retention remain your responsibility.
+
 ### Current Logging And Text Output
 
 - With no enabled plain destination, Logger adds a timestamp-named relative file destination using local
@@ -927,20 +1103,100 @@ Consumer callbacks and raw payloads are not made safe by these bounded reporting
 - The failure rules above cover configured dispatch and supplied guarded direct attempts, not
     qualification of unconfigured file establishment, arbitrary independent direct code or a
     guarantee that all I/O completes. Borrowed lifetime and retained-object responsibilities remain.
-- Console/file formatting uses local, culture-dependent timestamps and pads severity names to 12
-  characters. It does not escape multiline/control input into one physical record or redact content.
-- Supplied exceptions now retain their detail for warnings, errors, critical entries and every
-    valid composite. The text layout is otherwise unchanged; exception detail can itself be multiline.
 
-For example, `Logger.Debug("Hello World!")` has this text shape, with the actual host timestamp:
+#### Record Layout
+
+The supplied text bases render the captured UTC event time in invariant round-trip `O` format
+(including `+00:00`), followed by the full severity's general spelling padded left to 12 characters.
+The message is massaged once, then quoted and escaped. For `Logger.Debug("Hello World!")` without
+scopes or entry annotations, the shape is below. The timestamp placeholder is not literal output
+or a recorded execution:
+
+```text
+<UTC event time> ::    DebugOnly:  "Hello World!" | entryLabels=null | scopes=[]
+```
+
+`GenericTextBasedDestination<T>` adds the literal prefix `" | metadata="` (excluding the quotes)
+immediately after the message token, before `entryLabels`, even for null/default metadata.
+Ordinary text has no metadata field.
+There is no configurable grammar or automatic discovery of arbitrary structured objects.
+
+| Component | Representation |
+| --- | --- |
+| Absent text / empty text / literal `null` text | `null` / `""` / `"null"`; non-null values are always quoted. |
+| Entry or scope annotation | `null` when absent; `[]` when present but empty; otherwise ordered quoted label identifiers, including duplicates. |
+| Scopes | `[{labels=attachment,properties=[(key,value),...]},...]`, outermost first, including empty/unlabeled frames. |
+| Properties | Ordered pairs, not a dictionary: duplicate keys, null/empty/whitespace keys and original value slots remain separate. Keys are string tokens; values use `FormatValue`. |
+
+Arrays and pairs use commas without added spaces or trailing commas. Entry labels are separate
+from scope labels. Text preserves label occurrences rather than exporting the deduplicated
+`EffectiveLabels` set; frame positions in `scopes` are not the label-only `ScopeIndex` values.
+
+Every content token is escaped once after formatting, including message and exception detail,
+metadata, scope keys/values, label identifiers, unsupported markers and explicit formatter output:
+
+| Input | Emitted text |
+| --- | --- |
+| Backslash / double quote | `\\` / `\"` |
+| CR / LF / TAB | `\r` / `\n` / `\t` |
+| Other `Char.IsControl` units and U+2028/U+2029 | `\uXXXX`, with four uppercase hexadecimal digits. |
+| Other UTF-16 units | Preserved without normalization or truncation. |
+
+An actual newline becomes `\n`; an existing backslash followed by `n` becomes `\\n`.
+Delimiter-looking text stays inside its quoted token. This is reversible text escaping, not
+redaction, confidentiality, lossless object serialization or proof of downstream encoding fidelity.
+
+Each text base builds the whole record before one `PrintLogEntry` call. That string is non-null,
+single-line and **has no terminator**; the sink owns termination. Console retains its `WriteLine`
+handoff. Physical file termination, encoding and lifecycle are not certified by this rendering work.
+
+#### Scalars And Explicit Formatting
+
+The default `LoggingDestinationCore.FormatValue(object value)` supports only these values:
+
+| Value | Unescaped scalar text |
+| --- | --- |
+| Null, string, char, Boolean | Null result, original string/character, or `True`/`False`. |
+| SByte/Byte, Int16/UInt16, Int32/UInt32, Int64/UInt64, IntPtr/UIntPtr | Invariant `D`; pointer-sized integers render their numeric value, without dereferencing. |
+| Single/Double; Decimal | Invariant `R`; invariant `G`, respectively. Floating special values remain supported. |
+| Guid; DateTime/DateTimeOffset; TimeSpan | Invariant `D`; `O`; `c`, respectively. Payload times retain their kind/offset; only the event time is forced to UTC. |
+| Enum | General `G` names/representable flag names, otherwise invariant underlying decimal; alias choice follows the BCL. |
+| Anything else | `[no formatter: TypeName]`, using runtime `Type.Name`, not a full name or object string. |
+
+Nullable boxing follows the underlying value, or null when empty. Runtime-specific BCL floating
+spellings are not promised byte-identical across target frameworks. Dictionaries, enumerables and
+annotation-shaped metadata remain values, not automatically traversed structures or label sources.
+Default rendering calls no arbitrary getters, object `ToString`, `IFormattable`, equality, hashing
+or nested enumeration. It does not deep-clone values.
+
+Override `FormatValue` on your text destination to opt into application-owned inspection. Return
+**unescaped** text, delegate unhandled values to `base.FormatValue(value)`, or return null for a
+null text token. The renderer escapes every result as data; returning null is not a failure.
+Successful text rendering calls the hook once per metadata/property-value occurrence after
+eligibility. Duplicate slots are separate calls; call order across values is unspecified, and
+results are not cached across recipients. Keys, labels and message/exception text bypass this hook.
+Overrides may run concurrently and own their inspection, effects and retained objects.
+
+The rules are implemented by the
+[ordinary text base](ProphetsWay.Logger/LoggerDestinations/TextBasedDestination.cs),
+[typed text base](ProphetsWay.Logger/LoggerDestinations/GenericTextBasedDestination.cs) and
+[formatting hook](ProphetsWay.Logger/LoggingDestinationCore.cs), and specified in
+[TextRenderingTests.cs](ProphetsWay.Logger.Test/TextRenderingTests.cs).
+
+#### Earlier Text Layout
+
+The old local-time, unquoted output looked like this; it is retained only as a migration reference,
+not current output:
 
 ```text
 3/15/2019 11:09:33 PM ::    DebugOnly:  Hello World!
 ```
 
 The existing [example program](ProphetsWay.Logger.Example/Program.cs) constructs nested exceptions.
-This retained illustrative error excerpt shows their messages; a constructed-but-unthrown
-exception does not acquire a stack trace merely because its message mentions one:
+This historical illustrative error excerpt shows their messages in the earlier multiline layout.
+Current text keeps the exception detail inside one escaped message token at every valid mask;
+events retain unescaped massaged text. A constructed-but-unthrown exception does not acquire
+a stack trace merely because its message mentions one:
 
 ```text
 3/15/2019 11:25:41 PM ::    ErrorOnly:  Another generic message about an error occuring. (friendly message to show a UI maybe?)
@@ -950,19 +1206,22 @@ Inner Exception Message:
 This is a specific Exception Message and will contain a stack trace.
 ```
 
-### Implemented M3 And Remaining Boundaries
+### Implemented M3/M4-A And Remaining Boundaries
 
 Native scopes, ordered origins/full properties, effective-label filtering, atomic registration
 settings replacement, optional contextual receivers and guarded supplied destinations are implemented.
+M4-A adds call-shared UTC time, invariant scalar/explicit value formatting, ordinary and exact-`T`
+text bases, and quoted single-line rendering of the message and captured native context.
 They extend the existing severity validation, explicit-route isolation, borrowed-recipient lifetime
 and independent-attempt reporting rules. This source status is not full-v4 or release certification;
 the permanent regression, compiled-example and parent final acceptance gates remain separate.
 
-Owned-resource lifetime work, record framing, invariant rendering/shared UTC timestamps, fixed
-automatic-file recovery/reuse and remembered initialization failure, append-by-default explicit files,
-and both Microsoft logging bridges remain outside this implemented M3 slice.
+M4-B physical-file termination/encoding proof, owned-resource lifetime work, fixed automatic-file
+recovery/reuse and remembered initialization failure, and append-by-default explicit files remain
+outstanding. Both Microsoft logging bridges remain outside this native slice (M5).
 Unconfigured typed fallback still forwards to ordinary logging; the existing default-file path is
-unexercised by this focused validation. Explicit membership safety is not a guarantee of all
+not qualified by the in-memory rendering checks. Preserving its captured context/time is not a
+fallback lifecycle fix. Explicit membership safety is not a guarantee of all
 concurrency safety. Microsoft severity conversion/None handling is not supplied by this native enum.
 The implemented configured-route failure behavior above is not delivery of every policy in
 [docs/requirements.md](docs/requirements.md). Requirements readiness is not delivery.
@@ -1015,6 +1274,19 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
 - Update report readers for `LabelCheck`, empty recipient lists on core-only failure, and
     core-inclusive totals. Notifications do not all imply an exception; severity/output failures do.
     Event consumers may read `Context` on delivery but must allow null on manually constructed args.
+- Migrate text parsers from local culture-dependent, unquoted multiline output to the fixed UTC
+    `O` prefix and quoted token grammar above. Parse boundaries before decoding escapes once;
+    do not split blindly on delimiters that can occur inside quoted content. Preserve null versus
+    empty/literal-null tokens, repeated labels/keys and full scope frames. Exception stacks now
+    appear escaped within the message token, not as additional physical lines.
+- Keep `MassageLogStatement` unframed and unescaped if you need the supplied text contract:
+    text bases frame its result, while events retain it unescaped. Use `FormatValue` for explicit
+    metadata/property rendering and `PrintLogEntry` for the completed unterminated record. Review
+    existing subclasses for a coincidentally named `FormatValue` member; replacing `LogCore` can
+    replace the supplied rendering behavior. These hooks do not certify custom output code.
+- Do not reinterpret event `Timestamp` as UTC. Read `Context.EventTimestampUtc` on delivery;
+    a public direct reuse samples anew without altering the retained context. Update text readers
+    independently from raw/event consumers, whose original fields and local timestamp remain.
 
 ## Architecture And Design Decisions
 
@@ -1028,9 +1300,11 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
 | Immutable membership, original nested objects | Stable scope/settings structure without arbitrary deep cloning, classification or sanitization; consumers own nested-object safety and retention. |
 | Conventional non-transferable scope handles | Normal await/child inheritance and local cleanup without a creator-ID/fork protocol or universal misuse detector. |
 | Nonvirtual entrypoints and protected output hooks | Selection precedes supplied output even on direct calls, at the cost of a major subclass override migration. |
+| Closed scalar formatting plus explicit overrides | Predictable invariant text without arbitrary object inspection; your formatter owns any additional reads and effects. |
+| Shared UTC and quoted native records | One call-time fact and preserved content boundaries, at the cost of a breaking text-parser migration; physical storage remains a separate responsibility. |
 
 The accepted direction is recorded in [docs/decision-log.md](docs/decision-log.md).
-Its broader file, rendering and bridge decisions are not made complete by native M3 delivery.
+M4-A implements native rendering/framing; broader file lifecycle and bridge decisions remain separate.
 
 ## Building And Testing Locally
 
@@ -1066,19 +1340,20 @@ $filter = @(
     'FullyQualifiedName~ProphetsWay.Logger.Test.LogAnnotationsTests.'
     'FullyQualifiedName~ProphetsWay.Logger.Test.EventDestinationTests.'
     'FullyQualifiedName~ProphetsWay.Logger.Test.DestinationRegistrationSettingsTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.TextRenderingTests.'
 ) -join '|'
 
 dotnet test .\ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj -c Debug -f net48 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
 dotnet test .\ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj -c Debug -f net10.0 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
 ```
 
-This selection includes native scope/context/settings and guarded-destination specifications,
-not just the earlier severity and standalone-policy tests. Its discovered count may change as
-regressions are added. The two new scope/subclass README examples are intended for independent
-compile-only checking against both library assets; do not execute them as part of that check.
+This selection includes native scope/context/settings, guarded-destination and text-rendering
+specifications, not just the earlier severity and standalone-policy tests. Its discovered count
+may change as regressions are added. Every C# example above requires independent compile-only
+checking against both library assets; do not execute the programs as part of that check.
 This README update does not claim that check, the parent final gate, or release approval passed.
 
-The following figures are **historical selections**, not totals for the current M3 matrix.
+The following figures are **historical selections**, not totals for the current source or rendering checks.
 
 The recorded M2-B Windows check on **2026-09-18 EDT** passed **320/320 cases on each of
 `net48` and `net10.0`**, with zero failures/skips: **20 new registration cases** plus the

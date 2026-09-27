@@ -19,9 +19,16 @@ namespace ProphetsWay.Utilities.Generics
 		/// <exception cref="ArgumentOutOfRangeException">level is invalid; ParamName is "level".</exception>
 		/// <exception cref="Exception">Implementation-defined failure; independent custom errors are not automatically sanitized.</exception>
 		/// <remarks>B02-B04: validate before payload work with no competing-error precedence.
-		/// Preserve supplied facts and original metadata; annotation-shaped T is still metadata.
+		/// Preserve supplied scope/label facts and original metadata; annotation-shaped T is still metadata.
 		/// Transport inspects no arbitrary getters and performs no implicit object formatting,
-		/// nested enumeration or deep clone. Each synchronous attempt may have effects before failure.</remarks>
+		/// nested enumeration or deep clone. Each synchronous attempt may have effects before failure.
+		/// <para>F01-F04/F23/F29: preserve supplied scope/label facts and original payload
+		/// references. A Logger handoff carries that call's EventTimestampUtc unchanged.
+		/// Supplied-base public direct calls follow their current-frame correspondence
+		/// contract and select a freshly stamped context without modifying the supplied
+		/// value. Independently invoked custom implementations remain application-owned;
+		/// implementing this interface alone performs no capture or guard.</para>
+		/// </remarks>
 		void LogWithContext(LogContext context, LogLevels level, T metadata, string message = null, Exception ex = null);
 	}
 }

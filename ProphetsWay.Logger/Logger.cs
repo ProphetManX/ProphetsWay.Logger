@@ -53,7 +53,12 @@ namespace ProphetsWay.Utilities
 	/// raw failure causes or backlinks. Secondary reporters cannot change original result policy.
 	/// Recursive notification suppression is not entry suppression or a scope-propagation store.
 	/// These APIs add no disposal of Logger, global drain, background queue, durability guarantee,
-	/// classification, redaction, scope ownership transfer or access-control service.</remarks>
+	/// classification, redaction, scope ownership transfer or access-control service.
+	/// <para>F01-F05: each validated ordinary or exact-T invocation captures one UTC
+	/// event timestamp before recipient callbacks as part of its completed context.
+	/// Trusted handoffs and any internal forwarding of that same invocation retain
+	/// its time and membership; recursive calls capture anew. The timestamp is
+	/// independent of filename allocation and promises neither uniqueness nor order.</para></remarks>
 	public static partial class Logger
 	{
 		/// <summary>Notifies observers of one bounded safe original-failure report.</summary>
@@ -259,7 +264,7 @@ namespace ProphetsWay.Utilities
 			DispatchOrdinary(null, level, message, ex);
 		}
 
-		private static void DispatchOrdinary(LogAnnotations annotations, LogLevels level, string message, Exception ex)
+		private static void DispatchOrdinary(LogAnnotations annotations, LogLevels level, string message, Exception ex, LogContext capturedContext = null)
 		{
 			OrdinaryRegistration[] destinations;
 			LogContext context;
@@ -269,7 +274,7 @@ namespace ProphetsWay.Utilities
 				{
 					destinations = OrdinaryDestinations.ToArray();
 				}
-				context = LogScopeHandle.Capture(annotations);
+				context = capturedContext ?? LogScopeHandle.Capture(annotations, DateTimeOffset.UtcNow);
 			}
 			catch (Exception)
 			{
@@ -374,7 +379,7 @@ namespace ProphetsWay.Utilities
 			DestinationLabelPolicy policy;
 			try
 			{
-				current = LogScopeHandle.Capture(null);
+				current = LogScopeHandle.Capture(null, DateTimeOffset.UtcNow);
 				policy = destination.LabelPolicy;
 			}
 			catch (Exception)
@@ -392,6 +397,16 @@ namespace ProphetsWay.Utilities
 				{
 					if (!ReferenceEquals(context.Scopes[index], current.Scopes[index]))
 						throw new ArgumentException("The context does not match the current scope openings.", nameof(context));
+				}
+
+				try
+				{
+					context = new LogContext(context, current.EventTimestampUtc);
+				}
+				catch (Exception)
+				{
+					CompleteDispatchFailure(null, 0, 1, false);
+					return;
 				}
 			}
 			else

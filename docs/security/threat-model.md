@@ -9,6 +9,9 @@ The [ON-04 M2-A extension](#on-04-m2-a-severity-boundaries) below adds native se
 and argument-boundary design input. The preceding label/policy model retains its
 ON-03 historical checkpoint and statuses; this extension does not re-grade that work.
 
+The [M4-A promotion](#m4-a-native-rendering-and-framing) supplies the current bounded
+M3-carrier/M4-A rendering model. Earlier sections remain historical assessments.
+
 ## Basis And Scope
 
 Opened sources are [SensitivityLabel.cs](../../ProphetsWay.Logger/SensitivityLabel.cs),
@@ -441,3 +444,169 @@ this in-process slice. Next gate is independent Contract Reviewer against MB-R1-
 after the contract author fixes the mechanical C# details. Security Reviewer compares
 actual implementation and fresh scoped evidence later. No HTTP API Designer work is
 introduced, and no test execution or implementation verdict is supplied here.
+
+## M4-A Native Rendering And Framing
+
+**Promotion checkpoint: 2026-09-27. SourceNoCodeVerdict.** This section promotes the
+completed [M4-A threat/data assessment, report 02](../../../.agent-runs/20260926-2305-logger-m4a-preparation/02-m4a-framing-threat-input.md)
+under the owner's "Approve the m4-a envelope" activation in
+[report 05](../../../.agent-runs/20260926-2305-logger-m4a-preparation/05-owner-activation.md).
+The [revision-1 envelope](../../../.agent-runs/20260926-2305-logger-m4a-preparation/m4a-implementation-r1.md)
+authorizes these two canonical security documents; its pending heading is historical.
+The governing design is [M4A-C1, F01-F30 and its complete XML/grammar/integration](../../../.agent-runs/20260926-2305-logger-m4a-preparation/01-m4a-contract.md),
+accepted by independent [contract review 03](../../../.agent-runs/20260926-2305-logger-m4a-preparation/03-m4a-contract-review.md).
+Report 02's preparation-era source status and pending-promotion paragraph remain historical,
+not rewritten. Earlier canonical sections are not new audits or current implementation claims.
+
+Reopened [decision-log.md](../decision-log.md), D008/D010/D013/D018/D022, and
+[requirements.md](../requirements.md), R-10 through R-16/R-24. D008 states "Framing
+prevents forged record boundaries, not sensitive-content disclosure"; D013 assigns
+classification, mapping/sanitization, recipient access/authentication, storage, retention
+and audit duties to consumers. D018/D022 require propagation for configured Output and
+custom-severity Eligibility failures, not a blanket replacement of capture/LabelCheck policy.
+The [implementation author's report 22](../../../.agent-runs/20260926-2305-logger-m4a-preparation/22-m4a-implementation.md)
+is status only: its green execution is not security proof. This author supplies requirements,
+not a code verdict, dependency clearance, release approval or I/O certification.
+
+### Current Scope And Interview
+
+The [current field inventory](data-classification.md#m4-a-current-carrier-addendum)
+links the actual carrier, event, core and renderer definitions opened for this promotion.
+They establish what data exists, not whether code satisfies the controls below. This is
+a synchronous in-process utility: native capture, selected ordinary/exact-T recipients,
+text rendering, intentional raw/event handoff and a separate bounded failure channel.
+
+| Interview item | Bounded answer |
+| --- | --- |
+| Actors/trust | Consumer developer/configurator, host/operator, producer, formatter, recipient and subscriber. Upstream-influenced input is an abuse scenario. Selected executable code retains host-process privileges; no benign-code assumption or sandbox. |
+| Tenancy/authorization | No tenant, business row, HTTP endpoint or authenticated retrieval is introduced. Reference holders can read documented getters; D013 makes the consumer responsible for who receives references/outputs. Severity, labels, time and correlation IDs grant no identity or row rights. |
+| Topology | Local object/call boundaries only. No server, network, database or deployment is selected. An eventual export needs its own consumer assessment. |
+| Retention/erasure/compliance | No new duration, erasure/consent flow, encryption mechanism or legal obligation. Scope end/removal does not erase retained copies or revoke captured calls. Consumer-specific unknowns block that consumer's assessment only. |
+
+**Assumption M4-A1 (report 02 A1):** Unseen messages, exception/property/metadata graphs,
+keys, label meanings/associations, formatter results and dynamic marker type names are
+unbounded and provisionally Confidential. An inspected consumer inventory/classification
+replaces this precaution. No actual PII, Sensitive PII or Secret value is claimed inspected.
+No unanswered actor, tenancy or topology decision blocks the approved utility slice.
+
+### Boundaries And Exposure
+
+B1-B6 retain report 02's identifiers. All are local trust/ownership crossings, not process
+isolation. Intentional local response is not permission for blanket serialization.
+
+| Boundary | Flow and permitted exposure | Required withholding/control |
+| --- | --- | --- |
+| B1 Capture | Producer/host to completed `LogContext`, full frames, explicit attachments and captured settings. Original nested objects remain accessible to intended context holders. | Complete immutable membership before recipients; no producer re-enumeration or library-added live-stack/handle/enumerator/recipient/history backlinks. Existing capabilities inside original values are not stripped. |
+| B2 Selection | Captured ordinary/exact-T route, settings and intrinsic restrictions to eligibility; public direct input to current-opening validation. | Every required severity bit and label gate must permit before any payload hook/handoff. Direct calls recheck current openings/intrinsic policy without registration lookup; timestamp equality is not permission. Denial never enables fallback. |
+| B3 Hooks | Permitted message/exception to massage; metadata/property-value occurrences to `FormatValue`. | Closed default scalar recognition; explicit extensions own inspection/effects. Keys/labels/message/exception text do not use the value hook. Nontext recipients do not acquire a value-formatting invocation. |
+| B4 Text/output | All content results to final token encoding, full composition, then selected `PrintLogEntry`/console wrapper. | Quote/escape every component once; no print on render failure. One complete non-null unterminated record on success. Print effects can precede an output failure. |
+| B5 Raw/event | One selected contextual or legacy handoff, original optional message/exception/exact-T metadata/property values; event `Message`, `RawMessage`, `Context`, level and legacy `Timestamp`. | No rejected recipient receives any payload. Keep event massage unescaped and raw references unchanged. Context/event/exception serialization can reveal data and capabilities the text renderer never discovers. |
+| B6 Reporting | Capture/check/hook/output/callback failure to subscribers, stderr and propagated safe report. | Only generated correlation, captured position, stage and counts; no payload/context/time/labels/keys/paths/names/marker or formatter text, foreign cause or backlink. Local construction errors are not silently sanitized dispatch reports. |
+
+Settings/policy getters remain intentional local readback; registry/control handles are
+input/internal state, not new export fields. Raw recipients may inspect original exception
+`Data` and nested values even when default text does not. No server-only business entity
+or HTTP DTO exists. Supplied guards do not constrain hostile custom direct methods,
+protected-hook calls or replacement nonsealed `LogCore` bodies.
+
+### Ranked Required Controls
+
+Priorities rank modeled consequences, not findings against implementation. These preserve
+the accepted contract; they introduce no new policy or public surface.
+
+| Priority / control | Required property and threat defended against | Trace |
+| --- | --- | --- |
+| P1 / M4-1 | Whole-entry eligibility first: preserve argument, all-bits severity, registration/intrinsic label, exact-T and direct-current-opening guards before massage, formatting, callbacks or print. Prevents a denied recipient observing raw graphs or invoking its formatter. Active reject-all/mismatch is not failure or fallback permission. | F13/F26/F29; R-06; D010/D013 |
+| P1 / M4-2 | Encode every emitted content component at the final text boundary, including massaged exception text, keys, label identifiers, scalars, unsupported markers and explicit-hook results. Prevents forged records and reassigned field/attachment boundaries. Only fixed renderer delimiters are syntax. | F17-F19/F24-F25; D008/R-13 |
+| P1 / M4-3 | Preserve payload-free bounded diagnostics and boundary-specific failure policy after independent attempts. Prevents a formatter failure leaking content through a supposedly safe channel or being hidden by another success/reporter failure. | F27-F28; D018/D022/R-15/R-16 |
+| P2 / M4-4 | Capture one offset-zero `DateTimeOffset` per originating ordinary/exact-T/direct call before callbacks. Trusted handoff/same-call forwarding reuses it; public reentry/nested calls capture anew. Direct stamped views preserve supplied frames/entry labels without mutating retained context. Prevents recipient-time misattribution and stale-context permission reuse. | F01-F05/F23 |
+| P2 / M4-5 | Restrict default formatting to the exact scalar set below, otherwise the escaped `[no formatter: TypeName]` using runtime `Type.Name` only. No arbitrary getter, object `ToString`, `IFormattable`, equality/hash, enumeration or graph discovery. Prevents implicit execution/disclosure merely from logging an object. | F06-F11; D008/R-12 |
+| P2 / M4-6 | Invoke explicit `FormatValue` once per metadata/property-value occurrence on successful recipient rendering; order across values is unspecified and a failed recipient may stop. Results are recipient-local unescaped data, including a permitted null result; no cross-recipient cache or raw-value writeback. Prevents extension output bypassing framing and one recipient contaminating another's text. | F12-F14/F22-F23 |
+| P2 / M4-7 | Preserve entry/scope attachment presence, every full frame outermost first, ordered property pairs, duplicate/null/empty keys and duplicate label occurrences. Never substitute `EffectiveLabels` or flatten to a dictionary. `ScopeIndex` indexes label-only `ScopeAnnotations`, not full `Scopes`. Prevents loss or reassignment of origin evidence. | F20-F23 |
+| P2 / M4-8 | Massage once per permitted text/event delivery; preserve optional raw values and existing exception-chain messages/available stacks for masks 1-63. No added `Data` serializer, arbitrary getter discovery, exception `ToString` or aggregate traversal. Assemble completely before one print; retain independent synchronous attempts and borrowing limits. Prevents partial text emission and text-driven changes to raw/event semantics. | F15-F16/F24-F30 |
+
+Default scalars are null, string/char, Boolean, SByte/Byte/Int16/UInt16/Int32/UInt32/
+Int64/UInt64/IntPtr/UIntPtr, Single/Double, Decimal, Guid, DateTime/DateTimeOffset,
+TimeSpan and enums. Nullable boxing follows its underlying value or null. Integers use
+invariant `D`, floating values `R`, Decimal `G`, Guid `D`, payload times `O`, TimeSpan `c`,
+enums general names/flags or invariant underlying decimal. Strings/chars stay unchanged
+before encoding; Boolean is `True`/`False`. Payload time kind/offset is preserved; only
+event time must be UTC. Floating spellings/enum aliases follow the executing BCL. Numeric
+pointers are not dereferenced. Scalar support does not make the content Public.
+
+The F17 token map is exact: backslash becomes `\\`, quote `\"`, CR/LF/TAB become
+`\r`/`\n`/`\t`; every other `Char.IsControl` unit plus U+2028/U+2029 becomes uppercase
+four-digit `\uXXXX`. Process original UTF-16 units once: actual LF and literal backslash-n
+remain distinguishable. Preserve all other units, including unpaired surrogates, without
+truncation/normalization. Confusables and other visual-format characters are not a promised
+visual-spoofing defense; downstream encoding fidelity is not established.
+
+Null text is bare `null`; non-null text is double-quoted escaped content. Null, empty,
+whitespace and literal `null` therefore differ. A null hook result represents a null text
+token, not proof its input was null. Order is invariant call-UTC `O` with `+00:00`, full
+general severity spelling padded left to 12 without truncation, massaged-message token,
+typed-only metadata token even for null/default(T), entry attachment, then full scopes.
+Attachments are null or ordered token lists; frames contain labels and ordered `(key,value)`
+pairs. Quoted delimiter-looking content must not be parsed as structure by ignoring quotes.
+This is not lossless arbitrary-CLR serialization or a general parser API.
+
+M4-3 retains at most eight recipient descriptors during accumulation, plus overflow and
+one zero-or-one core-capture count; a descriptor is one-based captured position and stage.
+Stderr is at most 512 UTF-16 units including its terminator. `Eligibility` and `Output`
+failures require propagation after independent attempts/safe reporting; capture-only and
+opted-in `LabelCheck`-only failures retain report-and-return when no mandatory failure is
+present. No new strict selector. Supplied direct calls use the one-recipient reporting
+boundary once; ordinary argument/noncurrent-context errors remain local errors.
+Subscribers/writer failures are contained, preserving original-failure precedence.
+Suppress recursive notification on the same thread, not independent logging; neither
+cross-thread cycle protection nor guaranteed reporting/rate limiting follows. The authored
+safe exception interface excludes raw causes but does not erase CLR state or cover
+reflection, `TargetSite`, debugger, serialization or inherited post-catch mutation.
+
+### Abuse Cases And STRIDE
+
+| Actor and goal | Path | Control or accepted limit |
+| --- | --- | --- |
+| Upstream-influenced producer forges a record or attachment | Inserts newline, separator, quote or plausible prefix through B3/B4 message, key, label, value or exception detail. | M4-2 encodes every component once and M4-7 retains native boundaries. Framing does not conceal the contents. |
+| Faulty formatter injects syntax or exposes arbitrary members | Returns delimiter text or implicitly formats an unsupported object at B3/B4. | M4-5/M4-6 separate closed default recognition from explicit code and encode all successful results as data. |
+| Integration bypasses rejection or reuses old permission | Formats before B2, confuses overlapping severity bits with all-bits permission, or treats retained time/context as direct authorization. | M4-1/M4-4 require every gate and fresh public-direct selection. Arbitrary custom bypasses are not sandboxed. |
+| Throwing formatter discloses a secret/path through diagnostics | Foreign Message/StackTrace/Data/InnerException enters B6. | M4-3 excludes the entire raw cause and content; independent success cannot suppress mandatory failure. |
+| Overlapping/reentrant calls mix records or stall the host | Shared hook state, nested logging, mutable values, blocking output or recursive notification at B3-B6. | Per-call time/structure and recipient-local complete assembly; no registry lock through consumer callbacks. Consumer hooks/sinks own thread safety and may still block, recurse, retain or mutate. No timeout, size cap or rollback is added. |
+| Host mistakes output/removal for durable audit or revocation | Treats B4 return, UTC, scope end or removal as persistence, uniqueness, erasure or immediate cancellation. | Borrowed-resource quiescence and captured-call limits remain; no replay, exactly-once, trusted clock, erasure or durability promise. |
+
+| Crossing | Spoofing | Tampering | Repudiation | Information disclosure | Denial of service | Elevation of privilege |
+| --- | --- | --- | --- | --- | --- | --- |
+| B1 | Labels/time do not authenticate. | Completed ordered membership; nested values not frozen. | No audit identity. | Context graphs remain unbounded. | Stable finite capture expected; sequence effects unbounded. | Handles/context grant no row rights. |
+| B2 | Host selects recipients. | Complete settings and fresh direct checks. | Permission is not receipt. | Whole-entry gate before payload work. | No registry lock through callbacks; no time bound. | No tenant/authentication guarantee. |
+| B3 | Hook output proves no provenance. | Closed defaults; explicit output remains data. | Effects/retention not audited. | Accepted hooks see originals, not redacted values. | Hooks/exception access can block/throw/reenter. | Explicit code keeps host capabilities. |
+| B4 | Escape forged boundaries. | Exact units/tokens before one print. | UTC/print are not durable evidence. | Framed sensitive content remains sensitive. | Unbounded allocation/output possible. | Text is not trusted command syntax. |
+| B5 | Metadata/event is not a principal. | Preserve raw values and exact route. | Effects may precede failure. | Raw graphs remain deliberately readable. | Recipients can retain/block/recurse. | Original object capabilities survive capture. |
+| B6 | Generated IDs are not authentication. | Immutable safe facts; original failure wins. | Notification may be unavailable. | No payload/cause/path/context backlinks. | Per-call bounds, not rate/cross-thread cycle limits. | No raw control handle exposed by safe fields; CLR inspection not isolated. |
+
+### Limits And Handoff
+
+Highest-consequence framing exposure is forged record/attachment authority; require M4-2
+first for that risk, always after M4-1 eligibility. The separate highest-consequence
+diagnostic path is raw data escaping through reporting; M4-3 preserves that boundary.
+These are modeled risks, not discovered vulnerabilities or accepted new risk dispositions.
+
+D008/D013's selected limits remain: framing is not redaction/confidentiality, unsupported
+markers are not arbitrary-object persistence, copied membership is not deep freezing,
+and consumer code can inspect/retain/mutate original objects. Overlapping calls are not
+serialized; nested/public reentry gets a new capture without changing the outer call.
+Time is neither unique/monotonic nor anti-replay evidence. Consumers choose necessity,
+classification, sanitization, readers, storage and cleanup; the companion inventory
+states minimization, credential and conditional-compliance boundaries.
+
+No new compliance, consent, retention, tenancy, encryption or durability guarantee.
+M4-B file lifecycle/recovery, physical termination/encoding, path/fixture behavior and
+automatic-route correction remain excluded. Same-call forwarding retains context/time
+only; it is not certification of typed-fallback metadata transport. The console contract
+retains one `WriteLine` after renderer handoff, not physical-console/file proof. Bridges,
+package/platform/full-v4/release qualification are also outside this promotion.
+
+**Open Questions proposed for M4-A:** None. Consumer deployment/data decisions remain
+dependency-scoped, not reopened utility policy. Next: Security Reviewer v2 independently
+grades final source/evidence against this promoted design and M4A-C1. API Designer v2 has
+no HTTP workstream here. No tests, builds, Git, subagents or physical I/O were run by this
+author, and no implementation-security verdict is supplied.
