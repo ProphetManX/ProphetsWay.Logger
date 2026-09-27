@@ -1,5 +1,237 @@
 # Security Review - Scoped Logger Assessments
 
+## M3 Native Context And Reporting
+
+_S40 review and focused S44 re-review, 2026-09-26, against the existing [threat model](threat-model.md),
+[data classification](data-classification.md), reviewed M3 P1-P10/addenda, exact
+SA-02 replacements, [D024](../decision-log.md#L449) and composed Set A/Set B contracts._
+
+### M3 Verdict
+
+**No blocking issues found in the reviewed M3 scope. S40-01 is closed.** The repaired
+report owns its descriptor membership and exposes a separate synchronization object,
+so public collection aliases no longer provide the writable backing identified by S40.
+The focused source/XML review and input-bound author probe support that closure.
+
+**Open counts: Critical 0, High 0, Medium 0, Low 0, Informational 0; closed: one Medium.**
+S44 re-reviewed only the report repair; unchanged M3 coverage is retained from [S40][m3-s40]
+after input verification. Three fresh dependency queries completed. The permanent
+report-specific SyncRoot regression gap remains, but does not block this security
+closure for the verified source. Independent code/test/document gates and parent
+FullFinal remain separate. This is neither release approval nor a claim that the
+library is secure. This reviewer applied no source fix and ran no product test/probe.
+
+### M3 Findings
+
+#### [CLOSED] S40-01: Writable Failure-Report Backing
+
+**Original severity:** Medium. **Closure:** S44, after [repair S42][m3-s42].
+
+**Location:** repaired [LogFailureReport.cs:33](../../ProphetsWay.Logger/LogFailureReport.cs#L33),
+with shared observer delivery in [Logger.cs:477](../../ProphetsWay.Logger/Logger.cs#L477)
+and subsequent propagation in [Logger.cs:501](../../ProphetsWay.Logger/Logger.cs#L501).
+
+**Original evidence, preserved:** at S40, the constructor wrapped `failures.ToArray()` in a plain
+`ReadOnlyCollection<LogFailureDescriptor>`. That wrapper's non-generic
+`ICollection.SyncRoot` exposed the backing array. S40's read-only framework check on
+.NET 10.0.12, using only an empty object array, confirmed that the returned object
+was the original array. No Logger object was invoked or mutated. This backing
+representation predated M3 integration; the original finding and proposed correction
+remain in the immutable S40 report, not retrospectively rewritten as a passing review.
+
+**Pre-repair attack:** a misbehaving in-process report subscriber could obtain the
+backing collection through the public synchronization property and replace, reorder
+or clear descriptor elements. Later subscribers and `LogDispatchException.Report`
+could read the changed facts without reflection or a public report constructor.
+
+**Original impact:** recipient positions/stages could be falsified, or null elements could
+make later observers fail and lose their notification. This concerned diagnostic integrity
+and observer availability, not remote code execution, a label-denial bypass or raw
+payload disclosure. The scalar core/overflow counts and mandatory-throw flag were not
+changed by this alias. Medium reflected the required in-process observer access and
+limited effect; no sandbox or tamper-proof audit-log guarantee is being invented.
+
+**Threat basis:** Set B B14-B17 requires immutable original facts, non-null descriptors
+and no writable backing through aliases. P10/B8 requires secondary observers not to
+replace original facts. The current report's own
+[remarks](../../ProphetsWay.Logger/LogFailureReport.cs#L8) state that same obligation.
+
+**Repair verified:** the sole executable delta calls
+[LogContext.CopyMembership](../../ProphetsWay.Logger/LogContext.cs#L56). It eagerly
+copies into a fresh private list, then returns a private sealed read-only wrapper whose
+[explicit ICollection.SyncRoot](../../ProphetsWay.Logger/LogContext.cs#L65) is a separate
+plain object. No caller/source list or public collection API exposes the owned list.
+Indexing/enumeration/CopyTo expose only sealed readonly descriptors; a public copy has
+independent membership. The synchronization object supplies no membership interface,
+and protected backing cannot be exposed by subclassing the sealed wrapper.
+
+S44 independently checked the recorded before/after bytes against current source:
+one report assignment, XML-only descriptor/exception changes, no other executable
+delta. Structured C# 7.3/XML comparisons match Set B U4, including full positions,
+Eligibility/Output/LabelCheck and capture/check-only default return. Counts, bounds,
+safe exception members, original result policy and all selection code are unchanged.
+
+**Runtime evidence, attributed:** S42's [actual-public-path observation][m3-probe]
+and [encoded command record][m3-probe-command] use two real exact-T Logger calls on
+.NET 10.0.12, not fabricated reports or private construction. Twenty output attempts
+after a rejected first slot yielded the first eight full positions 2 through 9,
+overflow 2 and core count 0. Both subscribers and both mandatory exceptions retained
+equal original facts with fresh per-call correlation IDs. SyncRoot exposed no descriptor
+membership, direct generic/non-generic writes were rejected, and changing a detached
+public copy did not change the report. S44 decoded/read the command and verified its
+current inputs/tool binding; **S44 did not execute that probe**. It is not a separate
+net48 alias observation, native-fault/OOM exercise or permanent test addition.
+
+**Residual coverage:** the existing
+[report regression](../../ProphetsWay.Logger.Test/LoggerTests.cs#L1571) checks direct
+IList writes, not SyncRoot. That durable call-site regression gap remains for Test
+Designer v2 and focused Test Auditor v2 through the parent. It does not block S40-01
+closure: the current ownership path is directly established by source and corroborated
+by the bound real-report observation. The gap is future regression protection, not
+evidence of a remaining public backing alias. It is not waived or falsely counted as
+new suite coverage, and this disposition does not decide the independent code/test gate.
+
+### M3 Basis And Exposure
+
+Both canonical security-model files were reopened. Their earlier proposal-only and M2
+checkpoint wording is historical, not evidence that the current types are absent.
+This review composes their applicable rules with the September 19 P1-P10 input,
+September 22 flow and field addenda, exact SA-02 replacement wording, September 23
+conventional-scope amendment and Set B U3/U4 field reconciliation. The external
+invocation record preserves their exact paths and current acceptance bindings.
+
+S40 read all 17 scope35 production files, called surfaces and supplied-sink inheritance;
+its inventory included untracked supporting types and contextual interfaces. S44 did
+not repeat that audit. It reopened the three repaired files, actual owned-membership
+helper, shared report delivery/propagation, named regression and author probe. Current
+source matches the 49-file S42 snapshot; S40's 54-entry inventory differs only in the
+three authorized repair files. Applicable model/contract inputs remain bound and current.
+
+The modeled actors remain in-process producers, configurators, recipients and report
+observers. Labels, origins, frames, arbitrary properties and raw payloads retain
+provisional Confidential treatment; generated failure facts are Internal activity,
+not credentials. [D013](../decision-log.md#L181) leaves classification, recipient
+authorization, onward disclosure, sanitization, retention and audit duties with consumers.
+No missing tenant/row authentication service is inferred in this logging library.
+
+SA-02 permits original supplied property references, including graphs already holding
+handles, delegates, destinations or enumerables. It prohibits Logger-added capture
+backlinks, not those supplied capabilities. D024 permits conventional local cleanup
+without universal creator detection; unsupported inherited-handle use is not promoted
+to supported transfer or a new confidentiality guarantee.
+
+### M3 Dependency Vulnerabilities
+
+S44 ran three fresh queries successfully on **2026-09-26, 22:44:36-22:44:39 UTC**, using
+SDK **10.0.401**, JSON output version 1 and the sole requested source
+`https://api.nuget.org/v3/index.json`. Each used an exact absolute project path:
+
+```powershell
+dotnet package list --project C:/Projects/ProphetManX/ProphetsWay.Logger/ProphetsWay.Logger/ProphetsWay.Logger.csproj --vulnerable --include-transitive --no-restore --source https://api.nuget.org/v3/index.json --format json --output-version 1
+dotnet package list --project C:/Projects/ProphetManX/ProphetsWay.Logger/ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj --vulnerable --include-transitive --no-restore --source https://api.nuget.org/v3/index.json --format json --output-version 1
+dotnet package list --project C:/Projects/ProphetManX/ProphetsWay.Logger/ProphetsWay.Logger.Example/ProphetsWay.Logger.Example.csproj --vulnerable --include-transitive --no-restore --source https://api.nuget.org/v3/index.json --format json --output-version 1
+```
+
+All three exited 0, returned the requested project, no problems and no vulnerability
+entries; [fresh query evidence][m3-scan] records exact arguments, times and input checks.
+No restore, install, build, credentials or other network operation was used. S40's
+successful 21:57 queries remain prior evidence, not runs by S44. All three project files
+and three restored asset files still match their S40 identities; the fresh scan also
+verified them and the dotnet executable unchanged before/after querying.
+
+| Package | Version | Advisory | Severity | Direct/Transitive | Fixed in |
+| --- | --- | --- | --- | --- | --- |
+| None returned in examined resolved graphs | n/a | No advisory matches returned | n/a | Direct, implicit and transitive queried | n/a |
+
+Clean query results omit framework arrays; coverage was therefore reconciled against
+the actual restored asset target dictionaries, not interpreted as zero target graphs.
+
+| Project | Restored graphs | Package/version identities per graph | Exposure |
+| --- | --- | --- | --- |
+| [Library](../../ProphetsWay.Logger/ProphetsWay.Logger.csproj#L4) | netstandard2.0; net10.0 | 2; 0 | Production: Standard2.0 resolves NETStandard.Library 2.0.3 and Microsoft.NETCore.Platforms 1.1.0; no direct package references. |
+| [Tests](../../ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj#L4) | net48; net48/win-x86; net10.0; net10.0/win-x86 | 34; 34; 28; 28 | Non-packable developer/test graph; tools execute with developer/CI privileges when invoked. PrivateAssets is not a sandbox. |
+| [Example](../../ProphetsWay.Logger.Example/ProphetsWay.Logger.Example.csproj#L5) | net10.0 | 0 | Example references the library, with no direct package references. |
+
+Total: **seven restored graphs, 41 distinct package/version identities**. This is a
+dated resolved-NuGet-graph query, not a scan of every bundled/native binary, package
+signature, license, SDK, OS or shared-framework implementation. Older or deprecated
+versions alone are not new security findings. No publication clearance follows.
+
+### M3 Coverage
+
+"S40 retained" means its completed assessment is carried forward over verified unchanged
+inputs, not newly re-audited by S44. The repaired reporting boundary and fresh scan are
+identified separately. No security review is exhaustive.
+
+| Area / obligation | Reviewed | Evidence and limits |
+| --- | --- | --- |
+| Ordinary/exact-T whole-entry denial; P1/P5/P8 | S40 retained | [Ordinary](../../ProphetsWay.Logger/Logger.cs#L262) and [typed](../../ProphetsWay.Logger/Generics/Logger.cs#L155) capture before callbacks; disabled/mask/policy/severity rejection precedes raw or contextual delivery. Enabled reject-all stays active; rejection/check failure does not select rescue output. Metadata is not classified or runtime-rerouted. |
+| Label validity and predicate; P2 | S40 retained | [Policy](../../ProphetsWay.Logger/DestinationLabelPolicy.cs#L135), SensitivityLabel, LogAnnotations and LabelFilterMode preserve full finite validation, ordinal membership and the reviewed truth table. NoFilter dispatch skips a redundant check only over valid library-owned membership; it does not recover a failed capture. |
+| Frame, origin and property capture; P3/P4/P9, SA-02 | S40 retained; helper reopened | LogLabelOrigin, LogLabelContext, LogScopeFrame and [LogContext](../../ProphetsWay.Logger/LogContext.cs#L50) own membership and preserve original property references. Origins use the non-null annotation projection; duplicate/empty attachments survive. No arbitrary property getter, object ToString, nested enumeration or added live-stack/control backlink is used. |
+| Native lifetime; P4/D024 | S40 static review retained | [LogScopeHandle](../../ProphetsWay.Logger/LogScopeHandle.cs#L26) uses an immutable parent/frame chain and AsyncLocal head. Current/below/absent cleanup is local; no shared consumed flag or history. Normal inheritance, suppression and outliving captures follow that runtime model; unsupported transfer remains the documented limit, not a creator-security detector. |
+| Settings and policy ownership; P8/B05 | S40 retained | DestinationRegistrationSettings stores validated readonly values; registry entries/settings are replaced under private coordination. [LabelPolicy](../../ProphetsWay.Logger/LoggingDestinationCore.cs#L79) publishes whole sealed policy references with Volatile. Captures precede consumer callbacks; immutable configuration conveys no authentication or permanent permission. |
+| Supplied-direct currentness and denial; B06-B08 | S40 retained | Both BaseLoggingDestination types and [DispatchDirect](../../ProphetsWay.Logger/Logger.cs#L368) validate arguments, compare ordered current opening references including empty/unlabeled frames, and recheck intrinsic mask/policy before hooks. No payload equality, stale-context permission or registration lookup is used. |
+| Trusted delivery and public reentry; B04/B09 | S40 retained | Both internal nonvirtual LogCaptured methods invoke their hook once without recapture/local reporting. Public and explicit-interface entrypoints return through fresh guards. No ambient trusted-dispatch flag exists; a hook exception reaches the outer Output boundary. |
+| Event, text and inherited sinks; P1/B11-B12 | S40 M3 crossing retained | EventDestination, GenericEventDestination and TextBasedDestination move payload work behind LogCore. Events retain original permitted raw/T/context values; manual constructors leave Context null. Console/File inherit the text guard. Existing rendering, filename and file-lifecycle behavior is not certified here. |
+| Report facts, aliases and retention; P7/P10/B14-B17 | S44 re-reviewed; S40-01 closed | Only generated ID, immutable position/stage descriptors and counts are retained. CopyMembership owns the list and isolates SyncRoot. No raw cause/context/destination/delegate is stored or new backlink introduced. Public copies cannot change original membership. |
+| Safe propagated error; B17 | S44 affected boundary; S40 limits retained | [LogDispatchException](../../ProphetsWay.Logger/LogDispatchException.cs#L19) retains the repaired report, fixed text/source, no cause constructor, initially empty Data and null InnerException/HelpLink. StackTrace returns null and ToString ignores mutable inherited content. Reflection, TargetSite, serialization, debugger state and post-catch mutation remain outside the safe-view promise. |
+| Core/check failure handling and overflow; P6/B20 | S40 static review retained, not fault execution | Both partials and direct capture catch before handoff and complete with core count 1, no recipient descriptors and default return. LabelCheck records the full captured slot and continues. Mandatory severity/output status is independent of the retained eight descriptors, so overflow cannot suppress propagation. Allocation/runtime-fatal survival is not promised. |
+| Default reporting and recursion; P7/P10/B18-B19 | S40 retained; report alias closed | [Completion](../../ProphetsWay.Logger/Logger.cs#L459) does not inspect caught causes. It individually contains captured subscribers and stderr, restores its thread-static reporting flag in finally, and never reports through fanout. Nested entries still run under their own gates/result policy. Fixed stderr plus maximum-width allowed scalars is 124 UTF-16 units including terminator, below 512; total arithmetic widens before addition. |
+| Durable report-alias regression | Known remaining gap | [Existing report test](../../ProphetsWay.Logger.Test/LoggerTests.cs#L1571) checks direct IList writes, not SyncRoot. S42's real-report probe is temporary net10.0 author evidence; no report-specific permanent test or separate net48 alias probe was added. Nonblocking for this security closure only. |
+| Availability and executable inputs | S40 accepted limits retained | Descriptor accumulation is bounded before insertion. Scope/value enumeration finishes before publication, including disposal. Accepted callbacks, producer sequences, scope depth, nested objects and cross-thread/asynchronous report cycles are not sandboxed or given new quotas/timeouts. No OOM or fabricated native-fault probe was run. |
+| Secrets | S40 retained; repair inspected | No new secret literal found in the repair. S40's marker checks across 33 library/example C# files and three project files returned no hits; these were not rerun by S44. No values printed. Git history, ignored settings, machine credentials and exhaustive secret search remain excluded. |
+| Injection, deserialization and cryptography | S40 retained; no new mechanism in repair | No SQL/command/LDAP/XPath/HTTP-fetch/type-permissive deserialization/credential-crypto mechanism is introduced. Collection hashes are equality aids. Permitted raw exception rendering is intentional; existing record framing, file-path handling and constructor diagnostics remain excluded later work. |
+| Authentication, sessions, audit and compliance | S40 responsibility boundary retained | No endpoint, tenant/row/session/cookie/CORS mechanism exists in the named M3 surface. Labels/settings/context are not authority. Synchronous delivery and safe facts are not durable audit, retention, erasure or consumer-compliance guarantees. |
+| Dependency graphs | S44 fresh required query | Three successful public no-restore/transitive queries; seven restored graphs and 41 identities independently reconciled to unchanged assets. Runtime/bundled-binary/license assessment is not implied. |
+
+### M3 Evidence And Gates
+
+S44's [independent comparisons][m3-verification] match **49/49 current source entries**,
+**19/19 specification inputs**, **1,608/1,608 setup inputs**, **22/22 M3 frozen records**,
+**8/8 review-identity inputs**, **378/378 toolchain inputs**, and both two-entry seals.
+S40's 54-entry source baseline remains unchanged history: 51 still match, with exactly
+the three authorized repaired files changed and no additions/removals. [Exact diff/XML
+checks][m3-diff] bind the repair to current source; the [107-input review manifest][m3-inputs]
+records the consulted sources, basis, prior records and tools. No protected baseline was refreshed.
+
+S44 reparsed S42's actual TRXs and compared their recorded identities/outcomes/configuration
+with the prior green matrix: **462 passed, 0 failed, 0 skipped on each Windows leg**.
+Both test copies match their correct library asset; recorded library/example builds and
+their output hashes remain valid. These are reused **author executions**, not fresh
+S44 test/build results. The probe's input/tool hashes also match. No product execution,
+example execution, test-quality audit, FullFinal or reading of the parallel S43 review occurred.
+
+B20's ordinary-input-unforceable native branches retain S40's static assessment. No public
+fault API, invalid internal object, memory-exhaustion experiment or working exploit
+was created. The helper adds no payload inspection or new fault contract. The author probe
+establishes its ordinary real-report observations only, not native-fault containment,
+exhaustive scheduling or permanent regression coverage.
+
+### M3 Worth Checking
+
+- Test Designer v2 / Test Auditor v2 through the parent: retain and assess the named
+  permanent report-specific SyncRoot gap under a separately authorized specification boundary.
+  This review neither adds a test nor waives another reviewer's required gate.
+- Code Reviewer v2: independent CR39-01/CR39-02 disposition remains your gate. S44 verified
+  the repaired XML's security meaning and exact source delta, without consuming S43's work.
+- Consumer/host: assess actual data classification, recipient access, retention and
+  permitted object capabilities before use with real data; supported-use/CLR limits remain.
+- Parent: preserve independent code/specification/document gates and run Full Final
+  after the required documentation is ready; no merge, publication or deployment authority
+  follows. Pipeline/infrastructure permissions, secret history and full-v4 file/bridge
+  behavior were not reviewed. **No security review is exhaustive.**
+
+[m3-s40]: ../../../.agent-runs/20260926-1138-logger-m3-alignment/40-m3-security-review.md
+[m3-s42]: ../../../.agent-runs/20260926-1138-logger-m3-alignment/42-report-review-repair.md
+[m3-probe]: ../../../.agent-runs/20260926-1138-logger-m3-alignment/evidence/s42-alias-20260926T223100-f179ab3b4a1a4b18b1c081d8bbf4daad-observation.json
+[m3-probe-command]: ../../../.agent-runs/20260926-1138-logger-m3-alignment/evidence/s42-alias-20260926T223100-f179ab3b4a1a4b18b1c081d8bbf4daad.json
+[m3-scan]: ../../../.agent-runs/20260926-1138-logger-m3-alignment/evidence/s44-dependency-scan-r1.json
+[m3-verification]: ../../../.agent-runs/20260926-1138-logger-m3-alignment/evidence/s44-review-verification-r1.json
+[m3-diff]: ../../../.agent-runs/20260926-1138-logger-m3-alignment/evidence/s44-repair-comparison-r1.json
+[m3-inputs]: ../../../.agent-runs/20260926-1138-logger-m3-alignment/evidence/s44-reviewed-inputs-r1.json
+
+## Historical Assessments
+
 The ON-03 assessment below retains its **2026-09-17 historical scope and evidence**,
 including its then-fresh public dependency scan and 110-case-per-leg execution.
 The separate [ON-04 assessment](#on-04-native-m2-a) adds the eight native M2-A source

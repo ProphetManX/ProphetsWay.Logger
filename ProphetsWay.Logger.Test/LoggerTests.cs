@@ -18,6 +18,880 @@ namespace ProphetsWay.Logger.Test
 	public class LoggerTests
 	{
 		[Fact]
+		public void ShouldKeepM3CoreCountZeroForAnObservedConfiguredSeverityFailure()
+		{
+			var receiver = new M3ContextReceiver { OnValidate = () => { throw new Exception("private severity cause"); } };
+			var reports = new List<LogFailureReport>();
+			Action<LogFailureReport> observer = report => reports.Add(report);
+			var oldError = Console.Error;
+			using (var error = new StringWriter())
+			{
+				Console.SetError(error);
+				Utilities.Logger.AddDestination(receiver);
+				Utilities.Logger.DispatchFailed += observer;
+				try
+				{
+					var failure = Should.Throw<LogDispatchException>(() => Utilities.Logger.Info("private message"));
+					var report = reports.ShouldHaveSingleItem();
+					report.CoreCaptureFailureCount.ShouldBe(0);
+					failure.Report.CoreCaptureFailureCount.ShouldBe(0);
+					failure.Report.CorrelationId.ShouldBe(report.CorrelationId);
+					report.Failures.ShouldHaveSingleItem().Stage.ShouldBe(LogFailureStage.Eligibility);
+					report.OverflowCount.ShouldBe(0);
+					receiver.Entries.ShouldBeEmpty();
+					receiver.LegacyCalls.ShouldBe(0);
+				}
+				finally
+				{
+					Utilities.Logger.RemoveDestination(receiver);
+					Utilities.Logger.DispatchFailed -= observer;
+					Console.SetError(oldError);
+				}
+			}
+		}
+
+		[Fact]
+		public void ShouldPublishM3SettingsWhileACapturedEligibilityCallIsBlocked()
+		{
+			var first = new M3ContextReceiver();
+			var second = new M3ContextReceiver();
+			var policy = new DestinationLabelPolicy(LabelFilterMode.NoFilter, new SensitivityLabel[0]);
+			var enabled = new DestinationRegistrationSettings(true, LogLevels.Trace, policy);
+			var disabled = new DestinationRegistrationSettings(false, (LogLevels)0, policy);
+			using (var entered = new ManualResetEventSlim())
+			using (var release = new ManualResetEventSlim())
+			using (var published = new ManualResetEventSlim())
+			{
+				var paused = 0;
+				first.OnValidate = () =>
+				{
+					if (Interlocked.Exchange(ref paused, 1) != 0) return;
+					entered.Set();
+					if (!release.Wait(TimeSpan.FromSeconds(10))) throw new TimeoutException("M3 test release was not signaled.");
+				};
+				Exception producerFailure = null;
+				Exception writerFailure = null;
+				var producer = new Thread(() => producerFailure = Record.Exception(() => Utilities.Logger.Info("captured"))) { IsBackground = true };
+				var writer = new Thread(() =>
+				{
+					try { M3Set(second, disabled); }
+					catch (Exception failure) { writerFailure = failure; }
+					finally { published.Set(); }
+				}) { IsBackground = true };
+				var writerStarted = false;
+				Utilities.Logger.AddDestination(first);
+				try
+				{
+					M3Add(second, enabled);
+					var observedEntry = false;
+					var publishedBeforeRelease = false;
+					producer.Start();
+					try
+					{
+						observedEntry = entered.Wait(TimeSpan.FromSeconds(5));
+						if (observedEntry)
+						{
+							writer.Start();
+							writerStarted = true;
+							publishedBeforeRelease = published.Wait(TimeSpan.FromSeconds(5));
+							second.Entries.ShouldBeEmpty();
+						}
+					}
+					finally
+					{
+						release.Set();
+						var producerJoined = producer.Join(TimeSpan.FromSeconds(5));
+						var writerJoined = !writerStarted || writer.Join(TimeSpan.FromSeconds(5));
+						if (!producerJoined || !writerJoined)
+							Environment.FailFast("M3 specification workers did not terminate after release; aborting before shared teardown.");
+					}
+					observedEntry.ShouldBeTrue();
+					publishedBeforeRelease.ShouldBeTrue("Settings publication must not drain blocked recipient code.");
+					producerFailure.ShouldBeNull();
+					writerFailure.ShouldBeNull();
+					second.Read("captured").Level.ShouldBe(LogLevels.InformationOnly);
+					Utilities.Logger.Info("later");
+					second.Entries.Select(entry => entry.Message).ShouldBe(new[] { "captured" });
+					second.DisposeCalls.ShouldBe(0);
+				}
+				finally
+				{
+					Utilities.Logger.RemoveDestination(first);
+					Utilities.Logger.RemoveDestination(second);
+				}
+			}
+		}
+
+		[Fact]
+		public void ShouldChooseOneM3ContextualOrLegacyHandoffWithDefaultSettings()
+		{
+			var contextual = new M3ContextReceiver();
+			var legacy = new M3LegacyReceiver();
+			Utilities.Logger.AddDestination(contextual);
+			Utilities.Logger.AddDestination(legacy);
+			try
+			{
+				Utilities.Logger.Info("default settings");
+				var first = contextual.Read("default settings");
+				first.Context.Scopes.ShouldBeEmpty();
+				first.Context.Labels.EntryAnnotations.ShouldBeNull();
+				first.Context.Labels.EffectiveLabels.ShouldBeEmpty();
+				first.Level.ShouldBe(LogLevels.InformationOnly);
+				var exception = new Exception("raw original");
+				M3Log(null, (LogLevels)9, null, exception);
+				var raw = contextual.Read(null);
+				raw.Level.ShouldBe((LogLevels)9);
+				raw.Message.ShouldBeNull();
+				raw.Exception.ShouldBeSameAs(exception);
+				contextual.LegacyCalls.ShouldBe(0);
+				contextual.ValidationCalls.ShouldBe(2);
+				legacy.Entries.Select(entry => entry.Message).ShouldBe(new[] { "default settings", null });
+				legacy.Entries[1].Exception.ShouldBeSameAs(exception);
+				legacy.Entries[1].Level.ShouldBe((LogLevels)9);
+			}
+			finally
+			{
+				Utilities.Logger.RemoveDestination(contextual);
+				Utilities.Logger.RemoveDestination(legacy);
+			}
+		}
+
+		[Theory]
+		[InlineData(0)]
+		[InlineData(-1)]
+		[InlineData(64)]
+		[InlineData(65)]
+		public void ShouldRejectM3RawMasksBeforeRecipientWork(int mask)
+		{
+			var receiver = new M3ContextReceiver();
+			var reports = 0;
+			Action<LogFailureReport> observer = report => reports++;
+			Utilities.Logger.AddDestination(receiver);
+			Utilities.Logger.DispatchFailed += observer;
+			try
+			{
+				var failure = Should.Throw<ArgumentOutOfRangeException>(() => M3Log(null, (LogLevels)mask, null, null));
+				failure.ParamName.ShouldBe("level");
+				receiver.ValidationCalls.ShouldBe(0);
+				receiver.Entries.ShouldBeEmpty();
+				receiver.LegacyCalls.ShouldBe(0);
+				reports.ShouldBe(0);
+			}
+			finally
+			{
+				Utilities.Logger.RemoveDestination(receiver);
+				Utilities.Logger.DispatchFailed -= observer;
+			}
+		}
+
+		[Theory]
+		[InlineData(true, 9, LabelFilterMode.NoFilter, new string[0], true)]
+		[InlineData(true, 8, LabelFilterMode.NoFilter, new string[0], false)]
+		[InlineData(false, 63, LabelFilterMode.NoFilter, new string[0], false)]
+		[InlineData(true, 0, LabelFilterMode.NoFilter, new string[0], false)]
+		[InlineData(true, 63, LabelFilterMode.Exclude, new[] { "inherited" }, false)]
+		[InlineData(true, 63, LabelFilterMode.Exclude, new string[0], true)]
+		[InlineData(true, 63, LabelFilterMode.AllowOnly, new[] { "entry" }, false)]
+		[InlineData(true, 63, LabelFilterMode.AllowOnly, new[] { "inherited", "entry" }, true)]
+		[InlineData(true, 63, LabelFilterMode.AllowOnly, new string[0], false)]
+		public void ShouldSelectM3UsingEnablementAllBitsAndCompleteEffectiveLabels(bool enabled, int mask,
+			LabelFilterMode mode, string[] configured, bool expected)
+		{
+			var sentinel = new M3ContextReceiver { Permitted = false };
+			var receiver = new M3ContextReceiver();
+			var reports = 0;
+			Action<LogFailureReport> observer = report => reports++;
+			Utilities.Logger.AddDestination(sentinel);
+			Utilities.Logger.DispatchFailed += observer;
+			try
+			{
+				M3Add(receiver, new DestinationRegistrationSettings(enabled, (LogLevels)mask,
+					new DestinationLabelPolicy(mode, configured.Select(identifier => new SensitivityLabel(identifier)))));
+				using (M3Begin(M3Annotations("inherited")))
+					M3Log(M3Annotations("entry"), (LogLevels)9, "selected", new Exception("private payload"));
+				receiver.Entries.Count.ShouldBe(expected ? 1 : 0);
+				receiver.LegacyCalls.ShouldBe(0);
+				receiver.ValidationCalls.ShouldBeLessThanOrEqualTo(1);
+				if (!enabled) receiver.ValidationCalls.ShouldBe(0);
+				if (expected)
+				{
+					receiver.ValidationCalls.ShouldBe(1);
+					receiver.Read("selected").Context.Labels.EffectiveLabels.Select(label => label.Identifier).OrderBy(label => label)
+						.ShouldBe(new[] { "entry", "inherited" });
+				}
+				reports.ShouldBe(0);
+			}
+			finally
+			{
+				Utilities.Logger.RemoveDestination(receiver);
+				Utilities.Logger.RemoveDestination(sentinel);
+				Utilities.Logger.DispatchFailed -= observer;
+			}
+		}
+
+		[Fact]
+		public void ShouldRetainM3CapturedSettingsAndOrderThroughReentrantReplacement()
+		{
+			var order = new List<string>();
+			var first = new M3ContextReceiver();
+			var second = new M3ContextReceiver();
+			var third = new M3ContextReceiver();
+			var policy = new DestinationLabelPolicy(LabelFilterMode.NoFilter, new SensitivityLabel[0]);
+			var enabled = new DestinationRegistrationSettings(true, LogLevels.Trace, policy);
+			var disabled = new DestinationRegistrationSettings(false, (LogLevels)0, policy);
+			first.OnContext = (context, message) =>
+			{
+				order.Add("first:" + message);
+				if (message == "outer")
+				{
+					M3Set(second, disabled);
+					using (M3Begin(M3Annotations("recursive"))) Utilities.Logger.Info("nested");
+				}
+			};
+			second.OnContext = (context, message) => order.Add("second:" + message);
+			third.OnContext = (context, message) => order.Add("third:" + message);
+			Utilities.Logger.AddDestination(first);
+			try
+			{
+				M3Add(second, enabled);
+				Utilities.Logger.AddDestination(third);
+				Utilities.Logger.Info("outer");
+				order.ShouldBe(new[] { "first:outer", "first:nested", "third:nested", "second:outer", "third:outer" });
+				second.Read("outer").Context.Scopes.ShouldBeEmpty();
+				third.Read("outer").Context.Scopes.ShouldBeEmpty();
+				third.Read("nested").Context.Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "recursive" });
+				M3Set(second, enabled);
+				Utilities.Logger.Info("later");
+				order.Skip(5).ShouldBe(new[] { "first:later", "second:later", "third:later" });
+				second.DisposeCalls.ShouldBe(0);
+				foreach (var restriction in new[] { "mask", "policy" })
+				{
+					var replacement = new DestinationRegistrationSettings(true,
+						restriction == "mask" ? (LogLevels)8 : LogLevels.Trace,
+						restriction == "policy" ? new DestinationLabelPolicy(LabelFilterMode.Exclude,
+							new[] { new SensitivityLabel("restricted") }) : policy);
+					var outerMessage = restriction + " outer";
+					var nestedMessage = restriction + " nested";
+					var subsequentMessage = restriction + " subsequent";
+					var restoredMessage = restriction + " restored";
+					order.Clear();
+					first.OnContext = (context, message) =>
+					{
+						order.Add("first:" + message);
+						if (message == outerMessage)
+						{
+							M3Set(second, replacement);
+							M3Log(null, (LogLevels)9, nestedMessage, null);
+						}
+					};
+					using (M3Begin(M3Annotations("restricted")))
+					{
+						M3Log(null, (LogLevels)9, outerMessage, null);
+						M3Log(null, (LogLevels)9, subsequentMessage, null);
+						order.ShouldBe(new[] { "first:" + outerMessage, "first:" + nestedMessage,
+							"third:" + nestedMessage, "second:" + outerMessage, "third:" + outerMessage,
+							"first:" + subsequentMessage, "third:" + subsequentMessage });
+						var captured = second.Read(outerMessage);
+						captured.Level.ShouldBe((LogLevels)9);
+						captured.Context.Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "restricted" });
+						M3Set(second, enabled);
+						M3Log(null, (LogLevels)9, restoredMessage, null);
+						order.Skip(7).ShouldBe(new[] { "first:" + restoredMessage, "second:" + restoredMessage, "third:" + restoredMessage });
+						second.Read(restoredMessage).Level.ShouldBe((LogLevels)9);
+					}
+				}
+				first.LegacyCalls.ShouldBe(0);
+				second.LegacyCalls.ShouldBe(0);
+				third.LegacyCalls.ShouldBe(0);
+				second.DisposeCalls.ShouldBe(0);
+			}
+			finally
+			{
+				Utilities.Logger.RemoveDestination(first);
+				Utilities.Logger.RemoveDestination(second);
+				Utilities.Logger.RemoveDestination(third);
+			}
+		}
+
+		[Fact]
+		public void ShouldRejectM3InvalidSettingsPublicationsWithoutUpsertOrDisabledDuplicates()
+		{
+			var receiver = new M3ContextReceiver();
+			var missing = new M3ContextReceiver();
+			var sentinel = new M3ContextReceiver { Permitted = false };
+			var settings = new DestinationRegistrationSettings(false, LogLevels.Trace,
+				new DestinationLabelPolicy(LabelFilterMode.NoFilter, new SensitivityLabel[0]));
+			Utilities.Logger.AddDestination(sentinel);
+			try
+			{
+				Should.Throw<ArgumentNullException>(() => M3Add(null, settings)).ParamName.ShouldBe("newDest");
+				Should.Throw<ArgumentNullException>(() => M3Add(receiver, null)).ParamName.ShouldBe("settings");
+				Should.Throw<ArgumentException>(() => M3Set(missing, settings)).ParamName.ShouldBe("destination");
+				M3Add(receiver, settings);
+				Should.Throw<ArgumentException>(() => M3Add(receiver, settings)).ParamName.ShouldBe("newDest");
+				Should.Throw<ArgumentNullException>(() => M3Set(receiver, null)).ParamName.ShouldBe("settings");
+				Should.Throw<ArgumentNullException>(() => M3Set(null, settings)).ParamName.ShouldBe("destination");
+				receiver.ValidationCalls.ShouldBe(0);
+				Utilities.Logger.Info("disabled remains");
+				receiver.ValidationCalls.ShouldBe(0);
+				missing.ValidationCalls.ShouldBe(0);
+				M3Set(receiver, new DestinationRegistrationSettings(true, LogLevels.Trace, settings.LabelPolicy));
+				M3Capture(receiver, "enabled later").Scopes.ShouldBeEmpty();
+				receiver.DisposeCalls.ShouldBe(0);
+			}
+			finally
+			{
+				Utilities.Logger.RemoveDestination(receiver);
+				Utilities.Logger.RemoveDestination(missing);
+				Utilities.Logger.RemoveDestination(sentinel);
+			}
+		}
+
+		[Fact]
+		public void ShouldReportM3FullCapturedPositionsAndZeroCoreCountWithoutPrivatePayloads()
+		{
+			var noFilter = new DestinationLabelPolicy(LabelFilterMode.NoFilter, new SensitivityLabel[0]);
+			var recipients = Enumerable.Range(0, 13).Select(index => new M3ContextReceiver()).ToArray();
+			var reports = new List<LogFailureReport>();
+			var oldError = Console.Error;
+			using (var error = new StringWriter())
+			{
+				Action<LogFailureReport> observer = report => { reports.Add(report); throw new Exception("reporter-private-canary"); };
+				Console.SetError(error);
+				Utilities.Logger.DispatchFailed += observer;
+				try
+				{
+					for (var index = 0; index < recipients.Length; index++)
+					{
+						var policy = index == 1 ? new DestinationLabelPolicy(LabelFilterMode.AllowOnly, new SensitivityLabel[0]) : noFilter;
+						M3Add(recipients[index], new DestinationRegistrationSettings(index != 0, LogLevels.Trace, policy));
+					}
+					recipients[3].OnValidate = () => { throw new Exception("eligibility-private-canary"); };
+					foreach (var recipient in recipients.Skip(4))
+						recipient.OnContext = (context, message) => { throw new Exception("output-private-canary"); };
+					LogDispatchException failure;
+					using (M3Begin(M3Annotations("label-private-canary"), new[] { new KeyValuePair<string, object>("key-private-canary", "value-private-canary") }))
+						failure = Should.Throw<LogDispatchException>(() => M3Log(null, LogLevels.InformationOnly, "message-private-canary", new Exception("exception-private-canary")));
+					var report = reports.ShouldHaveSingleItem();
+					report.CoreCaptureFailureCount.ShouldBe(0);
+					report.CorrelationId.ShouldNotBe(Guid.Empty);
+					report.Failures.Select(item => item.RegistrationId).ShouldBe(Enumerable.Range(4, 8));
+					report.Failures.Select(item => item.Stage).ShouldBe(new[] { LogFailureStage.Eligibility }.Concat(Enumerable.Repeat(LogFailureStage.Output, 7)));
+					report.OverflowCount.ShouldBe(2);
+					failure.Report.CorrelationId.ShouldBe(report.CorrelationId);
+					failure.Report.CoreCaptureFailureCount.ShouldBe(0);
+					failure.Report.OverflowCount.ShouldBe(2);
+					failure.InnerException.ShouldBeNull();
+					failure.Data.Count.ShouldBe(0);
+					failure.StackTrace.ShouldBeNull();
+					recipients[0].ValidationCalls.ShouldBe(0);
+					recipients[1].Entries.ShouldBeEmpty();
+					recipients[2].Entries.ShouldHaveSingleItem();
+					recipients[3].Entries.ShouldBeEmpty();
+					foreach (var recipient in recipients.Skip(4)) recipient.Entries.ShouldHaveSingleItem();
+					Should.Throw<NotSupportedException>(() => ((IList<LogFailureDescriptor>)report.Failures).Clear());
+					report.Failures.Count.ShouldBe(8);
+					var safeText = error.ToString() + failure.Message + failure.ToString();
+					foreach (var marker in new[] { "label", "key", "value", "message", "exception", "eligibility", "output", "reporter" })
+						safeText.ShouldNotContain(marker + "-private-canary");
+					error.ToString().Length.ShouldBeInRange(1, 512);
+				}
+				finally
+				{
+					foreach (var recipient in recipients) Utilities.Logger.RemoveDestination(recipient);
+					Utilities.Logger.DispatchFailed -= observer;
+					Console.SetError(oldError);
+				}
+			}
+		}
+
+		private static void M3Add(ILoggingDestination destination, DestinationRegistrationSettings settings)
+		{
+			M3Invoke("AddDestination", new[] { typeof(ILoggingDestination), typeof(DestinationRegistrationSettings) }, destination, settings);
+		}
+
+		private static void M3Set(ILoggingDestination destination, DestinationRegistrationSettings settings)
+		{
+			M3Invoke("SetDestinationSettings", new[] { typeof(ILoggingDestination), typeof(DestinationRegistrationSettings) }, destination, settings);
+		}
+
+		private sealed class M3LegacyReceiver : ILoggingDestination
+		{
+			public readonly List<M3CapturedEntry> Entries = new List<M3CapturedEntry>();
+			public bool ValidateMessageLevel(LogLevels level) { return true; }
+			public void Log(LogLevels level, string message = null, Exception ex = null)
+			{
+				Entries.Add(new M3CapturedEntry { Level = level, Message = message, Exception = ex });
+			}
+		}
+
+		[Fact]
+		public void ShouldCaptureM3OrderedOriginsAndTheCompleteOrdinalUnion()
+		{
+			var receiver = new M3ContextReceiver();
+			Utilities.Logger.AddDestination(receiver);
+			try
+			{
+				using (M3Begin(M3Annotations("A", "A")))
+				using (M3Begin(null))
+				using (M3Begin(M3Annotations()))
+				using (M3Begin(M3Annotations("a")))
+				{
+					receiver.Entries.ShouldBeEmpty();
+					receiver.ValidationCalls.ShouldBe(0);
+					receiver.LegacyCalls.ShouldBe(0);
+					M3Log(M3Annotations("A"), (LogLevels)9, "origins", null);
+				}
+				var capture = receiver.Read("origins");
+				capture.Level.ShouldBe((LogLevels)9);
+				capture.Context.Scopes.Count.ShouldBe(4);
+				capture.Context.Scopes[1].Annotations.ShouldBeNull();
+				capture.Context.Scopes[2].Annotations.LabelOccurrences.ShouldBeEmpty();
+				capture.Context.Scopes.All(frame => frame.Properties.Count == 0).ShouldBeTrue();
+				var labels = capture.Context.Labels;
+				labels.ScopeAnnotations.Select(annotation => string.Join(",", annotation.LabelOccurrences.Select(label => label.Identifier)))
+					.ShouldBe(new[] { "A,A", "", "a" });
+				labels.EntryAnnotations.LabelOccurrences.Select(label => label.Identifier).ShouldBe(new[] { "A" });
+				labels.Origins.Select(origin => origin.Label.Identifier).ShouldBe(new[] { "A", "A", "a", "A" });
+				labels.Origins.Select(origin => origin.ScopeIndex).ShouldBe(new int?[] { 0, 0, 2, null });
+				labels.Origins.Select(origin => origin.OccurrenceIndex).ShouldBe(new[] { 0, 1, 0, 0 });
+				labels.EffectiveLabels.Select(label => label.Identifier).OrderBy(identifier => identifier, StringComparer.Ordinal)
+					.ShouldBe(new[] { "A", "a" });
+				Should.Throw<NotSupportedException>(() => ((IList<LogScopeFrame>)capture.Context.Scopes).Clear());
+				Should.Throw<NotSupportedException>(() => ((IList<LogAnnotations>)labels.ScopeAnnotations).Clear());
+				Should.Throw<NotSupportedException>(() => ((IList<LogLabelOrigin>)labels.Origins).Clear());
+				Should.Throw<NotSupportedException>(() => ((IList<SensitivityLabel>)labels.EffectiveLabels).Clear());
+				M3AssertOwnedMembership(capture.Context.Scopes, frame => frame.Annotations == null ? "absent" : string.Join(",", frame.Annotations.LabelOccurrences.Select(label => label.Identifier)));
+				M3AssertOwnedMembership(labels.ScopeAnnotations, annotation => string.Join(",", annotation.LabelOccurrences.Select(label => label.Identifier)));
+				M3AssertOwnedMembership(labels.Origins, origin => origin.Label.Identifier + ":" + origin.ScopeIndex + ":" + origin.OccurrenceIndex);
+				M3AssertOwnedMembership(labels.EffectiveLabels, label => label.Identifier);
+				labels.Origins.Count.ShouldBe(4);
+				M3Capture(receiver, "outside").Scopes.ShouldBeEmpty();
+				receiver.LegacyCalls.ShouldBe(0);
+			}
+			finally { Utilities.Logger.RemoveDestination(receiver); }
+		}
+
+		[Fact]
+		public void ShouldDistinguishM3AbsentEmptyAndRepeatedAttachmentsWithoutSubtraction()
+		{
+			var receiver = new M3ContextReceiver();
+			Utilities.Logger.AddDestination(receiver);
+			try
+			{
+				var annotation = M3Annotations("outer");
+				using (M3Begin(annotation))
+				using (M3Begin(annotation))
+				{
+					M3Log(null, LogLevels.InformationOnly, "absent", null);
+					M3Log(M3Annotations(), LogLevels.InformationOnly, "empty", null);
+					var absent = receiver.Read("absent").Context.Labels;
+					var empty = receiver.Read("empty").Context.Labels;
+					absent.EntryAnnotations.ShouldBeNull();
+					empty.EntryAnnotations.ShouldNotBeNull();
+					empty.EntryAnnotations.LabelOccurrences.ShouldBeEmpty();
+					foreach (var labels in new[] { absent, empty })
+					{
+						labels.ScopeAnnotations.Count.ShouldBe(2);
+						labels.Origins.Select(origin => origin.ScopeIndex).ShouldBe(new int?[] { 0, 1 });
+						labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "outer" });
+					}
+				}
+			}
+			finally { Utilities.Logger.RemoveDestination(receiver); }
+		}
+
+		[Fact]
+		public void ShouldCopyM3PropertiesWithoutInspectingOrCloningOriginalValues()
+		{
+			var receiver = new M3ContextReceiver();
+			var opaque = new M3OpaqueValue();
+			var source = new List<KeyValuePair<string, object>>();
+			Action callback = () => { throw new InvalidOperationException("property delegate must not run"); };
+			Utilities.Logger.AddDestination(receiver);
+			try
+			{
+				object[] values;
+				using (var outer = M3Begin(null))
+				{
+					source.Add(default(KeyValuePair<string, object>));
+					source.Add(new KeyValuePair<string, object>("", opaque));
+					source.Add(new KeyValuePair<string, object>(" repeated ", source));
+					source.Add(new KeyValuePair<string, object>(" repeated ", callback));
+					source.Add(new KeyValuePair<string, object>("handle", outer));
+					source.Add(new KeyValuePair<string, object>("recipient", receiver));
+					values = source.Select(pair => pair.Value).ToArray();
+					using (M3Begin(null, source))
+					{
+						source.Clear();
+						var context = M3Capture(receiver, "properties");
+						var properties = context.Scopes[1].Properties;
+						properties.Select(pair => pair.Key).ShouldBe(new[] { null, "", " repeated ", " repeated ", "handle", "recipient" });
+						for (var index = 0; index < values.Length; index++)
+							properties[index].Value.ShouldBeSameAs(values[index]);
+						Should.Throw<NotSupportedException>(() => ((IList<KeyValuePair<string, object>>)properties).Clear());
+						M3AssertOwnedMembership(properties, pair => pair.Key);
+						opaque.Value = 42;
+						((M3OpaqueValue)properties[1].Value).Value.ShouldBe(42);
+						context.Labels.EffectiveLabels.ShouldBeEmpty();
+					}
+				}
+				var retained = receiver.Read("properties").Context.Scopes[1].Properties;
+				retained.Select(pair => pair.Key).ShouldBe(new[] { null, "", " repeated ", " repeated ", "handle", "recipient" });
+				for (var index = 0; index < values.Length; index++)
+					retained[index].Value.ShouldBeSameAs(values[index]);
+				opaque.InspectionCalls.ShouldBe(0);
+				opaque.DisposeCalls.ShouldBe(0);
+				receiver.DisposeCalls.ShouldBe(0);
+			}
+			finally { Utilities.Logger.RemoveDestination(receiver); }
+		}
+
+		[Fact]
+		public void ShouldPreserveM3FramesAfterOutOfOrderCleanupAndIgnoreEndedHandles()
+		{
+			var receiver = new M3ContextReceiver();
+			var reports = 0;
+			Action<LogFailureReport> observer = report => reports++;
+			Utilities.Logger.DispatchFailed += observer;
+			Utilities.Logger.AddDestination(receiver);
+			try
+			{
+				using (var outer = M3Begin(M3Annotations("cleanup-private-canary")))
+				{
+					using (var inner = M3Begin(M3Annotations("cleanup-private-canary")))
+					{
+						var failure = Should.Throw<InvalidOperationException>(() => outer.Dispose());
+						failure.GetType().ShouldBe(typeof(InvalidOperationException));
+						failure.Message.ShouldNotContain("cleanup-private-canary");
+						foreach (var value in failure.Data.Keys.Cast<object>().Concat(failure.Data.Values.Cast<object>()))
+						{
+							ReferenceEquals(value, outer).ShouldBeFalse();
+							ReferenceEquals(value, inner).ShouldBeFalse();
+							if (value is string) ((string)value).ShouldNotContain("cleanup-private-canary");
+						}
+						M3Capture(receiver, "still nested").Scopes.Count.ShouldBe(2);
+					}
+					M3Capture(receiver, "outer only").Scopes.Count.ShouldBe(1);
+					outer.Dispose();
+					using (M3Begin(M3Annotations("later")))
+					{
+						outer.Dispose();
+						M3Capture(receiver, "later intact").Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "later" });
+					}
+				}
+				M3Capture(receiver, "clean").Scopes.ShouldBeEmpty();
+				reports.ShouldBe(0);
+				receiver.DisposeCalls.ShouldBe(0);
+			}
+			finally
+			{
+				Utilities.Logger.RemoveDestination(receiver);
+				Utilities.Logger.DispatchFailed -= observer;
+			}
+		}
+
+		[Fact]
+		public void ShouldRejectNullM3PropertiesWithoutPublishingAScope()
+		{
+			var receiver = new M3ContextReceiver();
+			Utilities.Logger.AddDestination(receiver);
+			try
+			{
+				var failure = Should.Throw<ArgumentNullException>(() => M3Begin(null, null));
+				failure.ParamName.ShouldBe("properties");
+				M3Capture(receiver, "no scope").Scopes.ShouldBeEmpty();
+			}
+			finally { Utilities.Logger.RemoveDestination(receiver); }
+		}
+
+		[Theory]
+		[InlineData("GetEnumerator")]
+		[InlineData("MoveNext")]
+		[InlineData("Current")]
+		[InlineData("Dispose")]
+		public void ShouldNotPublishM3PartialFramesOrReportsWhenPropertyCaptureFails(string failurePoint)
+		{
+			var receiver = new M3ContextReceiver();
+			var reports = 0;
+			Action<LogFailureReport> observer = report => reports++;
+			Utilities.Logger.AddDestination(receiver);
+			Utilities.Logger.DispatchFailed += observer;
+			try
+			{
+				using (M3Begin(M3Annotations("outer")))
+				{
+					LogScopeHandle returned = null;
+					try
+					{
+						var failure = Record.Exception(() => returned = M3Begin(M3Annotations("partial"), new M3FailingProperties(failurePoint)));
+						failure.ShouldNotBeNull();
+						failure.ShouldNotBeOfType<LogDispatchException>();
+						returned.ShouldBeNull();
+						var context = M3Capture(receiver, "unaffected");
+						context.Scopes.Count.ShouldBe(1);
+						context.Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "outer" });
+						reports.ShouldBe(0);
+					}
+					finally { if (returned != null) returned.Dispose(); }
+				}
+			}
+			finally
+			{
+				Utilities.Logger.RemoveDestination(receiver);
+				Utilities.Logger.DispatchFailed -= observer;
+			}
+		}
+
+		[Fact]
+		public async System.Threading.Tasks.Task ShouldKeepM3AwaitContinuationsAndChildCleanupIsolated()
+		{
+			var receiver = new M3ContextReceiver();
+			var propertyValue = new object();
+			Utilities.Logger.AddDestination(receiver);
+			try
+			{
+				using (M3Begin(M3Annotations("parent"), new[] { new KeyValuePair<string, object>("inherited", propertyValue) }))
+				{
+					await System.Threading.Tasks.Task.Yield();
+					M3Capture(receiver, "after await").Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "parent" });
+					var entered = new System.Threading.Tasks.TaskCompletionSource<bool>(System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
+					var release = new System.Threading.Tasks.TaskCompletionSource<bool>(System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
+					var child = System.Threading.Tasks.Task.Run(async () =>
+					{
+						try
+						{
+							using (M3Begin(M3Annotations("child")))
+							{
+								M3Capture(receiver, "child nested");
+								entered.TrySetResult(true);
+								await release.Task;
+							}
+							M3Capture(receiver, "child restored");
+						}
+						finally { entered.TrySetResult(false); }
+					});
+					try
+					{
+						(await entered.Task).ShouldBeTrue();
+						M3Capture(receiver, "parent while nested").Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "parent" });
+						await System.Threading.Tasks.Task.Run(() => M3Capture(receiver, "sibling"));
+					}
+					finally
+					{
+						release.TrySetResult(true);
+						await child;
+					}
+					receiver.Read("child nested").Context.Labels.EffectiveLabels.Select(label => label.Identifier).OrderBy(label => label)
+						.ShouldBe(new[] { "child", "parent" });
+					receiver.Read("child restored").Context.Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "parent" });
+					receiver.Read("sibling").Context.Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "parent" });
+					foreach (var message in new[] { "after await", "child nested", "child restored", "sibling", "parent while nested" })
+						receiver.Read(message).Context.Scopes[0].Properties.ShouldHaveSingleItem().Value.ShouldBeSameAs(propertyValue);
+				}
+				M3Capture(receiver, "parent ended").Scopes.ShouldBeEmpty();
+			}
+			finally { Utilities.Logger.RemoveDestination(receiver); }
+		}
+
+		[Fact]
+		public async System.Threading.Tasks.Task ShouldRetainM3OutlivingChildCaptureAndRespectFlowSuppression()
+		{
+			var receiver = new M3ContextReceiver();
+			var release = new System.Threading.Tasks.TaskCompletionSource<bool>(System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
+			System.Threading.Tasks.Task child = null;
+			System.Threading.Tasks.Task suppressed = null;
+			Utilities.Logger.AddDestination(receiver);
+			try
+			{
+				using (M3Begin(M3Annotations("retained")))
+				{
+					M3Capture(receiver, "retained entry");
+					child = System.Threading.Tasks.Task.Run(async () => { await release.Task; M3Capture(receiver, "outliving"); });
+					using (ExecutionContext.SuppressFlow())
+						suppressed = System.Threading.Tasks.Task.Run(() => M3Capture(receiver, "suppressed"));
+					await suppressed;
+					M3Capture(receiver, "caller intact").Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "retained" });
+				}
+				M3Capture(receiver, "outside parent").Scopes.ShouldBeEmpty();
+				release.TrySetResult(true);
+				await child;
+				receiver.Read("outliving").Context.Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "retained" });
+				receiver.Read("retained entry").Context.Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "retained" });
+				receiver.Read("suppressed").Context.Scopes.ShouldBeEmpty();
+			}
+			finally
+			{
+				release.TrySetResult(true);
+				try
+				{
+					if (child != null) await child;
+					if (suppressed != null) await suppressed;
+				}
+				finally { Utilities.Logger.RemoveDestination(receiver); }
+			}
+		}
+
+		private static void M3AssertOwnedMembership<T>(System.Collections.ObjectModel.ReadOnlyCollection<T> collection, Func<T, string> project)
+		{
+			var expected = collection.Select(project).ToArray();
+			var alias = ((System.Collections.ICollection)collection).SyncRoot;
+			var generic = alias as IList<T>;
+			var untyped = alias as System.Collections.IList;
+			if (generic != null)
+			{
+				var failure = Record.Exception(() => generic.Clear());
+				if (failure != null) failure.ShouldBeOfType<NotSupportedException>();
+				collection.Select(project).ShouldBe(expected);
+			}
+			if (untyped != null)
+			{
+				var failure = Record.Exception(() => untyped.Clear());
+				if (failure != null) failure.ShouldBeOfType<NotSupportedException>();
+				collection.Select(project).ShouldBe(expected);
+			}
+			collection.Select(project).ShouldBe(expected);
+		}
+
+		private static LogAnnotations M3Annotations(params string[] identifiers)
+		{
+			return new LogAnnotations(identifiers.Select(identifier => new SensitivityLabel(identifier)));
+		}
+
+		private static object M3Invoke(string name, Type[] parameters, params object[] arguments)
+		{
+			var method = typeof(Utilities.Logger).GetMethods(BindingFlags.Public | BindingFlags.Static)
+				.SingleOrDefault(candidate => candidate.Name == name && !candidate.IsGenericMethod &&
+					candidate.GetParameters().Select(parameter => parameter.ParameterType).SequenceEqual(parameters));
+			method.ShouldNotBeNull("M3 requires the reviewed public Logger." + name + " signature.");
+			try { return method.Invoke(null, arguments); }
+			catch (TargetInvocationException failure)
+			{
+				ExceptionDispatchInfo.Capture(failure.InnerException).Throw();
+				throw;
+			}
+		}
+
+		private static LogScopeHandle M3Begin(LogAnnotations annotations)
+		{
+			return (LogScopeHandle)M3Invoke("BeginScope", new[] { typeof(LogAnnotations) }, annotations);
+		}
+
+		private static LogScopeHandle M3Begin(LogAnnotations annotations, IEnumerable<KeyValuePair<string, object>> properties)
+		{
+			return (LogScopeHandle)M3Invoke("BeginScope", new[] { typeof(LogAnnotations), typeof(IEnumerable<KeyValuePair<string, object>>) }, annotations, properties);
+		}
+
+		private static void M3Log(LogAnnotations annotations, LogLevels level, string message, Exception exception)
+		{
+			M3Invoke("LogAnnotated", new[] { typeof(LogAnnotations), typeof(LogLevels), typeof(string), typeof(Exception) }, annotations, level, message, exception);
+		}
+
+		private static LogContext M3Capture(M3ContextReceiver receiver, string message)
+		{
+			Utilities.Logger.Info(message);
+			var context = receiver.Read(message).Context;
+			context.ShouldNotBeNull("An eligible contextual recipient must receive the completed real capture.");
+			return context;
+		}
+
+		private sealed class M3CapturedEntry
+		{
+			public LogContext Context;
+			public LogLevels Level;
+			public string Message;
+			public Exception Exception;
+		}
+
+		private sealed class M3ContextReceiver : IContextLoggingDestination, IDisposable
+		{
+			public readonly List<M3CapturedEntry> Entries = new List<M3CapturedEntry>();
+			public int LegacyCalls;
+			public int ValidationCalls;
+			public int DisposeCalls;
+			public bool Permitted = true;
+			public Action OnValidate;
+			public Action<LogContext, string> OnContext;
+			public bool ValidateMessageLevel(LogLevels level)
+			{
+				Interlocked.Increment(ref ValidationCalls);
+				if (OnValidate != null) OnValidate();
+				return Permitted;
+			}
+			public void Log(LogLevels level, string message = null, Exception ex = null)
+			{
+				Interlocked.Increment(ref LegacyCalls);
+			}
+			public void LogWithContext(LogContext context, LogLevels level, string message = null, Exception ex = null)
+			{
+				lock (Entries) Entries.Add(new M3CapturedEntry { Context = context, Level = level, Message = message, Exception = ex });
+				if (OnContext != null) OnContext(context, message);
+			}
+			public M3CapturedEntry Read(string message)
+			{
+				lock (Entries)
+				{
+					var matches = Entries.Where(entry => entry.Message == message).ToArray();
+					matches.Length.ShouldBe(1, "M3 requires exactly one contextual handoff for " + message);
+					return matches[0];
+				}
+			}
+			public void Dispose() { DisposeCalls++; }
+		}
+
+		private sealed class M3OpaqueValue : System.Collections.IEnumerable, IDisposable
+		{
+			public int Value;
+			public int InspectionCalls;
+			public int DisposeCalls;
+			public object Dangerous { get { InspectionCalls++; throw new InvalidOperationException("getter canary"); } }
+			public override string ToString() { InspectionCalls++; throw new InvalidOperationException("ToString canary"); }
+			public System.Collections.IEnumerator GetEnumerator() { InspectionCalls++; throw new InvalidOperationException("enumeration canary"); }
+			public void Dispose() { DisposeCalls++; }
+		}
+
+		private abstract class M3UntypedProperties : System.Collections.IEnumerable
+		{
+			protected abstract System.Collections.IEnumerator GetUntypedEnumerator();
+			System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetUntypedEnumerator(); }
+		}
+
+		private sealed class M3FailingProperties : M3UntypedProperties, IEnumerable<KeyValuePair<string, object>>
+		{
+			private readonly string _point;
+			public M3FailingProperties(string point) { _point = point; }
+			public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+			{
+				if (_point == "GetEnumerator") throw new InvalidOperationException("synthetic acquisition failure");
+				return new Enumerator(_point);
+			}
+			protected override System.Collections.IEnumerator GetUntypedEnumerator() { return GetEnumerator(); }
+			private sealed class Enumerator : IEnumerator<KeyValuePair<string, object>>
+			{
+				private readonly string _point;
+				private int _index = -1;
+				public Enumerator(string point) { _point = point; }
+				public KeyValuePair<string, object> Current
+				{
+					get
+					{
+						if (_point == "Current" && _index == 1) throw new InvalidOperationException("synthetic current failure");
+						return new KeyValuePair<string, object>("prefix", _index);
+					}
+				}
+				object System.Collections.IEnumerator.Current { get { return Current; } }
+				public bool MoveNext()
+				{
+					_index++;
+					if (_point == "MoveNext" && _index == 1) throw new InvalidOperationException("synthetic iteration failure");
+					return _index < 2;
+				}
+				public void Reset() { throw new NotSupportedException(); }
+				public void Dispose() { if (_point == "Dispose") throw new InvalidOperationException("synthetic disposal failure"); }
+			}
+		}
+
+		[Fact]
 		public void ShouldTriggerDebugOnDebug()
 		{
 			var triggered = false;
@@ -694,6 +1568,134 @@ namespace ProphetsWay.Logger.Test
 		}
 
 		[Fact]
+		public void ShouldKeepFailureFactsImmutableThroughPublicCollectionAliases()
+		{
+			var attempts = new List<string>();
+			var rejected = new FailureDestination("rejected", attempts) { OnEligibility = () => false };
+			var recipients = Enumerable.Range(0, 9).Select(index => new FailureDestination("failure" + index, attempts)).ToArray();
+			for (var index = 0; index < recipients.Length; index++)
+			{
+				if (index % 2 == 0) recipients[index].OnEligibility = () => { throw new InvalidOperationException("synthetic eligibility"); };
+				else recipients[index].OnLog = () => { throw new InvalidOperationException("synthetic output"); };
+			}
+			var positions = Enumerable.Range(2, 8).ToArray();
+			var stages = Enumerable.Range(0, 8).Select(index => index % 2 == 0 ? LogFailureStage.Eligibility : LogFailureStage.Output).ToArray();
+			var firstReports = new List<LogFailureReport>();
+			var laterReports = new List<LogFailureReport>();
+			var retainedViews = new List<IList<LogFailureDescriptor>>();
+			var correlations = new List<Guid>();
+			var observerFailures = new List<Exception>();
+			var notifications = new List<string>();
+			var dispatchFailures = new List<LogDispatchException>();
+			void AssertMembership(IList<LogFailureDescriptor> view)
+			{
+				view.Count.ShouldBe(8);
+				view.ShouldAllBe(descriptor => descriptor != null);
+				view.Select(descriptor => descriptor.RegistrationId).ShouldBe(positions);
+				view.Select(descriptor => descriptor.Stage).ShouldBe(stages);
+			}
+			void AssertFacts(LogFailureReport report, Guid correlation)
+			{
+				AssertFailureReport(report, positions, stages, 1);
+				report.CoreCaptureFailureCount.ShouldBe(0);
+				report.CorrelationId.ShouldBe(correlation);
+			}
+			Action<LogFailureReport> firstObserver = report =>
+			{
+				notifications.Add("first");
+				firstReports.Add(report);
+				observerFailures.Add(Record.Exception(() =>
+				{
+					var correlation = report.CorrelationId;
+					var view = report.Failures;
+					correlations.Add(correlation);
+					retainedViews.Add(view);
+					AssertFacts(report, correlation);
+					AssertMembership(view);
+					Action<Action> attemptMutation = mutation =>
+					{
+						var failure = Record.Exception(mutation);
+						if (failure != null) failure.ShouldBeOfType<NotSupportedException>();
+						AssertMembership(view);
+						AssertFacts(report, correlation);
+					};
+					var aliases = new List<object> { view };
+					for (var index = 0; index < aliases.Count; index++)
+					{
+						var alias = aliases[index];
+						if (alias is System.Collections.ICollection collection)
+						{
+							var syncRoot = collection.SyncRoot;
+							if (syncRoot != null && !aliases.Any(known => ReferenceEquals(known, syncRoot))) aliases.Add(syncRoot);
+						}
+						if (alias is IList<LogFailureDescriptor> generic && generic.Count > 0)
+							attemptMutation(() => generic[0] = null);
+						if (alias is System.Collections.IList untyped)
+						{
+							if (untyped.Count > 0) attemptMutation(() => untyped[0] = null);
+							attemptMutation(() => untyped.Clear());
+						}
+						if (alias is ICollection<LogFailureDescriptor> members) attemptMutation(() => members.Clear());
+					}
+					M3AssertOwnedMembership(view, descriptor => descriptor.RegistrationId + ":" + descriptor.Stage);
+					var detached = new LogFailureDescriptor[view.Count];
+					((System.Collections.ICollection)view).CopyTo(detached, 0);
+					AssertMembership(detached);
+					detached[0] = null;
+					AssertMembership(view);
+					AssertFacts(report, correlation);
+				}));
+			};
+			Action<LogFailureReport> laterObserver = report =>
+			{
+				notifications.Add("later");
+				laterReports.Add(report);
+				observerFailures.Add(Record.Exception(() => AssertFacts(report, correlations[laterReports.Count - 1])));
+			};
+			var originalError = Console.Error;
+			using (var stderr = new StringWriter())
+			{
+				try
+				{
+					Console.SetError(stderr);
+					Utilities.Logger.ClearDestinations();
+					Utilities.Logger.AddDestination(rejected);
+					foreach (var recipient in recipients) Utilities.Logger.AddDestination(recipient);
+					Utilities.Logger.DispatchFailed += firstObserver;
+					Utilities.Logger.DispatchFailed += laterObserver;
+					for (var call = 0; call < 2; call++)
+						dispatchFailures.Add(Should.Throw<LogDispatchException>(() => Utilities.Logger.Debug("alias capture")));
+					notifications.ShouldBe(new[] { "first", "later", "first", "later" });
+					observerFailures.Count.ShouldBe(4);
+					observerFailures.ShouldAllBe(failure => failure == null);
+					firstReports.Count.ShouldBe(2);
+					laterReports.Count.ShouldBe(2);
+					retainedViews.Count.ShouldBe(2);
+					correlations.Count.ShouldBe(2);
+					correlations[1].ShouldNotBe(correlations[0]);
+					for (var call = 0; call < dispatchFailures.Count; call++)
+					{
+						AssertFacts(firstReports[call], correlations[call]);
+						AssertFacts(laterReports[call], correlations[call]);
+						AssertFacts(dispatchFailures[call].Report, correlations[call]);
+						AssertMembership(retainedViews[call]);
+					}
+					recipients.Select(recipient => recipient.ValidationCalls).ShouldBe(Enumerable.Repeat(2, 9));
+					recipients.Select(recipient => recipient.LogCalls).ShouldBe(Enumerable.Range(0, 9).Select(index => index % 2 * 2));
+					rejected.LogCalls.ShouldBe(0);
+				}
+				finally
+				{
+					Utilities.Logger.DispatchFailed -= firstObserver;
+					Utilities.Logger.DispatchFailed -= laterObserver;
+					foreach (var recipient in recipients) Utilities.Logger.RemoveDestination(recipient);
+					Utilities.Logger.RemoveDestination(rejected);
+					Console.SetError(originalError);
+				}
+			}
+		}
+
+		[Fact]
 		public void ShouldRetainAnImmutableReportWhileLaterCapturesAssignFreshScopedIdentifiers()
 		{
 			var attempts = new List<string>();
@@ -779,10 +1781,10 @@ namespace ProphetsWay.Logger.Test
 					property.GetSetMethod().ShouldBeNull();
 			}
 			typeof(LogFailureDescriptor).GetProperties().Select(property => property.Name).OrderBy(name => name).ShouldBe(new[] { "RegistrationId", "Stage" });
-			typeof(LogFailureReport).GetProperties().Select(property => property.Name).OrderBy(name => name).ShouldBe(new[] { "CorrelationId", "Failures", "OverflowCount" });
+			typeof(LogFailureReport).GetProperties().Select(property => property.Name).OrderBy(name => name).ShouldBe(new[] { "CoreCaptureFailureCount", "CorrelationId", "Failures", "OverflowCount" });
 			typeof(LogFailureReport).GetProperty("Failures").PropertyType.ShouldBe(typeof(System.Collections.ObjectModel.ReadOnlyCollection<LogFailureDescriptor>));
 			typeof(LogFailureStage).IsDefined(typeof(FlagsAttribute), false).ShouldBeFalse();
-			Enum.GetValues(typeof(LogFailureStage)).Cast<LogFailureStage>().Select(stage => (int)stage).ShouldBe(new[] { 1, 2 });
+			Enum.GetValues(typeof(LogFailureStage)).Cast<LogFailureStage>().Select(stage => (int)stage).ShouldBe(new[] { 1, 2, 3 });
 			((int)LogFailureStage.Eligibility).ShouldBe(1);
 			((int)LogFailureStage.Output).ShouldBe(2);
 			typeof(Utilities.Logger).GetEvent("DispatchFailed").EventHandlerType.ShouldBe(typeof(Action<LogFailureReport>));

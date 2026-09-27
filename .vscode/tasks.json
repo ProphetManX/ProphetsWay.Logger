@@ -577,6 +577,86 @@
 			"isBackground": false,
 			"group": "test",
 			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3 native validate setup",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260923-2038-logger-m3-implementation/validate-m3.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3 native Windows baseline",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260923-2038-logger-m3-implementation/validate-m3.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3 native candidate checks",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260923-2038-logger-m3-implementation/validate-m3.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3 native freeze specifications",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260923-2038-logger-m3-implementation/validate-m3.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3 native final verification",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260923-2038-logger-m3-implementation/validate-m3.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3 alignment validate setup",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260926-1138-logger-m3-alignment/validate-m3-alignment.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3 alignment Windows baseline",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260926-1138-logger-m3-alignment/validate-m3-alignment.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3 alignment candidate checks",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260926-1138-logger-m3-alignment/validate-m3-alignment.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3 alignment freeze specifications",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260926-1138-logger-m3-alignment/validate-m3-alignment.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M3 alignment final verification",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260926-1138-logger-m3-alignment/validate-m3-alignment.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
 		}
 	]
 }

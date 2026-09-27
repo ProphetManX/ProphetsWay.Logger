@@ -1,7 +1,8 @@
 namespace ProphetsWay.Utilities
 {
-	/// <summary>Describes one failed captured recipient without retaining that recipient or its cause.</summary>
-	/// <remarks>B08-B12: sealed, immutable and library-created; no public construction or mutation.</remarks>
+	/// <summary>Describes one failed recipient without retaining its object or raw cause.</summary>
+	/// <remarks>B13/B14/B17: sealed, immutable, library-created, with no public construction.
+	/// One observed stage per failed recipient, never per inner cause; core failures are not descriptors.</remarks>
 	public sealed class LogFailureDescriptor
 	{
 		private readonly int _registrationId;
@@ -13,9 +14,10 @@ namespace ProphetsWay.Utilities
 			_stage = stage;
 		}
 
-		/// <summary>Identifies the recipient within the failed call's captured membership.</summary>
-		/// <value>The positive, one-based position in the full capture, not in the failure list.</value>
-		/// <remarks>B09: meaningful only with the report's correlation ID; no cross-call identity.</remarks>
+		/// <summary>Locates the recipient within this call's full captured membership.</summary>
+		/// <value>A positive one-based position, including preceding disabled, rejected and successful slots.</value>
+		/// <remarks>B14: meaningful only with CorrelationId; not a stable ID, hash or lookup key.
+		/// The sole supplied-direct recipient occupies 1. Zero never denotes core capture.</remarks>
 		public int RegistrationId
 		{
 			get
@@ -24,9 +26,9 @@ namespace ProphetsWay.Utilities
 			}
 		}
 
-		/// <summary>Identifies which recipient callback threw.</summary>
-		/// <value>Eligibility or Output, selected by the observed boundary, never exception content.</value>
-		/// <remarks>B05-B06: one stage per failed recipient; no inner-cause decomposition.</remarks>
+		/// <summary>Gets the observed failed boundary.</summary>
+		/// <value>Eligibility, Output or LabelCheck.</value>
+		/// <remarks>B13: never derive this value from foreign exception types, messages or nested reports.</remarks>
 		public LogFailureStage Stage
 		{
 			get

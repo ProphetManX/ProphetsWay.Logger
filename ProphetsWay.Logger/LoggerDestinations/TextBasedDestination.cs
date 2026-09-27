@@ -8,19 +8,13 @@ namespace ProphetsWay.Utilities.LoggerDestinations
 	/// </summary>
 	public abstract class TextBasedDestination : BaseLoggingDestination
 	{
-		/// <summary>Prints a composed text entry only when every message bit is accepted.</summary>
-		/// <param name="level">A nonzero combination of known severity bits, from 1 through 63.</param>
-		/// <param name="message">Optional raw context, including null, empty or whitespace.</param>
-		/// <param name="ex">Optional exception; null is valid at every accepted mask.</param>
-		/// <exception cref="ArgumentOutOfRangeException"><paramref name="level"/> is zero, negative or contains an unknown bit.</exception>
-		/// <remarks>Validity and eligibility precede massage, text composition and PrintLogEntry. A valid mismatch returns without recipient work. Accepted content uses the existing local timestamp, severity and massaged-text layout.</remarks>
-		public override void Log(LogLevels level, string message = null, Exception ex = null)
+		/// <inheritdoc />
+		/// <remarks>B11/B12: the supplied guard has completed. Preserve existing massage and output
+		/// semantics. Context is the selected completed capture. Text delivery massages
+		/// once, composes the existing local-time/severity/text layout, then calls PrintLogEntry once.
+		/// No implicit scope/property serialization, new timestamp capture or framing rule is added.</remarks>
+		protected override void LogCore(LogContext context, LogLevels level, string message, Exception ex)
 		{
-			if (level == 0 || (level & ~LogLevels.Trace) != 0)
-				throw new ArgumentOutOfRangeException(nameof(level));
-			if (!ValidateMessageLevel(level))
-				return;
-
 			var massagedMessage = MassageLogStatement(level, message, ex);
 			var msg = $"{DateTime.Now} :: {level.ToString().PadLeft(12)}:  {massagedMessage}";
 			PrintLogEntry(msg);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace ProphetsWay.Utilities
 {
@@ -60,6 +61,35 @@ namespace ProphetsWay.Utilities
 		protected readonly object LoggerLock = new object();
 
 		private readonly LogLevels _reportingLevel;
+		private DestinationLabelPolicy _labelPolicy = new DestinationLabelPolicy(LabelFilterMode.NoFilter, new SensitivityLabel[0]);
+
+		/// <summary>Gets or replaces this supplied destination's whole-entry label restriction.</summary>
+		/// <value>A non-null immutable DestinationLabelPolicy; initially NoFilter with empty configured membership.</value>
+		/// <exception cref="ArgumentNullException">The assigned value is null; ParamName is "value"; the old policy remains.</exception>
+		/// <remarks>B05: nonvirtual configuration, available after every existing constructor.
+		/// Replace the complete reference atomically; return after publication without delivery,
+		/// notification, disposal or draining. Successful replacement preserves the supplied policy's
+		/// immutable mode/membership; object identity is unspecified. NoFilter adds no restriction;
+		/// empty AllowOnly rejects all, without fallback. Capture one complete value per direct call.
+		/// Logger captures supplied recipients' policy values before any recipient callback; changes
+		/// thereafter affect later captures only. This is an additional restriction, never a replacement
+		/// for registration settings or the destination's severity mask. It changes no registry setting.
+		/// Concurrent read/replacement is supported, not a global transaction across destinations or
+		/// a thread-safety guarantee for recipient state. Reassigning the same value causes no delivery.</remarks>
+		public DestinationLabelPolicy LabelPolicy
+		{
+			get
+			{
+				return Volatile.Read(ref _labelPolicy);
+			}
+			set
+			{
+				if (value == null)
+					throw new ArgumentNullException(nameof(value));
+
+				Volatile.Write(ref _labelPolicy, value);
+			}
+		}
 
 		/// <summary>
 		/// Combines the supplied context with exception messages and available stack traces.

@@ -65,10 +65,13 @@ label; `AllowOnly` requires nonempty effective membership wholly contained in th
 `NoFilter` permits valid effective input. Duplicate identities and ordering do not affect the result,
 and null labels or undeclared modes are rejected with argument errors.
 
-This is a standalone policy API. It does not yet dispatch Logger entries, render or redact content,
-select fallback destinations, or provide confidentiality or security guarantees; callers must apply
-the Boolean result themselves. Because this is a standalone predicate, creating or evaluating it does
-not alter Logger or destination behavior.
+This remains a standalone predicate API for callers that want to evaluate a policy directly; it does
+not render or redact content, select fallback destinations, or provide confidentiality or security
+guarantees. M3 also uses the immutable policy as an additional whole-entry gate through
+`DestinationRegistrationSettings` and the destination's intrinsic `LabelPolicy`: both configured
+and intrinsic restrictions must permit the complete effective label union before payload delivery.
+A label denial is a deliberate non-failure and does not select fallback; enabled membership still
+suppresses fallback on that route.
 
 The pure destination-label policy now protects its configured membership readback from ordinary collection-interface mutation attempts, including the synchronization-root path that previously exposed its owned backing list on the modern runtime. Constructed policies retain the same deduplicated, ordinal membership, and `Mode`, `Allows`, and the public API remain unchanged; consumers do not need to change their calls.
 
@@ -98,20 +101,32 @@ constructor and exposes the successful capture through the read-only `LabelOccur
 The constructor copies the supplied occurrences in order, preserves duplicates, accepts an empty
 sequence, and rejects null input or null elements. A failed or unsupported sequence capture does not
 publish a usable partial value; callers remain responsible for providing a finite, stable sequence.
-The returned collection is read-only, and this standalone value does not attach annotations to Logger
-dispatch, establish scopes, apply destination filters, format or redact content, or provide security
-guarantees. It is separate from the existing policy predicate's deduplicated membership behavior.
+The returned collection is read-only. `BeginScope` can attach one to a native scope and
+`LogAnnotated` can attach one to an entry; dispatch captures the enclosing scopes and entry
+annotation together before recipient callbacks, while the policy predicate still uses deduplicated
+ordinal membership rather than occurrence order. An annotation remains data, not authorization,
+classification, formatting, redaction, or a security guarantee.
 
 ## Configured dispatch failure reporting
 
-Configured ordinary and declared-typed routes now attempt each captured recipient independently. An
-eligibility or output callback failure does not stop later captured recipients; after all attempts, the
-call attempts bounded notification through `Logger.DispatchFailed` when subscribers are present and
-same-thread recursive reporting is not already suppressed, along with the ordinary stderr summary,
-then throws `LogDispatchException`. The report exposes a correlation ID, encounter-ordered failure descriptors
-with each recipient's one-based captured position and `Eligibility` or `Output` stage, and an overflow
-count when more failures occurred than the retained descriptor limit. Subscriber failures are contained,
-and the safe exception/report boundary does not retain or expose the original callback causes.
+Configured ordinary and declared-typed routes now capture the complete route, settings, scopes and
+effective labels before attempting each enabled, independently eligible recipient. Registration
+severity, destination severity and both applicable label policies must permit the entry; a contextual
+recipient receives one contextual handoff and a legacy recipient receives one raw handoff. A deliberate
+Boolean label denial withholds the entry from that recipient without recording a failure; a
+`LabelCheck` exception is recorded and returns through the safe report boundary. Neither kind of label
+outcome stops later captured recipients, while an eligibility or output callback failure also does not
+stop later captured recipients.
+After applicable attempts, the call attempts bounded notification through `Logger.DispatchFailed` when
+subscribers are present and same-thread recursive reporting is not already suppressed, along with the
+ordinary stderr summary, then throws `LogDispatchException` for mandatory eligibility/output failures.
+A capture or check-only failure therefore permits the whole call to return safely only when no mandatory
+eligibility/output failure also occurred, so mixed outcomes remain represented by `LogDispatchException`.
+The report exposes a correlation ID, encounter-ordered failure descriptors with each recipient's
+one-based captured position and `LabelCheck`, `Eligibility` or `Output` stage, an overflow count when
+more failures occurred than the retained descriptor limit, and a separate `CoreCaptureFailureCount`
+for a shared capture failure. Subscriber failures are contained, and the safe exception/report boundary
+does not retain or expose the original callback causes.
 
 Consumers that previously handled only the first raw recipient exception should instead catch
 `LogDispatchException` and inspect its `Report`, and may subscribe to `Logger.DispatchFailed` when they
@@ -122,6 +137,46 @@ or full exception-graph sanitization.
 The configured-route failure behavior corrects the prior single-failure propagation boundary without
 claiming that the full v4 integration, automatic Trace/file behavior, Microsoft bridge, framing, or
 output-failure policy is complete.
+
+## Native scopes and contextual destinations
+
+The Logger now captures native scopes and entry annotations into an immutable `LogContext`. Use
+`BeginScope` for ordered scope properties and labels, and `LogAnnotated` for entry labels; captured
+scope and label membership is complete at capture time, while nested property values remain the
+caller-owned objects. Scope handles are flow-local and conventional: dispose them in order, and do
+not treat a retained `LogContext` as authorization to bypass current destination checks.
+
+Destination registration now has immutable per-registration `Enabled`, severity-mask, and label-policy
+settings. `SetDestinationSettings` publishes a complete replacement atomically, so a callback sees
+either the old settings or the new settings rather than a partially updated combination. The ordinary
+and exact-declared-metadata-type routes remain separate. Existing independent destination interfaces
+remain valid; contextual interfaces are optional extensions for destinations that need the captured
+context.
+
+Supplied destinations and base classes now expose guarded direct `Log` calls and optional
+`LogWithContext` calls. Custom destinations deriving from `BaseLoggingDestination` or
+`BaseLoggingDestination<T>` must move their implementation to the protected `LogCore` override;
+the public logging entrypoints are guarded and are no longer the subclass override point. This is a
+source and binary compatibility break for custom destinations that overrode the former public logging
+member. Built-in event destinations expose the selected context through their event arguments, while
+text and event delivery preserve the original payload, metadata, exception and existing rendering
+behavior.
+
+Failure results now distinguish a failed native capture from a destination `LabelCheck`, `Eligibility`,
+or `Output` failure. Shared capture and label-check failures report safely and return without handing
+the incomplete or rejected entry to that recipient; eligibility and output failures remain mandatory
+`LogDispatchException` results after independent attempts. `CoreCaptureFailureCount` records the core
+capture count without inventing a recipient failure, and failure-report membership no longer exposes a
+writable `SyncRoot` alias through collection interfaces. Consumers reading `LogDispatchException.Report`
+can therefore distinguish these safe result paths without receiving callback causes or payload data.
+
+This M3 work is unreleased and does not by itself claim publication or release readiness. The custom
+destination override change has major-version implications; the new scope, annotation, contextual
+delivery, settings, and failure-report members are additive individually, but they do not make that
+overall compatibility decision a minor or patch change. The accepted local validation is green on the
+focused `net48` and `net10.0` matrix, with the library/example builds and compile-only README checks
+also passing; it is not unfiltered real-file fixture certification. The permanent report-membership
+regression and parent final gate are complete within that accepted local boundary; they are not pending release work.
 
 # v3.0.1
 ### Build target for Net 6.0

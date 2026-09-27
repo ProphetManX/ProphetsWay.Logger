@@ -1,12 +1,14 @@
 namespace ProphetsWay.Utilities
 {
-	/// <summary>Identifies the recipient callback boundary that failed.</summary>
-	/// <remarks>B05-B06/B10: non-flags codes; Logger emits only these values, not inferred causes.</remarks>
+	/// <summary>Names the recipient boundary at which an original failure was observed.</summary>
+	/// <remarks>B13: non-flags codes, not inferred causes. Core capture has a separate count.</remarks>
 	public enum LogFailureStage
 	{
-		/// <summary>The Logger-invoked severity eligibility callback threw before payload handoff.</summary>
+		/// <summary>The Logger-invoked severity callback threw before payload handoff.</summary>
 		Eligibility = 1,
-		/// <summary>The eligible recipient's Log invocation threw, including work inside that invocation.</summary>
-		Output = 2
+		/// <summary>The selected raw/contextual recipient invocation or supplied delivery hook threw.</summary>
+		Output = 2,
+		/// <summary>An opted-in captured recipient label-policy evaluation threw before payload handoff.</summary>
+		LabelCheck = 3
 	}
 }

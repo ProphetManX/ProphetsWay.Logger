@@ -3,11 +3,14 @@ using System;
 namespace ProphetsWay.Utilities
 {
 	/// <summary>Signals mandatory dispatch failure after independent attempts and safe reporting.</summary>
-	/// <remarks>B07/B19-B21: library-created, with no public constructors or raw causes. Report values equal
-	/// the notification's values. Initial InnerException and HelpLink are null, Data is empty and Source
-	/// is the fixed library name ProphetsWay.Logger. Message contains only fixed prose and safe report values;
-	/// wording is unspecified. Inherited Exception mutation is not report mutation or a sanitation guarantee.
-	/// Runtime/debugger/serialization/TargetSite inspection is outside the sanitized reporting interface.</remarks>
+	/// <remarks>B17/B18: library-created with no public constructor or raw cause. Report has the
+	/// same immutable safe values as notification, including when recursive reporting was suppressed.
+	/// Initial InnerException/HelpLink are null, Data empty, Source the fixed ProphetsWay.Logger name.
+	/// Message and ToString contain fixed prose and allowed generated IDs, boundary codes and counts
+	/// only; wording is unspecified. StackTrace returns null, not erasure of CLR diagnostic state.
+	/// Inherited post-catch mutation, reflection, TargetSite, debugger and serialization are outside
+	/// the sanitized interface. Default-return capture/check failure alone produces no such exception.
+	/// No strict-selection surface or raw diagnostic channel is introduced.</remarks>
 	public sealed class LogDispatchException : Exception
 	{
 		private const string FailureMessage = "Configured log dispatch failed.";

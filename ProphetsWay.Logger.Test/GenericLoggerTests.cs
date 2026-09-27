@@ -14,6 +14,398 @@ namespace ProphetsWay.Logger.Test
     public class GenericLoggerTests
     {
         [Fact]
+        public void ShouldDeliverM3ExactTypeContextOrLegacyOnceWithoutClassifyingMetadata()
+        {
+            var receiver = new M3TypedReceiver<object>();
+            var otherType = new M3TypedReceiver<LogAnnotations>();
+            var legacy = new M3TypedLegacy<object>();
+            Utilities.Logger.AddDestination<object>(receiver);
+            Utilities.Logger.AddDestination<LogAnnotations>(otherType);
+            Utilities.Logger.AddDestination<object>(legacy);
+            Utilities.Logger.AddDestination((ILoggingDestination)receiver);
+            try
+            {
+                var metadata = new LogAnnotations(new[] { new SensitivityLabel("metadata-only") });
+                var exception = new Exception("typed original");
+                M3TypedLog<object>(null, (LogLevels)9, metadata, null, exception);
+                var entry = receiver.Entries.ShouldHaveSingleItem();
+                entry.Metadata.ShouldBeSameAs(metadata);
+                entry.Message.ShouldBeNull();
+                entry.Exception.ShouldBeSameAs(exception);
+                entry.Level.ShouldBe((LogLevels)9);
+                entry.Context.Labels.EffectiveLabels.ShouldBeEmpty();
+                entry.Context.Labels.EntryAnnotations.ShouldBeNull();
+                entry.Context.Scopes.ShouldBeEmpty();
+                receiver.LegacyCalls.ShouldBe(0);
+                receiver.OrdinaryCalls.ShouldBe(0);
+                otherType.Entries.ShouldBeEmpty();
+                otherType.LegacyCalls.ShouldBe(0);
+                legacy.Metadata.ShouldBeSameAs(metadata);
+                legacy.Exception.ShouldBeSameAs(exception);
+                legacy.Message.ShouldBeNull();
+                legacy.Level.ShouldBe((LogLevels)9);
+                legacy.Calls.ShouldBe(1);
+                Utilities.Logger.Info("ordinary remains separate");
+                receiver.OrdinaryCalls.ShouldBe(1);
+                receiver.Entries.ShouldHaveSingleItem();
+            }
+            finally
+            {
+                Utilities.Logger.RemoveDestination<object>(receiver);
+                Utilities.Logger.RemoveDestination<LogAnnotations>(otherType);
+                Utilities.Logger.RemoveDestination<object>(legacy);
+                Utilities.Logger.RemoveDestination((ILoggingDestination)receiver);
+            }
+        }
+
+        [Theory]
+        [InlineData("disabled")]
+        [InlineData("mask")]
+        [InlineData("labels")]
+        [InlineData("severity")]
+        public void ShouldWithholdM3TypedAnnotatedPayloadUnlessEveryRecipientGatePermits(string rejection)
+        {
+            var contextual = new M3TypedReceiver<object> { Permitted = rejection != "severity" };
+            var legacy = new M3TypedLegacy<object> { Permitted = rejection != "severity" };
+            var permitted = new M3TypedReceiver<object>();
+            var settings = new DestinationRegistrationSettings(rejection != "disabled",
+                rejection == "mask" ? (LogLevels)8 : LogLevels.Trace,
+                new DestinationLabelPolicy(rejection == "labels" ? LabelFilterMode.AllowOnly : LabelFilterMode.NoFilter,
+                    new[] { new SensitivityLabel("entry") }));
+            var metadata = new M3OpaqueMetadata();
+            var exception = new Exception("annotated original");
+            var reports = 0;
+            Action<LogFailureReport> observer = report => reports++;
+            Utilities.Logger.DispatchFailed += observer;
+            try
+            {
+                M3TypedSettings("AddDestination", contextual, settings);
+                M3TypedSettings("AddDestination", legacy, settings);
+                Utilities.Logger.AddDestination<object>(permitted);
+                using (M3TypedScope("inherited"))
+                    M3TypedLog<object>(new LogAnnotations(new[] { new SensitivityLabel("entry") }),
+                        (LogLevels)9, metadata, "annotated payload", exception);
+                contextual.Entries.ShouldBeEmpty();
+                contextual.LegacyCalls.ShouldBe(0);
+                contextual.OrdinaryCalls.ShouldBe(0);
+                legacy.Calls.ShouldBe(0);
+                contextual.ValidationCalls.ShouldBeInRange(0, 1);
+                legacy.ValidationCalls.ShouldBeInRange(0, 1);
+                if (rejection == "disabled")
+                {
+                    contextual.ValidationCalls.ShouldBe(0);
+                    legacy.ValidationCalls.ShouldBe(0);
+                }
+                if (rejection == "severity")
+                {
+                    contextual.ValidationCalls.ShouldBe(1);
+                    legacy.ValidationCalls.ShouldBe(1);
+                }
+                if (contextual.ValidationCalls != 0) contextual.LastValidationLevel.ShouldBe((LogLevels)9);
+                if (legacy.ValidationCalls != 0) legacy.LastValidationLevel.ShouldBe((LogLevels)9);
+                var delivered = permitted.Entries.ShouldHaveSingleItem();
+                delivered.Metadata.ShouldBeSameAs(metadata);
+                delivered.Exception.ShouldBeSameAs(exception);
+                delivered.Message.ShouldBe("annotated payload");
+                delivered.Level.ShouldBe((LogLevels)9);
+                delivered.Context.Labels.EffectiveLabels.Select(label => label.Identifier).OrderBy(identifier => identifier)
+                    .ShouldBe(new[] { "entry", "inherited" });
+                delivered.Context.Scopes.ShouldHaveSingleItem().Annotations.LabelOccurrences
+                    .Select(label => label.Identifier).ShouldBe(new[] { "inherited" });
+                delivered.Context.Labels.EntryAnnotations.LabelOccurrences.Select(label => label.Identifier).ShouldBe(new[] { "entry" });
+                permitted.ValidationCalls.ShouldBe(1);
+                permitted.LastValidationLevel.ShouldBe((LogLevels)9);
+                permitted.LegacyCalls.ShouldBe(0);
+                permitted.OrdinaryCalls.ShouldBe(0);
+                metadata.InspectionCalls.ShouldBe(0);
+                reports.ShouldBe(0);
+            }
+            finally
+            {
+                Utilities.Logger.RemoveDestination<object>(contextual);
+                Utilities.Logger.RemoveDestination<object>(legacy);
+                Utilities.Logger.RemoveDestination<object>(permitted);
+                Utilities.Logger.DispatchFailed -= observer;
+            }
+        }
+
+        [Fact]
+        public void ShouldPreserveM3NullAndDefaultTypedRawValues()
+        {
+            var reference = new M3TypedReceiver<object>();
+            var value = new M3TypedReceiver<int>();
+            Utilities.Logger.AddDestination<object>(reference);
+            Utilities.Logger.AddDestination<int>(value);
+            try
+            {
+                M3TypedLog<object>(null, LogLevels.TraceOnly, null, "", null);
+                M3TypedLog<int>(null, LogLevels.InformationOnly, 0, " \t ", null);
+                reference.Entries.ShouldHaveSingleItem().Metadata.ShouldBeNull();
+                reference.Entries[0].Message.ShouldBe("");
+                reference.Entries[0].Exception.ShouldBeNull();
+                value.Entries.ShouldHaveSingleItem().Metadata.ShouldBe(0);
+                value.Entries[0].Message.ShouldBe(" \t ");
+                value.Entries[0].Exception.ShouldBeNull();
+                value.Entries[0].Context.Labels.EffectiveLabels.ShouldBeEmpty();
+                reference.LegacyCalls.ShouldBe(0);
+                value.LegacyCalls.ShouldBe(0);
+                var opaque = new M3OpaqueMetadata();
+                M3TypedLog<object>(null, LogLevels.InformationOnly, opaque, "opaque", null);
+                reference.Entries.Count.ShouldBe(2);
+                reference.Entries[1].Metadata.ShouldBeSameAs(opaque);
+                opaque.InspectionCalls.ShouldBe(0);
+            }
+            finally
+            {
+                Utilities.Logger.RemoveDestination<object>(reference);
+                Utilities.Logger.RemoveDestination<int>(value);
+            }
+        }
+
+        [Fact]
+        public void ShouldKeepM3SettingsIndependentForARecipientOnTwoRoutes()
+        {
+            var receiver = new M3TypedReceiver<object>();
+            var sentinel = new M3TypedReceiver<object> { Permitted = false };
+            var policy = new DestinationLabelPolicy(LabelFilterMode.NoFilter, new SensitivityLabel[0]);
+            Utilities.Logger.AddDestination((ILoggingDestination)receiver);
+            Utilities.Logger.AddDestination<object>(receiver);
+            Utilities.Logger.AddDestination<object>(sentinel);
+            try
+            {
+                M3TypedSettings("SetDestinationSettings", receiver, new DestinationRegistrationSettings(false, (LogLevels)0, policy));
+                receiver.ValidationCalls.ShouldBe(0);
+                Utilities.Logger.Info("ordinary");
+                Utilities.Logger.Info<object>("disabled typed", null);
+                receiver.OrdinaryCalls.ShouldBe(1);
+                receiver.Entries.ShouldBeEmpty();
+                receiver.LegacyCalls.ShouldBe(0);
+                M3TypedSettings("SetDestinationSettings", receiver, new DestinationRegistrationSettings(true, LogLevels.Trace, policy));
+                Utilities.Logger.Info<object>("enabled typed", null);
+                receiver.Entries.ShouldHaveSingleItem().Message.ShouldBe("enabled typed");
+                receiver.OrdinaryCalls.ShouldBe(1);
+                foreach (var restriction in new[] { "mask", "policy" })
+                {
+                    var ordinaryBefore = receiver.OrdinaryCalls;
+                    var typedBefore = receiver.Entries.Count;
+                    M3TypedSettings("SetDestinationSettings", receiver, new DestinationRegistrationSettings(true,
+                        restriction == "mask" ? LogLevels.Critical : LogLevels.Trace,
+                        restriction == "policy" ? new DestinationLabelPolicy(LabelFilterMode.AllowOnly, new SensitivityLabel[0]) : policy));
+                    Utilities.Logger.Info<object>(restriction + " denied typed", null);
+                    Utilities.Logger.Info(restriction + " ordinary unaffected");
+                    receiver.Entries.Count.ShouldBe(typedBefore);
+                    receiver.OrdinaryCalls.ShouldBe(ordinaryBefore + 1);
+                    M3TypedSettings("SetDestinationSettings", receiver, new DestinationRegistrationSettings(true, LogLevels.Trace, policy));
+                    Utilities.Logger.Info<object>(restriction + " typed restored", null);
+                    receiver.Entries.Count.ShouldBe(typedBefore + 1);
+                    receiver.Entries.Last().Message.ShouldBe(restriction + " typed restored");
+                    receiver.OrdinaryCalls.ShouldBe(ordinaryBefore + 1);
+                }
+                receiver.LegacyCalls.ShouldBe(0);
+            }
+            finally
+            {
+                Utilities.Logger.RemoveDestination((ILoggingDestination)receiver);
+                Utilities.Logger.RemoveDestination<object>(receiver);
+                Utilities.Logger.RemoveDestination<object>(sentinel);
+            }
+        }
+
+        [Fact]
+        public void ShouldRetainM3TypedCapturedSettingsThroughReentrantReplacement()
+        {
+            var first = new M3TypedReceiver<object>();
+            var second = new M3TypedReceiver<object>();
+            var third = new M3TypedReceiver<object>();
+            var order = new List<string>();
+            var policy = new DestinationLabelPolicy(LabelFilterMode.NoFilter, new SensitivityLabel[0]);
+            var enabled = new DestinationRegistrationSettings(true, LogLevels.Trace, policy);
+            first.OnContext = message =>
+            {
+                order.Add("first:" + message);
+                if (message == "outer")
+                {
+                    M3TypedSettings("SetDestinationSettings", second, new DestinationRegistrationSettings(false, (LogLevels)0, policy));
+                    Utilities.Logger.Info<object>("nested", null);
+                }
+            };
+            second.OnContext = message => order.Add("second:" + message);
+            third.OnContext = message => order.Add("third:" + message);
+            Utilities.Logger.AddDestination<object>(first);
+            try
+            {
+                M3TypedSettings("AddDestination", second, enabled);
+                Utilities.Logger.AddDestination<object>(third);
+                Utilities.Logger.Info<object>("outer", null);
+                order.ShouldBe(new[] { "first:outer", "first:nested", "third:nested", "second:outer", "third:outer" });
+                M3TypedSettings("SetDestinationSettings", second, enabled);
+                Utilities.Logger.Info<object>("later", null);
+                order.Skip(5).ShouldBe(new[] { "first:later", "second:later", "third:later" });
+                first.LegacyCalls.ShouldBe(0);
+                second.LegacyCalls.ShouldBe(0);
+                foreach (var restriction in new[] { "mask", "policy" })
+                {
+                    var annotation = new LogAnnotations(new[] { new SensitivityLabel("restricted") });
+                    var replacement = new DestinationRegistrationSettings(true,
+                        restriction == "mask" ? (LogLevels)8 : LogLevels.Trace,
+                        restriction == "policy" ? new DestinationLabelPolicy(LabelFilterMode.Exclude,
+                            new[] { new SensitivityLabel("restricted") }) : policy);
+                    var outerMessage = restriction + " outer";
+                    var nestedMessage = restriction + " nested";
+                    var subsequentMessage = restriction + " subsequent";
+                    var restoredMessage = restriction + " restored";
+                    order.Clear();
+                    first.OnContext = message =>
+                    {
+                        order.Add("first:" + message);
+                        if (message == outerMessage)
+                        {
+                            M3TypedSettings("SetDestinationSettings", second, replacement);
+                            M3TypedLog<object>(annotation, (LogLevels)9, null, nestedMessage, null);
+                        }
+                    };
+                    M3TypedLog<object>(annotation, (LogLevels)9, null, outerMessage, null);
+                    M3TypedLog<object>(annotation, (LogLevels)9, null, subsequentMessage, null);
+                    order.ShouldBe(new[] { "first:" + outerMessage, "first:" + nestedMessage,
+                        "third:" + nestedMessage, "second:" + outerMessage, "third:" + outerMessage,
+                        "first:" + subsequentMessage, "third:" + subsequentMessage });
+                    var captured = second.Entries.Single(entry => entry.Message == outerMessage);
+                    captured.Level.ShouldBe((LogLevels)9);
+                    captured.Context.Labels.EffectiveLabels.Select(label => label.Identifier).ShouldBe(new[] { "restricted" });
+                    M3TypedSettings("SetDestinationSettings", second, enabled);
+                    M3TypedLog<object>(annotation, (LogLevels)9, null, restoredMessage, null);
+                    order.Skip(7).ShouldBe(new[] { "first:" + restoredMessage, "second:" + restoredMessage, "third:" + restoredMessage });
+                    second.Entries.Single(entry => entry.Message == restoredMessage).Level.ShouldBe((LogLevels)9);
+                }
+                first.LegacyCalls.ShouldBe(0);
+                second.LegacyCalls.ShouldBe(0);
+                third.LegacyCalls.ShouldBe(0);
+            }
+            finally
+            {
+                Utilities.Logger.RemoveDestination<object>(first);
+                Utilities.Logger.RemoveDestination<object>(second);
+                Utilities.Logger.RemoveDestination<object>(third);
+            }
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        [InlineData(64)]
+        [InlineData(65)]
+        public void ShouldRejectM3TypedRawMasksBeforeEligibility(int mask)
+        {
+            var receiver = new M3TypedReceiver<object>();
+            Utilities.Logger.AddDestination<object>(receiver);
+            try
+            {
+                Should.Throw<ArgumentOutOfRangeException>(() => M3TypedLog<object>(null, (LogLevels)mask, null, null, null))
+                    .ParamName.ShouldBe("level");
+                receiver.ValidationCalls.ShouldBe(0);
+                receiver.LegacyCalls.ShouldBe(0);
+                receiver.Entries.ShouldBeEmpty();
+            }
+            finally { Utilities.Logger.RemoveDestination<object>(receiver); }
+        }
+
+        private static object M3TypedInvoke<T>(string name, Type[] parameters, params object[] arguments)
+        {
+            var method = typeof(Utilities.Logger).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+                .Where(candidate => candidate.Name == name && candidate.IsGenericMethodDefinition && candidate.GetGenericArguments().Length == 1)
+                .Select(candidate => candidate.MakeGenericMethod(typeof(T)))
+                .SingleOrDefault(candidate => candidate.GetParameters().Select(parameter => parameter.ParameterType).SequenceEqual(parameters));
+            method.ShouldNotBeNull("M3 requires the reviewed public exact-T Logger." + name + " signature.");
+            try { return method.Invoke(null, arguments); }
+            catch (System.Reflection.TargetInvocationException failure)
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure.InnerException).Throw();
+                throw;
+            }
+        }
+
+        private static void M3TypedLog<T>(LogAnnotations annotations, LogLevels level, T metadata, string message, Exception exception)
+        {
+            M3TypedInvoke<T>("LogAnnotated", new[] { typeof(LogAnnotations), typeof(LogLevels), typeof(T), typeof(string), typeof(Exception) },
+                annotations, level, metadata, message, exception);
+        }
+
+        private static void M3TypedSettings<T>(string name, Utilities.Generics.ILoggingDestination<T> receiver, DestinationRegistrationSettings settings)
+        {
+            M3TypedInvoke<T>(name, new[] { typeof(Utilities.Generics.ILoggingDestination<T>), typeof(DestinationRegistrationSettings) }, receiver, settings);
+        }
+
+        private static LogScopeHandle M3TypedScope(string label)
+        {
+            var method = typeof(Utilities.Logger).GetMethod("BeginScope", new[] { typeof(LogAnnotations) });
+            method.ShouldNotBeNull("M3 requires the reviewed public Logger.BeginScope signature.");
+            try { return (LogScopeHandle)method.Invoke(null, new object[] { new LogAnnotations(new[] { new SensitivityLabel(label) }) }); }
+            catch (System.Reflection.TargetInvocationException failure)
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure.InnerException).Throw();
+                throw;
+            }
+        }
+
+        private sealed class M3OpaqueMetadata : System.Collections.IEnumerable
+        {
+            public int InspectionCalls;
+            public object Dangerous { get { InspectionCalls++; throw new Exception("metadata getter must not run"); } }
+            public override string ToString() { InspectionCalls++; throw new Exception("metadata ToString must not run"); }
+            public System.Collections.IEnumerator GetEnumerator() { InspectionCalls++; throw new Exception("metadata enumeration must not run"); }
+        }
+
+        private sealed class M3TypedEntry<T>
+        {
+            public LogContext Context;
+            public T Metadata;
+            public LogLevels Level;
+            public string Message;
+            public Exception Exception;
+        }
+
+        private sealed class M3TypedReceiver<T> : Utilities.Generics.IContextLoggingDestination<T>, IContextLoggingDestination
+        {
+            public readonly List<M3TypedEntry<T>> Entries = new List<M3TypedEntry<T>>();
+            public int LegacyCalls;
+            public int OrdinaryCalls;
+            public int ValidationCalls;
+            public LogLevels LastValidationLevel;
+            public bool Permitted = true;
+            public Action<string> OnContext;
+            public bool ValidateMessageLevel(LogLevels level) { ValidationCalls++; LastValidationLevel = level; return Permitted; }
+            public void Log(LogLevels level, T metadata, string message = null, Exception ex = null) { LegacyCalls++; }
+            public void Log(LogLevels level, string message = null, Exception ex = null) { LegacyCalls++; }
+            public void LogWithContext(LogContext context, LogLevels level, T metadata, string message = null, Exception ex = null)
+            {
+                Entries.Add(new M3TypedEntry<T> { Context = context, Metadata = metadata, Level = level, Message = message, Exception = ex });
+                if (OnContext != null) OnContext(message);
+            }
+            public void LogWithContext(LogContext context, LogLevels level, string message = null, Exception ex = null) { OrdinaryCalls++; }
+        }
+
+        private sealed class M3TypedLegacy<T> : Utilities.Generics.ILoggingDestination<T>
+        {
+            public int Calls;
+            public int ValidationCalls;
+            public LogLevels LastValidationLevel;
+            public bool Permitted = true;
+            public T Metadata;
+            public string Message;
+            public LogLevels Level;
+            public Exception Exception;
+            public bool ValidateMessageLevel(LogLevels level) { ValidationCalls++; LastValidationLevel = level; return Permitted; }
+            public void Log(LogLevels level, T metadata, string message = null, Exception ex = null)
+            {
+                Calls++;
+                Metadata = metadata;
+                Message = message;
+                Level = level;
+                Exception = ex;
+            }
+        }
+
+        [Fact]
         public void ShouldTriggerDebugOnDebug()
         {
             var triggered = false;

@@ -1,15 +1,14 @@
 # ProphetsWay.Logger
 
-Route log messages to console, file, event, or custom destinations with per-destination severity selection.
+Route log messages to console, file, event, or custom destinations with per-destination severity and label selection.
 
 > **Current tree: unreleased v4 work.** The version file still reads `3.0.1`.
 > Explicit-registration route isolation and ordered membership snapshots (M2-B) are implemented.
-> Six native severities, strict mask validation, and severity checks before supplied
-> destination rendering are implemented. `SensitivityLabel`, `LabelFilterMode`, and
-> `DestinationLabelPolicy` also exist in source, but the label policy remains a standalone
-> predicate, not integrated into Logger registration or dispatch. `LogAnnotations` captures
-> ordered label occurrences as a standalone value, with no Logger, flow/scope, or filter
-> integration. These are not claims about the published NuGet package or completion of v4.
+> Native M3 scopes, entry annotations, full captured context, registration settings and
+> whole-entry label selection are now implemented alongside the six native severities.
+> Supplied destinations use guarded entrypoints and protected `LogCore` hooks; subclasses
+> must migrate their old `Log` overrides. This describes current source, not the published
+> NuGet package, a completed final acceptance gate, or release certification.
 
 Build Status:  
 [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/ProphetManX.ProphetsWay.Logger?repoName=ProphetManX%2FProphetsWay.Logger&branchName=main)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=25&repoName=ProphetManX%2FProphetsWay.Logger&branchName=main)
@@ -18,11 +17,14 @@ Build Status:
 
 When you need both a detailed log and a warning/error view, repeating each logging call
 for each output adds unnecessary work. Configure destinations once at application startup;
-plain Logger calls reach the registered destinations whose severity settings accept them.
+plain Logger calls reach enabled registered destinations whose severity and label restrictions
+accept the entry.
 
 - Send the same message to console, files, or callbacks with different reporting levels.
 - Pass application metadata to typed destinations without putting it into message text.
-- Evaluate application-defined label membership independently of logging in the current tree.
+- Carry application-defined labels and scope properties, withholding the whole entry from
+    destinations whose configured policies reject it.
+- Evaluate the same label policy independently when you need a membership-only decision.
 
 Configure your intended destinations explicitly. The automatic file is quick-start behavior,
 not a substitute for choosing output paths, access controls, and retention.
@@ -42,7 +44,7 @@ Install-Package ProphetsWay.Logger
 ```
 
 These commands do not install the unreleased API merely because it is documented here.
-To use the native severity and label/policy examples now, reference the current
+To use the native severity, scope/context and label-policy examples now, reference the current
 [library project](ProphetsWay.Logger/ProphetsWay.Logger.csproj) from your application.
 [app-variables.yml](app-variables.yml) still selects `3.0.1`; no v4 package or release is claimed.
 
@@ -61,9 +63,10 @@ new target set. Verification is currently Windows-focused, not equivalent Mac/Li
 
 ## Quick Start
 
-Each C# block below is a separate, self-contained console example, not a set of files to
-combine. Examples use current declarations and test call patterns. Expected output describes
-the source contract, not a recorded execution of these programs.
+Each C# block below is independent, with its own imports, enclosing types and static entry
+method, written for C# 7.3 library compilation. Call its `Main` or `Run` method only when you
+intend its output. Examples use current declarations and test call patterns. Expected output
+describes the source contract, not a recorded execution of these programs.
 
 ### Log To The Console
 
@@ -161,7 +164,89 @@ True
 ```
 
 `Allows` returns only label eligibility. It neither registers a destination nor intercepts
-a later `Logger.Debug` call. There is currently no Logger overload that attaches this policy.
+a later `Logger.Debug` call by itself. Attach the policy through registration settings or a
+supplied destination's `LabelPolicy` to enforce it during delivery.
+
+### Attach Scopes And Read Delivered Context
+
+Use scopes for labels and properties shared by an operation, and `LogAnnotated` for labels
+specific to one entry. This event recipient accepts only entries whose complete effective
+label set is nonempty and contained in its configured membership. All data here is synthetic;
+the example creates no file. The scope and context assertions live in
+[LoggerTests.cs](ProphetsWay.Logger.Test/LoggerTests.cs).
+
+> **Illustrative** — not currently present in the repo.
+
+```csharp
+using System;
+using System.Collections.Generic;
+using ProphetsWay.Utilities;
+using ProphetsWay.Utilities.LoggerDestinations;
+
+public static class ScopeExample
+{
+    public static void Run()
+    {
+        var internalUse = new SensitivityLabel("Internal");
+        var personal = new SensitivityLabel("PersonalData");
+        var policy = new DestinationLabelPolicy(
+            LabelFilterMode.AllowOnly, new[] { internalUse, personal });
+        var destination = new EventDestination(LogLevels.Trace);
+        destination.LoggingEvent += ReadEntry;
+        Logger.AddDestination(destination,
+            new DestinationRegistrationSettings(true, LogLevels.Trace, policy));
+
+        var properties = new List<KeyValuePair<string, object>>
+        {
+            new KeyValuePair<string, object>("Step", "Receive"),
+            new KeyValuePair<string, object>("Step", "Validate")
+        };
+        try
+        {
+            using (Logger.BeginScope(null, properties))
+            {
+                properties.Clear();
+                using (Logger.BeginScope(new LogAnnotations(new[] { internalUse, internalUse })))
+                {
+                    Logger.LogAnnotated(new LogAnnotations(new[] { personal }),
+                        LogLevels.InformationOnly, message: "Synthetic request.");
+                }
+            }
+
+            Logger.SetDestinationSettings(destination, new DestinationRegistrationSettings(
+                true, LogLevels.Trace,
+                new DestinationLabelPolicy(LabelFilterMode.AllowOnly, new SensitivityLabel[0])));
+            Logger.Info("Deliberately rejected without activating fallback.");
+        }
+        finally
+        {
+            Logger.RemoveDestination(destination);
+        }
+    }
+
+    private static void ReadEntry(object sender, EventDestination.LoggerEventArgs entry)
+    {
+        var context = entry.Context;
+        Console.WriteLine(entry.RawMessage);
+        foreach (var label in context.Labels.EffectiveLabels)
+            Console.WriteLine("Effective label: {0}", label.Identifier);
+        foreach (var origin in context.Labels.Origins)
+            Console.WriteLine("{0}: scope {1}, occurrence {2}", origin.Label.Identifier,
+                origin.ScopeIndex.HasValue ? origin.ScopeIndex.Value.ToString() : "entry",
+                origin.OccurrenceIndex);
+        foreach (var frame in context.Scopes)
+            foreach (var property in frame.Properties)
+                Console.WriteLine("{0}: {1}", property.Key, property.Value);
+    }
+}
+```
+
+The unlabeled outer frame keeps both `Step` pairs despite `properties.Clear()`. The repeated
+`Internal` label contributes separate origins but one effective identity. Origin scope indices
+address `context.Labels.ScopeAnnotations`, so they do not count that unlabeled outer frame.
+The final settings replacement keeps an enabled reject-all registration; it does not remove
+the recipient or cause automatic output. The callback explicitly formats its synthetic property
+values; Logger itself does not implicitly format arbitrary scope objects.
 
 ## Core Concepts
 
@@ -171,9 +256,9 @@ The package and assembly are `ProphetsWay.Logger`; the utility namespace deliber
 
 | Import | Use |
 | --- | --- |
-| `ProphetsWay.Utilities` | `Logger`, `LogLevels`, plain destination contracts/bases, all three label/policy types, and `LogAnnotations`. |
+| `ProphetsWay.Utilities` | `Logger`, `LogLevels`, ordinary destination contracts/bases, label/policy types, `LogAnnotations`, scope/context types and `DestinationRegistrationSettings`. |
 | `ProphetsWay.Utilities.LoggerDestinations` | `ConsoleDestination`, `FileDestination`, `EventDestination`, `GenericEventDestination<T>`, `TextBasedDestination`. |
-| `ProphetsWay.Utilities.Generics` | `ILoggingDestination<T>`, `BaseLoggingDestination<T>`, `ILoggerMetadata`, and metadata extension methods. |
+| `ProphetsWay.Utilities.Generics` | `ILoggingDestination<T>`, `IContextLoggingDestination<T>`, `BaseLoggingDestination<T>`, `ILoggerMetadata`, and metadata extension methods. |
 
 ### Severity Selection
 
@@ -224,7 +309,7 @@ See [SensitivityLabelTests.cs](ProphetsWay.Logger.Test/SensitivityLabelTests.cs)
 
 ### Annotation Occurrences
 
-[LogAnnotations.cs](ProphetsWay.Logger/LogAnnotations.cs) provides a sealed standalone value
+[LogAnnotations.cs](ProphetsWay.Logger/LogAnnotations.cs) provides a sealed immutable value
 for one explicit label attachment. Construct it with
 `LogAnnotations(IEnumerable<SensitivityLabel> labels)` and read its getter-only
 `ReadOnlyCollection<SensitivityLabel> LabelOccurrences`. Construction copies the complete
@@ -234,8 +319,56 @@ and later source additions, removals or replacements cannot change the captured 
 These are occurrences, not the deduplicated membership used by `DestinationLabelPolicy`.
 Labels retain `SensitivityLabel`'s ordinal value equality; `LogAnnotations` does not define
 annotation-value equality. Reusing a value does not combine attachments or merge their origins.
-It does not attach anything to Logger calls or implement flow/scope propagation or filtering.
+Construction alone attaches nothing. Pass it to `Logger.BeginScope` or `Logger.LogAnnotated`;
+ordinary and typed convenience helpers inherit scopes without adding an entry annotation.
 See [LogAnnotationsTests.cs](ProphetsWay.Logger.Test/LogAnnotationsTests.cs).
+
+### Scopes And Captured Context
+
+`Logger.BeginScope(annotations)` opens a label-only frame; the two-argument form also captures
+an ordered sequence of `KeyValuePair<string, object>`. A null annotation means no attachment;
+a non-null empty annotation is retained as an explicit empty attachment. Neither subtracts
+outer labels. Opening a scope does not log anything or change registrations.
+
+Read the completed `LogContext` from a permitted event or contextual recipient:
+
+| Readback | Meaning |
+| --- | --- |
+| `context.Scopes` | Every frame, outermost first, including inherited, empty and unlabeled frames. Each exposes `Annotations` and `Properties`. |
+| `context.Labels.EntryAnnotations` | This entry's explicit attachment, or null. |
+| `context.Labels.ScopeAnnotations` | The ordered non-null annotation projection of `Scopes`; empty attachments and repeated uses remain separate. |
+| `context.Labels.Origins` | One record per occurrence, scope attachments first then entry; each has `Label`, `ScopeIndex` and `OccurrenceIndex`. |
+| `context.Labels.EffectiveLabels` | The complete ordinal-identity union of all origins, with duplicates removed; ordering is unspecified. |
+
+`ScopeIndex` is zero-based into **ScopeAnnotations**, not **Scopes**; null identifies the entry.
+`OccurrenceIndex` is zero-based within that attachment's `LabelOccurrences`. Empty attachments
+occupy projection positions but contribute no origins. Inherited-only labels count as labeled.
+Context/frame/origin values are library-created, with no public constructors or ambient-capture
+factory; readback is data, not reusable delivery permission.
+
+Properties are copied membership, not a dictionary or a deep clone. Pair order, duplicate keys,
+null/empty/whitespace keys, default pairs and original values/references survive. Later source-list
+changes and scope exit cannot alter captured membership; nested objects can still change.
+Logger does not inspect getters, enumerate nested values, call their `ToString`, classify them
+or strip capabilities already reachable through them. Retaining recipients own safe retention
+and later cleanup. See [LogScopeFrame.cs](ProphetsWay.Logger/LogScopeFrame.cs) and
+[LogContext.cs](ProphetsWay.Logger/LogContext.cs).
+
+Use `using` blocks and dispose each handle only in the opening operation or its normal
+continuation, including across `await`. Normally captured child work inherits active frames;
+its own scope additions/cleanup do not change parent or sibling frames. A child can outlive
+parent scope exit and retain the captured labels. Deliberately suppressing execution-context
+flow prevents inheritance by newly queued work, without clearing the caller or earlier captures.
+Explicitly passed objects still require your classification.
+
+Cleanup removes the handle's frame when current, throws `InvalidOperationException` without
+mutation when it is below another active frame, and is a no-op when locally absent, including
+repeat cleanup after unrelated scopes open. Handles are non-transferable: do not delegate their
+disposal to independent work. There is no creator-ID/fork workflow or promise to detect every
+inherited-handle misuse. Supported inner scopes cannot remove inherited labels; deliberate or
+accidental handle misuse is not sandboxed. Ending a scope disposes neither destinations nor
+property values and does not revoke or erase captures. This is the accepted D024 discipline in
+[docs/decision-log.md](docs/decision-log.md#d024---conventional-scope-handles-and-deliberate-flow-suppression).
 
 ### Policy Membership
 
@@ -252,8 +385,34 @@ even for `NoFilter`. Later changes to the source collection cannot change the po
 
 Empty Exclude permits every valid input; empty AllowOnly denies every valid input. Duplicates
 and ordering do not change matching. Unknown valid identities participate normally.
-The caller must supply all effective labels, including inherited ones: the predicate does not
-collect scopes or preserve origins. An inherited-only effective set is still labeled.
+When calling `Allows` yourself, supply all effective labels, including inherited ones: the
+predicate alone does not collect scopes or origins. Logger supplies the full captured union
+when enforcing registration and supplied-destination policies.
+
+### Registration Settings
+
+`DestinationRegistrationSettings(bool enabled, LogLevels reportingLevel, DestinationLabelPolicy labelPolicy)`
+requires all three arguments and exposes getter-only `Enabled`, `ReportingLevel` and `LabelPolicy`.
+Pass it to `Logger.AddDestination(destination, settings)` or its exact-`T` overload. The original
+one-argument add means enabled, registration mask `Trace` (63), and empty `NoFilter`: no added
+restriction, not an override of the recipient's own severity mask.
+
+`Logger.SetDestinationSettings(destination, settings)` and its generic form replace all settings
+atomically on an existing registration, preserving its insertion position. They are not upserts.
+Existing captures keep their old settings; later captures, including recursive logging, see
+published replacements. Sharing a settings value across routes does not couple future replacements.
+
+An enabled registration suppresses fallback even when its mask is zero or its policy rejects
+everything. A disabled registration retains its position and duplicate identity but is neither
+attempted nor counted for fallback suppression. Disabling the last enabled recipient can therefore
+reactivate existing fallback behavior; disabling and rejecting are not interchangeable.
+
+Supplied destinations also expose `LabelPolicy`, initially empty `NoFilter`, through
+`LoggingDestinationCore`. Replacing it atomically changes that destination's own restriction,
+including direct calls, not its registration settings. Delivery must pass the registration mask,
+recipient severity permission, registration policy and supplied policy. Logger captures supplied
+policies before callbacks too; an earlier callback cannot change a later recipient's checks for
+the current call. No global transaction across separate destination objects is promised.
 
 ## API Reference
 
@@ -269,6 +428,31 @@ The tables summarize the current declarations, not proposed APIs.
 | `DestinationLabelPolicy.Allows(IEnumerable<SensitivityLabel> effectiveLabels)` | Synchronous Boolean membership decision; no output operation. |
 | `Logger.AddDestination` / `RemoveDestination` / `ClearDestinations` | Manage plain registrations; generic overloads manage registrations keyed by `T`. |
 | `ILoggerMetadata` / `MetadataExtensions` | Optional empty marker and the six metadata extension helpers below. |
+
+### Native Scope And Delivery Members
+
+These producer methods belong to `Logger`; generic `T` is unconstrained. The settings and
+context types are in `ProphetsWay.Utilities`.
+
+| Member | Current use |
+| --- | --- |
+| `BeginScope(LogAnnotations annotations)` | Return a `LogScopeHandle`; null opens an unlabeled frame with empty properties. |
+| `BeginScope(LogAnnotations annotations, IEnumerable<KeyValuePair<string, object>> properties)` | Capture the complete property sequence before opening the frame. |
+| `LogAnnotated(LogAnnotations annotations, LogLevels level, string message = null, Exception ex = null)` | Ordinary raw entry with optional explicit annotations and mask 1-63. |
+| `LogAnnotated<T>(LogAnnotations annotations, LogLevels level, T metadata, string message = null, Exception ex = null)` | Exact-`T` raw entry; metadata remains separate from annotations. |
+| `AddDestination(ILoggingDestination newDest, DestinationRegistrationSettings settings)` | Register an ordinary borrowed recipient with explicit settings. |
+| `AddDestination<T>(ILoggingDestination<T> newDest, DestinationRegistrationSettings settings)` | Register only on the declared metadata route. |
+| `SetDestinationSettings(ILoggingDestination destination, DestinationRegistrationSettings settings)` | Replace an existing ordinary registration's complete settings. |
+| `SetDestinationSettings<T>(ILoggingDestination<T> destination, DestinationRegistrationSettings settings)` | Replace settings only on that exact-`T` route. |
+| `LoggingDestinationCore.LabelPolicy` | Get/replace the supplied destination's additional immutable policy, including direct delivery. |
+| `IContextLoggingDestination.LogWithContext(LogContext context, LogLevels level, string message = null, Exception ex = null)` | Optional ordinary full-context receiver. |
+| `Generics.IContextLoggingDestination<T>.LogWithContext(LogContext context, LogLevels level, T metadata, string message = null, Exception ex = null)` | Optional exact-`T` full-context receiver. |
+| `Logger.DispatchFailed` / `LogDispatchException.Report` | Observe bounded original-failure facts; see the distinct return/throw policies below. |
+
+`LogAnnotated` uses raw rules: null message/exception and null annotations are valid, even at
+ErrorOnly or Critical. It is not a convenience helper with their required arguments. Null/default
+metadata is valid, and even `T = LogAnnotations` is only metadata, never an implicit label source.
+Use an explicit generic invocation when inference would not select the route you intend.
 
 ### All Eighteen Helper Forms
 
@@ -304,20 +488,26 @@ must handle the metadata values they accept; Logger does not clone or transform 
 | `EventDestination` | Required reporting level; subscribe to `LoggingEvent`. |
 | `GenericEventDestination<T>` | Typed callback; event arguments also expose `Metadata`. |
 | `ILoggingDestination` / `ILoggingDestination<T>` | `Log` receives severity, optional message/exception, and metadata for the generic form; `IDestination` supplies `ValidateMessageLevel`. |
-| `BaseLoggingDestination` / `BaseLoggingDestination<T>` | Pass a reporting level to the base constructor and override `Log`, not `WriteLogEntry`. |
+| `BaseLoggingDestination` / `BaseLoggingDestination<T>` | Pass a reporting level to the base constructor and override protected `LogCore`; public `Log` and `LogWithContext` are nonvirtual guards. |
 | `LoggingDestinationCore` / `TextBasedDestination` | Shared severity/exception handling; the text base formats then calls your overridden `PrintLogEntry(string message)`. |
 
 For a reusable application-specific destination, including a database destination, implement
-your own storage behavior behind the appropriate base. The plain override is
-`Log(LogLevels level, string message = null, Exception ex = null)`; the generic override is
-`Log(LogLevels level, T metadata, string message = null, Exception ex = null)`.
+your own storage behavior behind the appropriate base. The new ordinary hook is
+`protected override void LogCore(LogContext context, LogLevels level, string message, Exception ex)`;
+the generic hook is
+`protected override void LogCore(LogContext context, LogLevels level, T metadata, string message, Exception ex)`.
+Neither hook declares optional arguments. This replaces the old public `Log` override and
+is a source and binary break for subclasses: rebuild and move the output body to the matching
+hook, using its supplied context. Existing direct callers retain the public `Log` signatures
+and optional null message/exception defaults. Independent implementations of the old destination
+interfaces need not adopt a context interface.
 No database context, schema, or `WriteLogRecord` API is provided by this library.
 
 The core and these bases/event destinations accept `LogLevels reportingLevel`,
 `string strReportingLevel`, or `int intReportingLevel` constructors. Console/file constructors
 forward the same mask rules. `ValidateMessageLevel(LogLevels messageLevel)` queries eligibility
 without dispatching or changing the captured mask. There is no public raw `Logger.Log` method;
-the destination `Log` methods are the direct/raw entrypoints.
+`Logger.LogAnnotated` is the raw producer API, while destination `Log` methods are direct entrypoints.
 
 ## Common Scenarios
 
@@ -375,7 +565,7 @@ which is deliberately excluded from the default local check below.
 
 Subscribe before registering the destination. Callbacks run synchronously on the logging
 thread; marshal to your UI thread in your own handler when needed. Event arguments expose
-`Message`, `RawMessage`, `Exception`, `LogLevel`, and `Timestamp`.
+`Message`, `RawMessage`, `Exception`, `LogLevel`, `Timestamp`, and `Context`.
 
 > **Illustrative** — not currently present in the repo.
 
@@ -410,6 +600,12 @@ mask 9 is present in the destination's mask 9. It would be rejected by `Informat
 The callback receives that complete composite mask, not a single-bit reduction.
 The registration/event pattern is also in
 [EventDestinationTests.cs](ProphetsWay.Logger.Test/EventDestinationTests.cs).
+
+Both event argument types expose non-null `Context` on actual library delivery, even with no
+scopes or labels. Their existing public constructors leave `Context` null and perform no ambient
+capture. Normal `LoggingEvent` multicast rules remain: a throwing handler stops that invocation
+and counts as one output failure; other independent destinations are still attempted. This differs
+from the individually contained subscribers of the safe `Logger.DispatchFailed` event.
 
 ### Carry Metadata And Use Extension Calls
 
@@ -469,10 +665,79 @@ what to print. See the real call patterns in
 Ordinary explicit registrations and every exact declared-`T` route are independent, including
 interface types such as `T = ILoggingDestination`. Typed routing does not search base types,
 implemented interfaces, or the metadata object's runtime subtype. If that exact type has no
-registered destination, current typed logging still falls back to plain logging **without the
-metadata**. Register the typed destination to retain it; typed calls do not automatically broadcast
-to plain destinations when a typed registration exists. M2-B does not qualify unconfigured
-fallback or provide independent automatic routes.
+enabled registered destination, current typed logging still falls back to plain logging **without
+the metadata**, preserving the explicit annotation and recapturing the current native scopes.
+Register an enabled typed destination to retain metadata; typed calls do not automatically broadcast
+to plain destinations when that route is enabled, even if all its recipients reject the entry.
+Independent explicit routes do not imply completed independent automatic-file routes.
+
+### Implement A Guarded Custom Destination
+
+Move an old public `Log` override into protected `LogCore`. Keep formatting/output inside that
+hook so the supplied guards run first, and use its context instead of recapturing ambient state.
+This callback sink needs no files or external service; its added constructor belongs to the
+example, not the library. The base requires a reporting level and has no parameterless constructor.
+
+> **Illustrative** — not currently present in the repo.
+
+```csharp
+using System;
+using ProphetsWay.Utilities;
+
+public sealed class CallbackDestination : BaseLoggingDestination
+{
+    private readonly Action<LogContext, LogLevels, string, Exception> _write;
+
+    public CallbackDestination(LogLevels reportingLevel,
+        Action<LogContext, LogLevels, string, Exception> write)
+        : base(reportingLevel)
+    {
+        if (write == null)
+            throw new ArgumentNullException(nameof(write));
+        _write = write;
+    }
+
+    protected override void LogCore(LogContext context, LogLevels level,
+        string message, Exception ex)
+    {
+        _write(context, level, message, ex);
+    }
+}
+
+public static class CustomDestinationExample
+{
+    public static void Run()
+    {
+        var personal = new SensitivityLabel("PersonalData");
+        var destination = new CallbackDestination(LogLevels.Trace,
+            (context, level, message, exception) =>
+                Console.WriteLine("{0}: {1} ({2} labels)",
+                    level, message, context.Labels.EffectiveLabels.Count));
+        destination.LabelPolicy = new DestinationLabelPolicy(
+            LabelFilterMode.Exclude, new[] { personal });
+        Logger.AddDestination(destination);
+        try
+        {
+            using (Logger.BeginScope(new LogAnnotations(new[] { personal })))
+            {
+                Logger.Info("Withheld before the callback.");
+                destination.Log(LogLevels.InformationOnly, "Direct call also withheld.");
+            }
+            Logger.Info("Synthetic public message.");
+        }
+        finally
+        {
+            Logger.RemoveDestination(destination);
+        }
+    }
+}
+```
+
+The generic base uses the same pattern, adding `T metadata` between `level` and `message`
+in `LogCore`. Neither hook has optional parameters; the inherited public `Log` methods still
+default `message` and `ex` to null. `MassageLogStatement` and `PrintLogEntry` overrides retain
+their existing signatures. Hook or callback exceptions are output failures handled by the
+invoking guarded boundary, not a request to retry or activate another output.
 
 ## Behavior And Limitations
 
@@ -492,6 +757,12 @@ and supplied direct `Log` implementations, as indicated. Valid rejection is not 
 | Null required helper message or exception | `ArgumentNullException` | `message` or `ex` |
 | Null ordinary or typed `AddDestination` argument | `ArgumentNullException` | `newDest` |
 | Same object reference added again on the same ordinary or exact-`T` route | `ArgumentException` | `newDest` |
+| Null registration settings on add or replacement | `ArgumentNullException` | `settings` |
+| Null/absent destination on settings replacement | `ArgumentNullException` / `ArgumentException` respectively | `destination` |
+| Null policy in settings construction / supplied policy assignment | `ArgumentNullException` | `labelPolicy` / `value` respectively |
+| Null property sequence for `BeginScope` | `ArgumentNullException` | `properties` |
+| Invalid raw mask for `LogAnnotated` | `ArgumentOutOfRangeException` | `level` |
+| Null/noncurrent context on a supplied `LogWithContext` call | `ArgumentNullException` / `ArgumentException` respectively | `context` |
 
 No competing-error priority is promised when both Critical arguments are null. Exception
 message text is not a configuration contract. Equivalent valid mask representations have
@@ -499,17 +770,33 @@ the same eligibility, but invalid strings deliberately use different errors from
 
 ### Dispatch And Direct Calls
 
-For registered plain and typed destinations, Logger calls each recipient's
-`ValidateMessageLevel` before handing raw content to its `Log`; a false result withholds
-that handoff. A present reject-all destination still suppresses fallback on that route.
+For enabled ordinary and exact-`T` registrations, every registration and supplied-destination
+restriction must permit the full captured entry before handoff. Logger invokes a custom
+`ValidateMessageLevel` callback at most once per attempted recipient and requires true; an
+earlier rejection may skip it. No ordering among rejecting checks is promised. Label denial
+withholds message, exception, metadata and the complete context, including scope properties,
+before recipient-owned formatting, hooks, callbacks or export. Permitted recipients continue.
 
-`EventDestination.Log`, `GenericEventDestination<T>.Log`, and `TextBasedDestination.Log`
-also enforce mask validity and all-bits eligibility when you call them **directly**.
-Invalid masks throw before recipient work, even without event subscribers. A valid mismatch
-returns without massage, event construction/callback, text composition or `PrintLogEntry`.
-Console/file output inherits the text path. Arbitrary custom `Log` implementations or overrides
-called directly are not sandboxed; inheriting an abstract destination base alone cannot guard
-your override.
+A recipient implementing the optional `IContextLoggingDestination` or exact-`T` counterpart
+receives one `LogWithContext` handoff instead of the legacy `Log`, never both. Independent
+implementations of the old interfaces remain valid and receive no new context parameter.
+Supplied bases deliver once through Logger's internal captured path to `LogCore`, without
+recapturing callback-mutated scopes or repeating policy checks/reporting. That path is internal,
+not a consumer API or reusable permission token; public reentry always starts a new guarded attempt.
+
+The supplied bases' public `Log` and `LogWithContext` are **nonvirtual guards**, inherited by
+event/text/console/file destinations. Direct `Log` captures active frames with no entry annotation
+and checks the destination's own mask and `LabelPolicy`, not registration settings. A valid
+mismatch returns without massage, hook, event construction, text composition, output or fallback.
+Invalid masks throw before recipient work, even without event subscribers.
+
+Direct `LogWithContext` requires the same ordered scope openings currently active, including empty
+and unlabeled frames. Equal labels/properties from a different opening are insufficient. Both
+empty frame lists match; the supplied entry annotation may be non-null. Reuse while those openings
+remain current still rechecks current destination configuration. Added, ended or replaced frames
+make the context noncurrent and cause a local argument error before output. Possession or earlier
+successful delivery is not authorization. Arbitrary independent direct implementations, hidden or
+reimplemented members, and consumer methods calling their own hooks are not sandboxed.
 
 Direct/raw content is distinct from helper preconditions: message and exception may each be
 absent, even at Critical or ErrorOnly. Typed metadata may still be null/default. For accepted
@@ -561,9 +848,62 @@ Writes through its collection interfaces throw `NotSupportedException`; its `ICo
 does not expose occurrence storage. View and representative label-reference identity are unspecified.
 These readback guarantees describe `LogAnnotations` specifically.
 
+Scope-property capture follows the same complete-before-publication discipline, including
+enumerator disposal. A null sequence or failed acquisition/iteration/current/disposal publishes
+no scope or usable handle and emits no dispatch report. Opening cannot undo side effects in
+caller sequence code, bound an infinite input or support concurrent producer mutation. Scope
+cleanup errors are local errors too, not `LogDispatchException` or `DispatchFailed` notifications.
+
+### Failure Reports And Return Policy
+
+On configured routes and supplied guarded direct calls, failure handling depends on the observed
+boundary, not foreign exception text or type. Valid severity/label rejection is not a failure and
+does not activate fallback. Independent recipients are attempted once in captured order, without
+rollback or retries; another recipient succeeding does not cancel a mandatory failure.
+
+| Original failure | Safe fact | Result after independent attempts and reporting |
+| --- | --- | --- |
+| Logger-invoked severity callback throws | `LogFailureStage.Eligibility = 1` | Throw `LogDispatchException`. |
+| Selected legacy/contextual invocation, delivery hook, rendering or callback throws | `LogFailureStage.Output = 2` | Throw `LogDispatchException`. |
+| Opted-in label-policy evaluation unexpectedly fails | `LogFailureStage.LabelCheck = 3` | Withhold that recipient, report and return unless a mandatory failure also occurred. |
+| Shared entry/context capture unexpectedly fails | `CoreCaptureFailureCount = 1`, no recipient descriptor | Withhold the incomplete entry from all affected recipients, report and return. |
+
+No strict-mode selector is supplied by these APIs. A normal return proves neither delivery nor
+successful capture/checks. Value/scope construction and argument errors remain local exceptions,
+not fabricated dispatch failures. A mandatory failure still throws if its descriptor falls beyond
+the retained limit; result selection is not inferred from the truncated descriptor list.
+
+`LogFailureReport` contains a generated `CorrelationId`, at most eight immutable `Failures` in
+encounter order, `OverflowCount` for further failed recipients, and `CoreCaptureFailureCount`
+(zero or one). A core-only report has an empty recipient list and zero overflow. Total failures
+are `(long)report.CoreCaptureFailureCount + report.Failures.Count + report.OverflowCount`.
+Each descriptor's `RegistrationId` is a one-based position in this call's **full** capture,
+including preceding disabled, rejected and successful slots. A supplied direct attempt uses 1;
+zero is never a fabricated core recipient. These are not durable registration IDs.
+
+Reports retain no entry, labels, origins, properties, destinations, delegates, raw causes or
+control backlinks. Their owned membership remains unchanged across observers and later calls.
+`LogDispatchException.Report` carries the same safe facts, with no raw inner cause. Its initial
+diagnostic view uses fixed prose, allowed IDs/codes/counts, null `InnerException`/`HelpLink`, empty
+`Data`, fixed `Source`, and null `StackTrace`. This does not erase CLR diagnostic state or sanitize
+reflection, debugger access, serialization, inherited post-catch mutation or a whole object graph.
+
+`Logger.DispatchFailed` captures subscribers after attempts, invokes each synchronously outside
+registry locks, then attempts a safe stderr summary bounded to 512 UTF-16 units including its
+terminator. Subscriber/writer failures are contained and add no original failures or escalation.
+On the same managed-thread reporting stack, nested logging still runs with its own result policy
+but emits no nested event/stderr report; other threads are independent. No timeout, cross-thread
+cycle prevention, guaranteed observation or process-fatal containment is promised.
+
+Native capture and policy checks use library-owned membership and sealed label/policy values,
+with no ordinary deterministic consumer fault path for the unexpected capture/LabelCheck branches.
+Those branches require code review, not a fabricated report presented as execution coverage.
+Allocation/runtime faults may prevent reporting itself: **out-of-memory survival is not guaranteed**.
+Consumer callbacks and raw payloads are not made safe by these bounded reporting facts.
+
 ### Current Logging And Text Output
 
-- With no plain destination, Logger adds a timestamp-named relative file destination using local
+- With no enabled plain destination, Logger adds a timestamp-named relative file destination using local
     time and the current `FileDestination` defaults. Recreating a default can reset an existing
     same-name file. Its `Debug` mask excludes Trace: **no-setup Trace delivery is not provided**.
     Configure an explicit `Trace` destination for all six severities, and use `resetFile: false`
@@ -574,29 +914,19 @@ These readback guarantees describe `LogAnnotations` specifically.
     null/absent removal is a no-op, and clear affects only the selected route. After removal/clear,
     a successful re-add goes last.
 - For a route with explicit recipients, mutations and captures are atomic: each call captures
-    one complete insertion-ordered membership before the first eligibility check. Registry locks
-    span neither `ValidateMessageLevel` nor `Log`. Callback or eligibility add/remove/clear,
-    including self-removal, affects later captures only; an older capture can still call a removed
-    recipient after mutation returns. Recursive logging is a new call with a fresh capture.
+    one complete insertion-ordered membership and its registration settings before callbacks.
+    Native context and supplied policies are also captured before recipient callbacks, without
+    promising a global transaction across registry and flow state. Registry locks span no consumer
+    code. Callback add/remove/clear/settings changes, including self-removal, affect later captures
+    only; an older capture can still call a removed recipient after mutation returns. Recursive
+    logging is a new call with a fresh capture.
 - Explicit destinations are borrowed: removal/clear never dispose them and do not drain calls.
     Stop producers and await synchronous calls before disposing your recipients. Membership capture
     does not serialize callers or shared recipients, impose cross-thread delivery order, or freeze
     custom recipient state, eligibility results, metadata or exception graphs.
-- On explicitly configured plain and exact-`T` routes, Logger attempts recipients independently
-        in captured order, without retries. If `ValidateMessageLevel` throws, that recipient receives no
-        payload; eligibility or output exceptions do not prevent attempts on the remaining recipients.
-        After attempts, any such failure produces a bounded `LogFailureReport` through
-        `Logger.DispatchFailed`, followed by `LogDispatchException` even if other recipients succeeded.
-        The report keeps up to eight failure descriptors in encounter order: positions in this call's
-        full registration capture and their `LogFailureStage` (`Eligibility` or `Output`), plus an
-        overflow count and generated correlation ID, not payloads, recipient references or raw causes.
-        Event subscribers and a safe stderr summary are attempted synchronously; their exceptions are
-        contained without replacing the final dispatch failure. Recursive reporting on the same
-        managed-thread stack suppresses nested event/stderr reports, not nested dispatch or its
-        exception. No callback timeout, guaranteed observation or process-fatal containment is promised.
-        This configured-route boundary does not qualify unconfigured fallback, arbitrary direct calls
-        or runtime/debugger exception inspection; it is not whole-exception-graph sanitization or a
-        guarantee that all I/O completes.
+- The failure rules above cover configured dispatch and supplied guarded direct attempts, not
+    qualification of unconfigured file establishment, arbitrary independent direct code or a
+    guarantee that all I/O completes. Borrowed lifetime and retained-object responsibilities remain.
 - Console/file formatting uses local, culture-dependent timestamps and pads severity names to 12
   characters. It does not escape multiline/control input into one physical record or redact content.
 - Supplied exceptions now retain their detail for warnings, errors, critical entries and every
@@ -620,19 +950,17 @@ Inner Exception Message:
 This is a specific Exception Message and will contain a stack trace.
 ```
 
-### Unfinished Integration And Security Boundaries
+### Implemented M3 And Remaining Boundaries
 
-Native severity/mask/helper validation and supplied-recipient **severity** withholding are implemented,
-alongside the standalone labels, membership predicate and annotation value. M2-B adds independent
-explicit routes, atomic ordered membership capture and borrowed-recipient lifetime rules. M2-C adds
-independent recipient attempts and bounded safe failure reporting with a post-attempt
-`LogDispatchException` on explicitly configured routes. This completes neither the full dispatch
-foundation (M2) nor v4. Label registration/filter integration and entry/scope origin collection
-remain future work; neither a label policy nor an annotation value yet withholds Logger payloads.
+Native scopes, ordered origins/full properties, effective-label filtering, atomic registration
+settings replacement, optional contextual receivers and guarded supplied destinations are implemented.
+They extend the existing severity validation, explicit-route isolation, borrowed-recipient lifetime
+and independent-attempt reporting rules. This source status is not full-v4 or release certification;
+the permanent regression, compiled-example and parent final acceptance gates remain separate.
 
-Registration-level settings replacement, owned-resource lifetime work, record framing, invariant
-rendering/shared UTC timestamps, fixed automatic-file recovery/reuse and remembered initialization
-failure, append-by-default explicit files, and both Microsoft logging bridges remain unfinished.
+Owned-resource lifetime work, record framing, invariant rendering/shared UTC timestamps, fixed
+automatic-file recovery/reuse and remembered initialization failure, append-by-default explicit files,
+and both Microsoft logging bridges remain outside this implemented M3 slice.
 Unconfigured typed fallback still forwards to ordinary logging; the existing default-file path is
 unexercised by this focused validation. Explicit membership safety is not a guarantee of all
 concurrency safety. Microsoft severity conversion/None handling is not supplied by this native enum.
@@ -650,8 +978,8 @@ See the scoped [security review](docs/security/security-review.md),
 [threat model](docs/security/threat-model.md), and
 [data classification](docs/security/data-classification.md). Their scope is not a confidentiality,
 compliance, sandboxing, whole-library security, or publication guarantee.
-The native source assessment does not refresh the earlier dated advisory scan or provide new
-license, bundled-component, SDK/runtime, or release clearance.
+Any advisory-scan results in that review are dated evidence, not license, bundled-component,
+SDK/runtime, or release clearance.
 
 ### Breaking Migration From Earlier Logger APIs
 
@@ -661,7 +989,8 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
 
 - Remove calls to ordinary, typed, and metadata-extension `Security`, plus `Security`/`SecurityOnly`
     configuration names. Choose the appropriate remaining severity for each call. There is no automatic
-    security-event/concern replacement, and the standalone label policy is not a routing replacement.
+    security-event/concern replacement. Explicit application labels and policies are independent of
+    severity, not an automatic translation of the removed Security level.
 - Recalculate saved integer/numeric-string masks from the intended new bits: 1 is Critical, 2 is
     ErrorOnly, 4 is WarningOnly, 8 is InformationOnly, 16 is DebugOnly, and 32 is TraceOnly. Do not
     reuse old numeric configuration without reviewing its meaning. Recheck enum-name configuration too:
@@ -679,6 +1008,13 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
     with `ParamName` `newDest`, rather than adding another delivery. Retain the exact reference for
     removal; an equal but distinct object no longer removes it. Do not treat removal/clear as a drain
     or immediate revocation: already captured calls may still use that borrowed recipient.
+- Rebuild subclasses and move public `Log` overrides to the matching protected `LogCore` signature
+    shown above. The old virtual/abstract slot is gone: this is a binary as well as source break.
+    Do not hide `Log` to bypass guards. Existing callers keep the public method defaults, and independent
+    old-interface implementations need not adopt the optional context interface.
+- Update report readers for `LabelCheck`, empty recipient lists on core-only failure, and
+    core-inclusive totals. Notifications do not all imply an exception; severity/output failures do.
+    Event consumers may read `Context` on delivery but must allow null on manually constructed args.
 
 ## Architecture And Design Decisions
 
@@ -688,10 +1024,13 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
 | Typed metadata separate from message text | Your destination can inspect application data; Logger does not supply a database schema or automatically persist that object. |
 | Sealed, application-defined label instead of a closed taxonomy | No registry dependency and no invalid default value-type instance; consumers must agree on exact identities. |
 | Immutable copied policy membership | Later caller edits cannot change configuration; changing policy means constructing another policy. |
-| Separate predicate and runtime integration | Membership is usable and testable without output, but does not yet enforce recipient withholding. |
+| Standalone predicate plus native enforcement | Membership remains independently usable; Logger and supplied guards enforce whole-entry selection using the captured union. |
+| Immutable membership, original nested objects | Stable scope/settings structure without arbitrary deep cloning, classification or sanitization; consumers own nested-object safety and retention. |
+| Conventional non-transferable scope handles | Normal await/child inheritance and local cleanup without a creator-ID/fork protocol or universal misuse detector. |
+| Nonvirtual entrypoints and protected output hooks | Selection precedes supplied output even on direct calls, at the cost of a major subclass override migration. |
 
 The accepted direction is recorded in [docs/decision-log.md](docs/decision-log.md).
-Its future integration rules must not be inferred from this standalone API's completion.
+Its broader file, rendering and bridge decisions are not made complete by native M3 delivery.
 
 ## Building And Testing Locally
 
@@ -724,11 +1063,22 @@ $filter = @(
     'FullyQualifiedName~ProphetsWay.Logger.Test.GenericLoggerTests.'
     'FullyQualifiedName~ProphetsWay.Logger.Test.MetadataLoggerTests.'
     'FullyQualifiedName~ProphetsWay.Logger.Test.ILoggingDestinationTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.LogAnnotationsTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.EventDestinationTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Test.DestinationRegistrationSettingsTests.'
 ) -join '|'
 
 dotnet test .\ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj -c Debug -f net48 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
 dotnet test .\ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj -c Debug -f net10.0 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
 ```
+
+This selection includes native scope/context/settings and guarded-destination specifications,
+not just the earlier severity and standalone-policy tests. Its discovered count may change as
+regressions are added. The two new scope/subclass README examples are intended for independent
+compile-only checking against both library assets; do not execute them as part of that check.
+This README update does not claim that check, the parent final gate, or release approval passed.
+
+The following figures are **historical selections**, not totals for the current M3 matrix.
 
 The recorded M2-B Windows check on **2026-09-18 EDT** passed **320/320 cases on each of
 `net48` and `net10.0`**, with zero failures/skips: **20 new registration cases** plus the
