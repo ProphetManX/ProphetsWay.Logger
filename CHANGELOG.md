@@ -207,6 +207,27 @@ M4-A does not claim automatic Trace/file behavior, physical file termination or 
 bridge, fallback completion, or publication/release qualification. This is an unreleased v4-direction
 slice; no version number is changed here.
 
+## Explicit file destinations
+
+`FileDestination` now defaults all three constructor overloads to `resetFile: false`, so constructing a
+destination no longer deletes an existing selected file unless deletion is explicitly requested with
+`resetFile: true`. This is a breaking v4-direction behavior change for source callers that omitted the
+argument: recompile them with the desired value. Previously compiled callers retain the default value
+embedded in their call site until rebuilt, and callers that already pass `true` retain eager deletion.
+
+The destination captures the selected `fileName` path at construction and writes back to that same path,
+creating a missing file there on permitted output. Each write appends the rendered record followed by one
+`Environment.NewLine`, using the selected one of the five declared encodings (`ASCII`, `BigEndianUnicode`,
+`Unicode`, `UTF8`, or `UTF32`). It does not add a BOM, repair an unterminated existing prefix, inspect or
+transcode existing bytes, or relocate output. Undefined encoding values now fail with
+`ArgumentOutOfRangeException` for `encoder` before deletion or directory creation. Invalid `fileName`
+values identify `fileName`; ordinary framework filesystem and access diagnostics remain the originating
+exceptions rather than being replaced by a console echo.
+
+This remains an explicit-file implementation only. It does not claim automatic fallback, recovery, retry,
+replay, relocation, shared-session behavior, or publication/release qualification. The default change and
+the established file-output contract have major-version implications; the version file remains unchanged.
+
 # v3.0.1
 ### Build target for Net 6.0
 Library now targets .Net 6.0

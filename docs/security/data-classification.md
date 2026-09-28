@@ -539,3 +539,91 @@ redaction guarantee is selected. M4-B file lifecycle/recovery/termination/encodi
 fallback qualification, bridges and full product/release assessment remain outside scope.
 Independent Security Reviewer v2 assesses implementation after promotion; no HTTP API
 Designer work is introduced. This inventory passes no implementation-security verdict.
+
+## M4-B1 Explicit-File Design Addendum
+
+**Promotion checkpoint: 2026-09-27. Approved design only; SourceNoCodeVerdict.** This
+promotes the scoped [threat/classification input 02](../../../.agent-runs/20260927-1431-logger-m4b-continuation/02-m4b1-file-threat-input.md)
+with the complete [repaired contract 04](../../../.agent-runs/20260927-1431-logger-m4b-continuation/04-m4b1-contract-repair.md)
+and [acceptance 05](../../../.agent-runs/20260927-1431-logger-m4b-continuation/05-m4b1-contract-rereview.md),
+under [proposal 06](../../../.agent-runs/20260927-1431-logger-m4b-continuation/06-m4b1-execution-proposal-r1.md)
+as approved by [activation 14](../../../.agent-runs/20260927-1431-logger-m4b-continuation/14-m4b1-activation-and-extension.md).
+All preceding sections retain their original text and historical scope. The companion
+[explicit-file model](threat-model.md#m4-b1-explicit-file-design-addendum) states the
+accepted behavior and fixture limits; none is certified implemented by this inventory.
+
+At the 2026-09-27 promotion checkpoint, opened the complete then-current
+[FileDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/FileDestination.cs)
+and 04's complete declaration/XML snapshot: three constructor parameter sets, `_fi`,
+`_encoder`, `PrintLogEntry`, its bytes and the five encoding choices. The snapshot is
+the target, not a description of the then-unchanged production implementation.
+
+**F-A1, retained from 02:** Unseen path meanings, existing bytes, payloads and foreign
+diagnostics are **unbounded**, provisionally Confidential (C), not identified PII,
+Sensitive PII or Secret. An inspected consumer inventory replaces this assumption.
+Internal (I), Public (P) and C retain the existing D013 handling baselines; no writable
+path, benign contents, stable physical-file identity or execution permission is assumed.
+
+### File Carriers And Exposure
+
+Treatment below is the accepted design. These are local configuration, OS file I/O and
+diagnostic crossings, not an HTTP request/response or authenticated retrieval service.
+Existing M4-A context, payload and safe-report field inventories remain unchanged.
+
+| Field/carrier | Class / rationale | At rest | In transit | In logs | Local response/exposure |
+| --- | --- | --- | --- | --- | --- |
+| `fileName`; `_fi` name/directory/full path | C; unbounded location meaning | Private state and filesystem namespace | Constructor to OS; ordinary errors may carry it | Excluded from safe dispatch reports | Configuration input; no new path getter or public export |
+| `resetFile` | I; destructive selection | Constructor option, not retention policy | Explicit configuration | No side-output record | Input-only; default false, true requests eager deletion of the selected existing file |
+| Valid `reportingLevel`, `strReportingLevel`, `intReportingLevel`; inherited mask | I; recipient configuration | Inherited destination state | Constructor and eligibility | No new configuration dump | Existing mask rules; not reader authorization |
+| Malformed supplied severity text | C; unbounded rejected input | No new archive | Ordinary argument error boundary | Not a safe diagnostic by assumption | Local/framework error contract, not blanket sanitization |
+| `EncodingOptions.ASCII`, `BigEndianUnicode`, `Unicode`, `UTF8`, `UTF32` | P; fixed values 0-4 and BCL mappings | Constants | Local API vocabulary | No consumer data in the literals | Public choice enum, not flags or a sensitivity class |
+| `encoder`; `_encoder` selection | I; representation choice | Private destination state | Selected BCL encoding operation | Does not sanitize contents | Input-only; optional default UTF8, enum default ASCII; undefined values rejected before effects |
+| Existing target bytes | C; opaque unbounded prior data | Consumer-controlled file | Append positioning; no inspection/conversion required | Preserved unless reset expressly requested | No library read/export API; no prefix repair or suitability guarantee |
+| Target existence/length | C; activity associated with unbounded contents | Filesystem facts | Preparation/open/append | No safe-report export | Internal I/O use, not authenticated ownership evidence |
+| `PrintLogEntry.message` | C; complete intended record | Transient string and eventual file content | Permitted native renderer to sink | Intended accepted content, not redacted | Denied entries withheld; protected-hook bypasses are outside supplied-entrypoint guarantees |
+| `lineBytes` | C; encoded record content | Transient bytes and selected file | Selected encoder to append/create | Exact selected BCL bytes, not a second formatter | No public byte getter; encoding fallback is not arbitrary Unicode round-trip assurance |
+| `Environment.NewLine` and fixed grammar | P; record structure | Encoded suffix | Sink adds one trailing terminator | No leading newline, extra blank line or preamble | Framing only, not confidentiality or a delivery receipt |
+| Local/guarded failure `Message` | C; unbounded diagnostic text | No approved raw-failure archive | Ordinary constructor caller, or caught Output boundary | No constructor console echo; excluded from safe dispatch output | Constructor text may contain paths; no forced safe wrapper or message stripping |
+| Local/guarded failure `StackTrace` | C; location/implementation diagnostics | No raw-failure archive | Same distinct error boundaries | Excluded from safe dispatch output | Ordinary local diagnostics retained; no constructor stack-erasure promise |
+| Local/guarded failure `Data` | C; arbitrary reachable values | No raw-failure archive | Same distinct error boundaries | Excluded from safe dispatch output | No constructor empty-Data promise; no raw-data handoff through safe reports |
+| Local/guarded failure `InnerException` / raw cause | C; nested unbounded diagnostics | No approved raw-cause retention | Same distinct error boundaries | Excluded from safe dispatch output | Original ordinary construction failure propagates; no normalization or cause stripping; guarded reporting retains no raw cause |
+| Safe correlation/registration identifiers, stage, counts and authored text | I; bounded generated facts, fixed vocabulary P | Existing immutable safe report | Subscribers, stderr and guarded caller | Existing R-16 facts only | No actual path, payload, label, user name, raw cause or backlink |
+
+Construction may prepare directories or explicitly reset before any entry exists; entry
+eligibility does not promise side-effect-free setup. Construction emits neither console
+output nor `DispatchFailed` in the approved design, but its original ordinary framework
+exceptions are not safe reports. The withdrawn constructor-sanitization promise is not
+promoted. Guarded `Output` privacy and mandatory propagation remain separate obligations.
+
+File readers and onward export remain consumer-controlled under D013; labels and encoding
+do not authorize readership. Omit unnecessary details before logging; Logger gains no
+silent truncation/redaction. Physical framing does not conceal content. No new privacy,
+retention, compliance, erasure or identity guarantee, and no B2 design, is introduced.
+
+### Status And Evidence Limit
+
+**Status refresh: 2026-09-27, after parent Final.** The pre-provisioning and
+pre-implementation status in [promotion 22](../../../.agent-runs/20260927-1431-logger-m4b-continuation/22-m4b1-security-documentation.md)
+is historical. [Approval 23](../../../.agent-runs/20260927-1431-logger-m4b-continuation/23-temp-directory-authorization.md)
+authorized parent creation; [provisioning 24](../../../.agent-runs/20260927-1431-logger-m4b-continuation/24-m4b1-parent-provision.md)
+records `C:/temp/logger tests/` created at 18:09:47 EDT with ordinary non-reparse
+ancestry. [Closure 25](../../../.agent-runs/20260927-1431-logger-m4b-continuation/25-m4b1-safeexecution-closure.md)
+closes SE-M4B1-01 only; fixture cleanup still owns only fresh children, never the parent.
+
+[Audit 26](../../../.agent-runs/20260927-1431-logger-m4b-continuation/26-m4b1-specification-audit.md)
+and the [freeze record](../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/m4b1-frozen-specifications-r1.json)
+retain the reviewed Candidate/red history. [Implementation 27](../../../.agent-runs/20260927-1431-logger-m4b-continuation/27-m4b1-file-implementation.md)
+records B1 implemented; the current FileDestination source was reopened for this refresh.
+[Code review 28](../../../.agent-runs/20260927-1431-logger-m4b-continuation/28-m4b1-code-review.md)
+accepts only its code-review gate and records all **62 frozen specification/helper
+inputs unchanged**. Ordinary local constructor errors remain distinct from safe Output
+reports; no blanket sanitization is claimed.
+
+The separately opened [parent Final](../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/m4b1-final-20260927T223829-94a133d82dff4ba38dec2279dc382559-final.json)
+records **native 520/520 and physical 55/55 passed on each of net48 and net10.0,
+with 0 failed and 0 skipped**. These are dated execution results, not static case counts,
+a rebranding of the historical baseline or new fixed acceptance counts. No checks were
+rerun here beyond document validation. Independent Security Reviewer v2 and post-document
+parent final acceptance remain pending; preparation labels and green execution alone
+certify neither source nor fixture controls. No product blocker is reported in the supplied
+status packet. B2 remains unimplemented; this refresh changes no design or security verdict.

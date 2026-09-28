@@ -7,7 +7,8 @@ Route log messages to console, file, event, or custom destinations with per-dest
 > Native M3 scopes, entry annotations, full captured context, registration settings and
 > whole-entry label selection are now implemented alongside the six native severities.
 > M4-A adds shared UTC event time, invariant value rendering and quoted single-line text
-> with native scope boundaries. Physical file lifecycle/recovery work remains separate.
+> with native scope boundaries. M4-B1 implements explicit-file append/reset, fixed-path output
+> and physical encoding/termination. Automatic-session coordination and recovery (M4-B2) remain pending.
 > Supplied destinations use guarded entrypoints and protected `LogCore` hooks; subclasses
 > must migrate their old `Log` overrides. This describes current source, not the published
 > NuGet package, a completed final acceptance gate, or release certification.
@@ -493,7 +494,7 @@ must handle the metadata values they accept; Logger does not clone or transform 
 | Destination or extension point | Current use |
 | --- | --- |
 | `ConsoleDestination` | Text output; reporting level defaults to `Debug`, excluding Trace. |
-| `FileDestination` | Required filename; defaults: `Debug` (excluding Trace), `resetFile: true`, `EncodingOptions.UTF8`. |
+| `FileDestination` | Required filename; defaults: `Debug` (excluding Trace), `resetFile: false` (append), `EncodingOptions.UTF8`; no added BOM. |
 | `EventDestination` | Required reporting level; subscribe to `LoggingEvent`. |
 | `GenericEventDestination<T>` | Typed callback; event arguments also expose `Metadata`. |
 | `ILoggingDestination` / `ILoggingDestination<T>` | `Log` receives severity, optional message/exception, and metadata for the generic form; `IDestination` supplies `ValidateMessageLevel`. |
@@ -567,11 +568,26 @@ public static class Program
 ```
 
 For Debug/Information only, choose `LogLevels.DebugOnly | LogLevels.InformationOnly`.
-`resetFile: true` deletes an existing target during construction; use it only for an intentional
-reset. The fourth parameter, `encoder`, accepts `FileDestination.EncodingOptions.ASCII`,
-`BigEndianUnicode`, `Unicode`, `UTF8` (default), or `UTF32`.
-The append/reset behavior is shown in [FileDestinationTests.cs](ProphetsWay.Logger.Test/FileDestinationTests.cs),
-which is deliberately excluded from the default local check below.
+All three existing `FileDestination` overloads now default to `resetFile: false`; the example
+spells out that append choice. Explicit `resetFile: true` deletes only the selected existing
+file during construction, not on each write. Use it only for an intentional reset. Construction
+prepares missing parent directories but does not create a missing log file; eligible output
+creates it. Constructor preparation is separate from per-entry severity and label selection.
+
+The fourth parameter, `encoder`, accepts `FileDestination.EncodingOptions.ASCII`,
+`BigEndianUnicode`, `Unicode`, `UTF8` (the constructor default), or `UTF32`.
+`default(FileDestination.EncodingOptions)` is ASCII, not the optional UTF8 default.
+Each write appends the selected BCL encoding's bytes for the completed native record followed
+by exactly one `Environment.NewLine`. It adds no leading newline, extra blank line or encoding
+preamble/BOM. Encoding replacement follows the selected BCL encoding; ASCII does not promise
+arbitrary Unicode round-tripping.
+
+Appending leaves all existing bytes untouched, including any existing BOM. It does not inspect
+or transcode old content, detect binary or incompatible encoding, or insert a corrective separator
+after an unterminated prefix. You choose compatible existing content and encoding.
+See [Explicit File Output](#explicit-file-output) for path and failure boundaries. The behavior
+is exercised in [FileDestinationTests.cs](ProphetsWay.Logger.Test/FileDestinationTests.cs),
+which remains deliberately separate from the default local check below.
 
 ### Receive Messages In A Callback
 
@@ -1080,10 +1096,10 @@ they are not the bounded diagnostic channel. Custom inspection and retention rem
 ### Current Logging And Text Output
 
 - With no enabled plain destination, Logger adds a timestamp-named relative file destination using local
-    time and the current `FileDestination` defaults. Recreating a default can reset an existing
-    same-name file. Its `Debug` mask excludes Trace: **no-setup Trace delivery is not provided**.
-    Configure an explicit `Trace` destination for all six severities, and use `resetFile: false`
-    for append behavior.
+    time and the current `FileDestination` defaults, now append rather than reset. This default-argument
+    change does not implement the M4-B2 automatic-session coordinator or recovery behavior.
+    Its `Debug` mask still excludes Trace: **no-setup Trace delivery is not provided**.
+    Configure an explicit `Trace` destination for all six severities.
 - Explicit registration uses reference identity, never recipient equality or hashing. Distinct
     equal objects remain distinct; the same instance may register on different compatible routes.
     Duplicate same-route adds leave membership unchanged. Removal targets only the exact reference;
@@ -1103,6 +1119,34 @@ they are not the bounded diagnostic channel. Custom inspection and retention rem
 - The failure rules above cover configured dispatch and supplied guarded direct attempts, not
     qualification of unconfigured file establishment, arbitrary independent direct code or a
     guarantee that all I/O completes. Borrowed lifetime and retained-object responsibilities remain.
+
+#### Explicit File Output
+
+[FileDestination.cs](ProphetsWay.Logger/LoggerDestinations/FileDestination.cs) selects its full
+pathname once at construction using the framework's `FileInfo` semantics. Relative paths use
+that moment's `Environment.CurrentDirectory`; later directory changes do not redirect the instance.
+If the file is deleted, a later permitted call can recreate it at that same path. Missing parent
+directories are prepared at construction, not repaired on every output attempt. This fixes a
+pathname, not a persistent physical-file identity or filesystem sandbox.
+
+Required arguments are validated before deletion or directory creation. An undefined `encoder`
+throws `ArgumentOutOfRangeException` naming `encoder` before those effects. Ordinary construction,
+preparation and reset failures outside the documented argument mappings propagate as their original
+framework exceptions. Their diagnostic contents are not promised sanitized or path-free; construction
+produces neither a console echo nor a `Logger.DispatchFailed` notification.
+
+After construction, encoding/open/write/flush/close failures through supplied public direct
+entrypoints or Logger delivery are `LogFailureStage.Output` failures. A direct call safely reports
+its one-recipient failure and throws `LogDispatchException`. Logger attempts independent eligible
+recipients before safe reporting and the mandatory throw; reporter failures cannot suppress or
+replace that result. The sink emits no second report. Validly rejected entries never reach rendering
+or file output, but rejection does not undo earlier constructor preparation or explicit reset.
+
+Physical writes are synchronous and serialized within one destination instance; each attempt
+releases its acquired file handle before completion. Rendering can still run concurrently. There
+is no cross-instance/process coordination, promised concurrent-call order, retry, replay, relocation,
+global flush or crash-safe/exactly-once/durability guarantee. A failure may follow partial effects;
+a later logging call is a new attempt at the same path, not a replay of the failed entry.
 
 #### Record Layout
 
@@ -1148,7 +1192,8 @@ redaction, confidentiality, lossless object serialization or proof of downstream
 
 Each text base builds the whole record before one `PrintLogEntry` call. That string is non-null,
 single-line and **has no terminator**; the sink owns termination. Console retains its `WriteLine`
-handoff. Physical file termination, encoding and lifecycle are not certified by this rendering work.
+handoff. `FileDestination` appends one `Environment.NewLine` suffix using the selected encoding,
+as described above. This explicit-file behavior does not qualify automatic-file lifecycle or recovery.
 
 #### Scalars And Explicit Formatting
 
@@ -1216,9 +1261,10 @@ They extend the existing severity validation, explicit-route isolation, borrowed
 and independent-attempt reporting rules. This source status is not full-v4 or release certification;
 the permanent regression, compiled-example and parent final acceptance gates remain separate.
 
-M4-B physical-file termination/encoding proof, owned-resource lifetime work, fixed automatic-file
-recovery/reuse and remembered initialization failure, and append-by-default explicit files remain
-outstanding. Both Microsoft logging bridges remain outside this native slice (M5).
+M4-B1 now implements append-by-default explicit files, construction-only reset, fixed selected paths
+and physical record encoding/termination. M4-B2 automatic-session coordination, owned-resource
+lifetime, fixed automatic-file recovery/reuse and remembered initialization failure remain
+unimplemented. Both Microsoft logging bridges remain outside this native slice (M5).
 Unconfigured typed fallback still forwards to ordinary logging; the existing default-file path is
 not qualified by the in-memory rendering checks. Preserving its captured context/time is not a
 fallback lifecycle fix. Explicit membership safety is not a guarantee of all
@@ -1287,6 +1333,15 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
 - Do not reinterpret event `Timestamp` as UTC. Read `Context.EventTimestampUtc` on delivery;
     a public direct reuse samples anew without altering the retained context. Update text readers
     independently from raw/event consumers, whose original fields and local timestamp remain.
+- Recompile callers to obtain `FileDestination`'s new omitted `resetFile: false` default on all
+    three existing overloads. Previously compiled callers may still pass embedded `true` until
+    rebuilt; replacing the library alone does not change those arguments. Explicit `true` still
+    deletes the selected existing file during construction. No new reset method or factory is added.
+- Update file readers for one suffix terminator per appended record and no newly added BOM;
+    existing bytes and unterminated prefixes are not repaired. Reject undefined encodings during
+    setup, and handle ordinary constructor errors locally without expecting console echo or safe
+    dispatch diagnostics. Guarded output failures still report safely and must throw. These are
+    unreleased v4 behavioral changes, not a completed automatic-fallback feature or a patch-safe update.
 
 ## Architecture And Design Decisions
 
@@ -1304,7 +1359,8 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
 | Shared UTC and quoted native records | One call-time fact and preserved content boundaries, at the cost of a breaking text-parser migration; physical storage remains a separate responsibility. |
 
 The accepted direction is recorded in [docs/decision-log.md](docs/decision-log.md).
-M4-A implements native rendering/framing; broader file lifecycle and bridge decisions remain separate.
+M4-A implements native rendering/framing and M4-B1 implements the explicit-file sink behavior above;
+automatic-session lifecycle and bridge work remain separate.
 
 ## Building And Testing Locally
 
@@ -1376,9 +1432,11 @@ the [historical account](docs/security/security-review.md#recorded-execution-and
 is retained separately, not presented as the native check above.
 
 Do **not** substitute an unfiltered `dotnet test` as the default developer check.
-[FileDestinationTests.cs](ProphetsWay.Logger.Test/FileDestinationTests.cs) deletes a fixed-name file,
-and some tests in [DestinationManagmentTests.cs](ProphetsWay.Logger.Test/DestinationManagmentTests.cs)
-trigger automatic file output. They need separately reviewed isolation. The example program
+[FileDestinationTests.cs](ProphetsWay.Logger.Test/FileDestinationTests.cs) now uses isolated synthetic
+files, but its path/failure checks temporarily change process state; run that class in a separate
+reviewed test host, not in the default selection above. Some tests in
+[DestinationManagmentTests.cs](ProphetsWay.Logger.Test/DestinationManagmentTests.cs) still trigger
+automatic file output and need separately reviewed isolation. The example program
 constructs a relative file destination too: build it, do not run it by default.
 The existing pipeline is not evidence that this exact focused selection ran in CI.
 

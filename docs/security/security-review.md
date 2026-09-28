@@ -1,5 +1,150 @@
 # Security Review - Scoped Logger Assessments
 
+## M4-B1 Explicit File Output
+
+_Reviewed 2026-09-27 against the accepted [M4-B1 threat controls](threat-model.md#m4-b1-explicit-file-design-addendum),
+[file data classification](data-classification.md#m4-b1-explicit-file-design-addendum),
+[complete repaired contract 04][m4b1-contract] and [acceptance 05][m4b1-contract-review]._
+
+### M4-B1 Verdict
+
+**No blocking issues found in the scoped implementation and controlled Windows fixture.**
+The highest-priority controls hold: supplied entrypoints withhold denied records before
+formatting/file output, and guarded output failures expose only the inherited safe facts.
+All three constructors validate before filesystem effects and default to append; explicit
+reset remains destructive by request. Ordinary constructor diagnostics are retained without
+incidental console output, not silently converted into sanitized dispatch exceptions.
+
+**Outcome: COMPLETE / NONE / CONTINUE. Open findings: Critical 0, High 0, Medium 0, Low 0,
+Informational 0.** All three newly authorized public dependency queries completed with no
+query problems or advisory matches. No finding waiver, source correction or new policy was
+needed. This completes this security-review gate only; the parent's post-document Final is
+still required. It grants no merge, checkpoint, deployment or release permission.
+
+### M4-B1 Findings
+
+None located against the accepted in-scope obligations; no new finding ID or fix is proposed.
+C1-C6 below are existing threat-control IDs, not new vulnerabilities or risk acceptances.
+Earlier findings, reviews and query records retain their historical dates and dispositions.
+No security review is exhaustive, and absence of a finding is not proof of security.
+
+### M4-B1 Basis And Evidence
+
+Read the complete current [FileDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/FileDestination.cs),
+the [captured actual production diff][m4b1-diff] against the supplied `91d7fda` boundary,
+the complete [IsolatedFileFixture.cs](../../ProphetsWay.Logger.Test/IsolatedFileFixture.cs),
+and all 17 methods and observation/assertion helpers in
+[FileDestinationTests.cs](../../ProphetsWay.Logger.Test/FileDestinationTests.cs).
+Reopened the deciding supplied base, severity, ordinary/direct dispatch, text renderer and
+safe-report code, plus focused native failure assertions. The unchanged M4-A assessment is
+reused, not represented as a new whole-Logger audit. Current project metadata and the latest
+consumer/security-document sections were opened rather than inferred from historical inventories.
+
+[Independent reconciliation][m4b1-reconciliation] matched all 62 frozen specification/helper
+inputs, 38 fixed review inputs, 31 setup inputs, 4,387 toolchain inputs, both seals (12 and 22
+inputs), and five author surface-comparison inputs. [Audit 26][m4b1-tests] remains bound to its
+actual Candidate and Freeze; its red history was not overwritten or relabeled green.
+
+The exact [parent Final][m4b1-final] supplies these dated executions, not new reviewer runs:
+
+| Framework | Physical passed | Native passed | Failed / skipped |
+| --- | --- | --- | --- |
+| net48 | 55/55 | 520/520 | 0 / 0 |
+| net10.0 | 55/55 | 520/520 | 0 / 0 |
+
+Reparsed all four TRXs within their exact recorded invocation bounds, matched their hashes,
+identities/outcomes and aggregate records, and verified frozen physical membership and unchanged
+native baseline membership/outcomes. Each three-file output manifest and generated compiler-input
+manifest matched. These executions occurred at 22:39:06-22:39:50 UTC on 2026-09-27, separately
+hosted, build-enabled and without restore. No physical canary, test, build or application was run
+by this reviewer. Recorded library/example builds and all 18 pre-document README compilations
+were successful; those compilations executed no example code.
+
+Each execution-input manifest now matches **4,499/4,503** files: only README, CHANGELOG and the
+two approved security-model documents differ, with no additions/removals. Relevant source,
+specifications, tools and outputs remain unchanged. This review adds the fifth authorized prose
+difference. The whole old input set is therefore not unchanged, but its product evidence is not
+blanket stale. Parent must run post-document Final, including current README compilation.
+
+### M4-B1 Control Coverage
+
+Every named F1-F5 crossing and C1-C6 control was reviewed. Runtime references below mean the
+reconciled dated tests above; source inspection is not an exhaustive environmental fault test.
+
+| Area / priority | Reviewed | Evidence and limit |
+| --- | --- | --- |
+| Access control; P1 C3/F2 | Source and physical/native evidence | [Ordinary selection](../../ProphetsWay.Logger/Logger.cs#L321) checks enabled registration, all mask bits, registration/intrinsic label policy and supplied severity before delivery. [Direct dispatch](../../ProphetsWay.Logger/Logger.cs#L377) checks current context, severity and intrinsic policy before its delivery delegate. [Supplied base](../../ProphetsWay.Logger/BaseLoggingDestination.cs#L58) routes public calls through that guard. The physical rejection cases require zero massage/print, unchanged existing bytes or no created file, and no report. Constructor preparation is separate. D013 supplies no tenant/reader identity promise. |
+| Failure privacy and propagation; P1 C4/F4 | Source and physical/native evidence | [Output catch and completion](../../ProphetsWay.Logger/Logger.cs#L365) retain no raw exception, finish independent recipients, report once and throw when mandatory. [Safe report](../../ProphetsWay.Logger/LogFailureReport.cs#L27) owns copied descriptor membership; [descriptor](../../ProphetsWay.Logger/LogFailureDescriptor.cs#L11) holds only position/stage. [Safe exception](../../ProphetsWay.Logger/LogDispatchException.cs#L19) retains no cause. [Physical failure assertions](../../ProphetsWay.Logger.Test/FileDestinationTests.cs#L655) and [native assertions](../../ProphetsWay.Logger.Test/TextRenderingTests.cs#L932) exclude synthetic paths/payloads/causes, check null/empty diagnostic properties and bounded stderr. Reporter/stderr failures do not suppress the original result; eight-descriptor/overflow limits remain. CLR inspection and post-catch mutation are outside the safe interface. |
+| Reset and early validation; P1 C1/F1 | Entire constructor/helper path and physical evidence | Constructors at [79](../../ProphetsWay.Logger/LoggerDestinations/FileDestination.cs#L79), [104](../../ProphetsWay.Logger/LoggerDestinations/FileDestination.cs#L104) and [128](../../ProphetsWay.Logger/LoggerDestinations/FileDestination.cs#L128) default false. Base severity validation, [path mapping](../../ProphetsWay.Logger/LoggerDestinations/FileDestination.cs#L137) and [encoding validation](../../ProphetsWay.Logger/LoggerDestinations/FileDestination.cs#L152) precede [InitFile](../../ProphetsWay.Logger/LoggerDestinations/FileDestination.cs#L176). Invalid options preserve seeded files and missing directories; explicit reset affects the selected synthetic file, not its sibling. Old binary callers may still supply embedded true until rebuilt. |
+| Local construction boundary; E11/F1 | Source and physical evidence | Path argument mapping preserves its original diagnostic cause; ordinary preparation/reset failures remain uncaught. InitFile has no console or DispatchFailed side output. The construction tests compare the applicable BCL category/HResult and absence of side output, not path-canary absence or empty causes/Data. Accepted 04/05 explicitly rejects blanket constructor sanitization. |
+| Injection and record bytes; P1 C2/F2-F3 | Source and physical/native evidence | [Text LogCore](../../ProphetsWay.Logger/LoggerDestinations/TextBasedDestination.cs#L42) composes before printing; [AppendToken](../../ProphetsWay.Logger/LogTextRenderer.cs#L157) quotes/escapes content. [Physical writer](../../ProphetsWay.Logger/LoggerDestinations/FileDestination.cs#L200) adds exactly the selected BCL bytes for the record plus one suffix, without a BOM, leading separator or second formatting pass. All five encodings and opaque-prefix preservation are exercised. Encoding replacement, existing unterminated/differently encoded bytes and downstream parser behavior remain explicit limits; framing is not redaction. |
+| Fixed path, handles and concurrency; P2 C5/F3 | Source and physical evidence | One readonly FileInfo captures the construction-time path. Later open/create uses that same selection, without relocation/replay; the CWD/recreation test checks both candidate locations. Open, seek, write, flush and disposal are inside LoggerLock. Four awaited workers verify complete records and concurrent rendering; exclusive opens verify released handles. No cross-instance/process ordering, persistent file identity, rollback of partial effects or durability promise follows. |
+| Owned fixture operations; P1 C6/F5 | Complete helper and physical call sites | [Construction](../../ProphetsWay.Logger.Test/IsolatedFileFixture.cs#L24) checks ordinary ancestry, rejects native directory-creation collisions and holds the fresh child without delete sharing. [GetPath](../../ProphetsWay.Logger.Test/IsolatedFileFixture.cs#L53) restricts synthetic components; [ValidatePath](../../ProphetsWay.Logger.Test/IsolatedFileFixture.cs#L169) checks component containment, reservations and reparse points, rejecting unreserved existing entries. [Cleanup](../../ProphetsWay.Logger.Test/IsolatedFileFixture.cs#L120) validates the entire owned inventory before non-recursive per-entry deletion, rechecks each entry and rejects open issued handles. Only the empty owned child is removed; never the parent, siblings or a foreign tree. No ACL changes, remote-filesystem access, disk filling or physical fixture operations were performed here. |
+| Fixture global state and failure limits; C6/F5 | All actual test methods and helpers | Explicit recipients suppress fallback; finally blocks restore CWD, console, subscriptions and registrations before fixture disposal. Workers are awaited and held handles closed. [SafeExecution closure 25][m4b1-safety] remains a controlled Windows assessment, not hostile-process, crash-cleanup or production-sandbox proof. Reservations do not authorize external content to be adopted. |
+| Other injection, cryptography, secrets, deserialization | Scoped source inspected | No SQL/command/LDAP/HTTP-fetch sink, credential crypto, type-permissive deserializer or secret literal was found in the reviewed change/helper paths. Guid child names provide collision avoidance, not authentication. No broad history/ignored-file secret, infrastructure or pipeline audit was performed. |
+| Availability, authentication/session, audit/compliance | Applicable boundaries reviewed | This library adds no endpoint, session, cookie, CORS or business-row authorization surface. Payload size, hook cost, blocking I/O and storage exhaustion retain accepted consumer limits. F-A1 data remains provisionally Confidential; [D013](../decision-log.md#L181) assigns access/storage/retention/audit to consumers. Append/reset and synchronous return do not establish secure erasure, tamper-proof audit, confidentiality or exactly-once delivery. |
+
+### M4-B1 Dependency Vulnerabilities
+
+**Three fresh public-only queries completed at 22:57:26-22:57:29 UTC on 2026-09-27**, using
+installed SDK **10.0.401**, from the Logger root. Each used the approved exact project with
+`dotnet package list --vulnerable --include-transitive --no-restore --source https://api.nuget.org/v3/index.json --format json --output-version 1`.
+The records retain full executable/argument arrays, working directory, UTC bounds, exit status,
+public JSON, problems/advisories and before/after identity comparisons. Each had a 120-second
+bound, exit 0, no timeout or stderr, valid requested-project/public-source JSON, zero problems
+and zero advisory matches. No restore, install, update, private-feed query or retry ran.
+
+| Project / fresh record | Restored graph coverage | Exit | Problems | Advisory matches |
+| --- | --- | --- | --- | --- |
+| [Library query][m4b1-library-query] | netstandard2.0: 2 package identities; net10.0: 0 | 0 | 0 | 0 |
+| [Test query][m4b1-test-query] | net48 and net48/win-x86: 34 each; net10.0 and net10.0/win-x86: 28 each | 0 | 0 | 0 |
+| [Example query][m4b1-example-query] | net10.0: 0 package identities | 0 | 0 | 0 |
+
+Clean JSON omits framework arrays. [Actual restored graph inventory][m4b1-graphs] establishes
+**seven graphs and 41 distinct package/version identities**, not zero graphs or a test count.
+The library/example declare no direct PackageReference; tests declare seven. All **43 protected
+inputs** matched before and after every query, including the three projects, fifteen restored
+asset/cache/import inputs, relevant source/documents, executable/query assembly and authority.
+Earlier M4-A daytime queries remain history and did not substitute for this grant.
+
+| Package | Version | Advisory | Severity | Direct/Transitive | Fixed in |
+| --- | --- | --- | --- | --- | --- |
+| None returned | n/a | Zero matches in the three fresh successful queries | n/a | Direct, implicit and transitive resolved graphs | n/a |
+
+### M4-B1 Worth Checking And Handoff
+
+- Consumer path provenance/readership, remote-path transport, real payload classification and
+  retention require that consumer's assessment. Neither fixed paths nor labels authenticate
+  readers, and ordinary constructor exceptions must not be forwarded as safe public responses.
+- Fixture checks are path-based in a controlled Windows run. They do not prove resistance to
+  a hostile process replacing descendants between validation and use; do not repurpose this
+  helper as a general shared-tree cleaner. No such concurrent interference or crash cleanup
+  was tested. Production external interference/prefix suitability remain D020 limits.
+- B2 automatic-session/fallback implementation, cross-platform qualification, bundled/native
+  binary analysis, OS/SDK/shared-runtime servicing, advisories after query time and full-v4 or
+  release qualification are outside this review. Native fatal/allocation/partial-write faults
+  were not newly injected. No additional test API or policy is required by this assessment.
+- Test Auditor v2's specification gate and Code Reviewer v2's correctness gate remain their own
+  completed records; this assessment does not replace either. No new other-owner finding is raised.
+- **Exact handoff:** Vanguard consumes [report 32][m4b1-report] and its query/reconciliation evidence,
+  verifies the canonical-only repository delta and preserved history, then runs the existing
+  approved `M4-B1 final verification` task after all documents. Compile the current README without
+  executing examples and bind this security result. The three-query grant is consumed; no repeat
+  query, B2 operation, source fix, Git action or publication follows from this verdict.
+
+[m4b1-contract]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/04-m4b1-contract-repair.md
+[m4b1-contract-review]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/05-m4b1-contract-rereview.md
+[m4b1-diff]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/m4b1-implementer-20260927T223429-cee737f6effd46cb8561dc024927d8ba-post-edit-comparison.json
+[m4b1-tests]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/26-m4b1-specification-audit.md
+[m4b1-safety]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/25-m4b1-safeexecution-closure.md
+[m4b1-final]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/m4b1-final-20260927T223829-94a133d82dff4ba38dec2279dc382559-final.json
+[m4b1-reconciliation]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/s32-source-evidence-reconciliation-r1.json
+[m4b1-library-query]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/s32-library-public-query-r1.json
+[m4b1-test-query]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/s32-test-public-query-r1.json
+[m4b1-example-query]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/s32-example-public-query-r1.json
+[m4b1-graphs]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/s32-resolved-graphs-r1.json
+[m4b1-report]: ../../../.agent-runs/20260927-1431-logger-m4b-continuation/32-m4b1-security-review.md
+
 ## M4-A Native Rendering And Framing
 
 _Source reviewed 2026-09-27; daytime dependency closeout 2026-09-27 against the accepted [M4-A threat controls](threat-model.md#m4-a-native-rendering-and-framing),

@@ -697,6 +697,46 @@
 			"isBackground": false,
 			"group": "test",
 			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B1 validate setup",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b1.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B1 native baseline",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b1.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B1 candidate checks",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b1.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B1 freeze specifications",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b1.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B1 final verification",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b1.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
 		}
 	]
 }

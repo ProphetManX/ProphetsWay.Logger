@@ -610,3 +610,105 @@ dependency-scoped, not reopened utility policy. Next: Security Reviewer v2 indep
 grades final source/evidence against this promoted design and M4A-C1. API Designer v2 has
 no HTTP workstream here. No tests, builds, Git, subagents or physical I/O were run by this
 author, and no implementation-security verdict is supplied.
+
+## M4-B1 Explicit-File Design Addendum
+
+**Promotion checkpoint: 2026-09-27. Approved design only; SourceNoCodeVerdict.** This
+promotes [scoped input 02](../../../.agent-runs/20260927-1431-logger-m4b-continuation/02-m4b1-file-threat-input.md)
+as constrained by the complete [repaired snapshot 04](../../../.agent-runs/20260927-1431-logger-m4b-continuation/04-m4b1-contract-repair.md)
+and [acceptance 05](../../../.agent-runs/20260927-1431-logger-m4b-continuation/05-m4b1-contract-rereview.md).
+[Proposal 06's explicit Threat Modeler row](../../../.agent-runs/20260927-1431-logger-m4b-continuation/06-m4b1-execution-proposal-r1.md#exact-writes-and-owners),
+approved by [activation 14](../../../.agent-runs/20260927-1431-logger-m4b-continuation/14-m4b1-activation-and-extension.md),
+authorizes this append-only promotion, not a new requirements or contract review.
+All preceding sections remain verbatim historical records. The
+[file carrier inventory](data-classification.md#m4-b1-explicit-file-design-addendum)
+records the opened declarations and F-A1's unbounded, provisional Confidential treatment.
+
+Actors remain the consumer configurator/host, producer, selected recipient, filesystem
+reader/writer and diagnostic subscriber/operator. Topology is synchronous in-process
+selection/rendering followed by OS file I/O and separate local diagnostics. D013 leaves
+file readership and OS permissions with the consumer; severity/labels prove neither
+identity nor authorization. No tenant, business row, HTTP response or deployment is
+invented. Unseen consumer data and remote-path use need their own assessment, not a
+new assumption that this slice supplies isolation or protected transport.
+
+### Accepted Controls And Boundaries
+
+F1-F5 and C1-C6 retain 02's identifiers. Priorities rank modeled consequences, not code
+findings. Every control below specializes accepted D010/D012/D020, 04/05 and inherited
+M4-A obligations; fixture controls apply to tests, not a production path sandbox.
+
+| Boundary / priority | Actor, abuse path and exposure | Accepted control and defended property |
+| --- | --- | --- |
+| F1 Configuration/reset; P1 C1 | A configurator supplies an unintended path or omits reset intent; setup can delete data or expose an ordinary local error. | All three constructors default `resetFile` to false. Validate required path, severity and declared encoding before filesystem effects, without competing-error precedence. Select the full path once using FileInfo/construction-time CWD semantics; later CWD changes do not redirect it. Prepare missing directories; only explicit true deletes an existing selected file during construction. Missing log files are created by permitted output, not construction. Prevents implicit deletion and invalid-option effects, not misuse of host OS rights. |
+| F2 Selection/rendering; P1 C3 | A producer uses direct calls or rejected labels/severity to expose raw content, invoke hooks or write a denied record. | Preserve inherited registration/intrinsic and supplied-direct gates before massage, hooks, record encoding and entry I/O. Denial invokes no print and enables no rescue output. Separately requested constructor/reset effects are setup, not accepted entries. Defends against denied-payload disclosure without sandboxing custom code. |
+| F3 Physical append; P1 C2, P2 C5 | Forged delimiters or changed CWD redirect/misframe content; another process removes/replaces the file. | Append exactly selected `Encoding.GetBytes(message + Environment.NewLine)`: one suffix, no leading newline, extra blank line or preamble; no reformatting, re-escaping or recaptured context/time. Append existing bytes or create a missing file at the same selected pathname. Preserve any unterminated/differently encoded prefix without corrective separator, inspection or transcoding. Defends the approved new-record boundary and fixed selection, not persistent file identity or existing-content suitability. |
+| F4 Failure reporting; P1 C4 | Encoding/open/write/flush/close errors carry path/payload-bearing causes, or a successful recipient/reporter failure hides output failure. | Supplied guarded entrypoints classify these as `Output`: direct calls report once and throw `LogDispatchException`; Logger completes independent eligible attempts, safely reports and propagates even if another succeeds. No sink-local second report, raw cause/path echo, ordinary fanout or rescue route. Original failure facts survive reporter/stderr failures. Defends the inherited diagnostic privacy and propagation boundary. |
+| F5 Isolated fixture; P1 C6 | Stale names, traversal, links or unfinished workers redirect reset/cleanup toward unrelated data. | D021/proposal06 permit only fresh collision-rejecting, recorded-owned synthetic children beneath `C:/temp/logger tests/`. Check component containment and reparse ancestry before effects/cleanup; reject ambiguous or pre-existing ownership. Stop/join workers and release handles before reset/recreation/cleanup. Separate physical test hosts restore CWD/console/subscriptions/registrations in finally; use explicit recipients and no fallback. Defends unrelated files and global state; no parent creation/deletion, alternate root, ACL/elevation, network or disk-filling authority follows. |
+
+The five existing BCL encodings remain available; optional UTF8 differs from enum-default
+ASCII. Undefined values fail before effects, but selected BCL replacement behavior is
+not arbitrary Unicode round-trip fidelity. Physical writes are synchronous, serialized
+per instance through inherited `LoggerLock`, with handles released before completion;
+rendering/hooks keep their inherited concurrency. No cross-instance/process ordering
+is promised. Repeated calls append repeated records. Previously compiled callers may
+retain embedded `resetFile=true` until recompiled; approval alone changes no caller.
+
+**Local construction is not F4.** Accepted 04/E11 removes incidental console output and
+`DispatchFailed` side output, while preserving original ordinary framework preparation/
+access exceptions outside the documented argument mappings. No normalized IOException,
+fixed/path-free message, null cause or empty Data promise is selected. The unsupported
+constructor-sanitization promise was withdrawn in 04 and that repair accepted in 05;
+it is not pending policy. Inherited bounded safe `Output` reporting remains mandatory:
+at most eight descriptors plus overflow and existing capture count, stderr at most 512
+UTF-16 units including terminator, with no raw diagnostic/payload/path backlinks.
+
+### STRIDE By Crossing
+
+| Crossing | Spoofing | Tampering | Repudiation | Information disclosure | Denial of service | Elevation of privilege |
+| --- | --- | --- | --- | --- | --- | --- |
+| F1 | Path is not ownership proof | Explicit reset; validation before effects | No audit/erasure receipt | Local errors may carry paths; no incidental echo | Setup can fail/block | Host OS rights, no sandbox |
+| F2 | Labels/prefixes are not identity | Inherited gates and final token escaping | Time is not authenticity | Withhold before hooks/print | Payload/hook cost remains unbounded | No reader/tenant rights from eligibility |
+| F3 | Pathname is not physical identity | Append/create, no implicit truncation | Return/flush is not durable audit | File readers remain consumer-controlled | Locked/full storage or blocking I/O | No cross-user/process isolation |
+| F4 | Generated IDs are not principals | Preserve original bounded facts | Notification may be unavailable | No raw cause/path in safe output | Per-call bounds, not rate limits | No raw object/control backlinks |
+| F5 | Unique name alone is insufficient | Ownership, containment and rejection before effects | Preserve operation/ownership evidence | Synthetic inputs only | Quiesce handles/workers and isolate global state | No elevation or escape authority |
+
+Highest-consequence modeled exposure is denied unbounded content reaching the file;
+require **C3, eligibility before payload work**, first. C4 separately prevents diagnostic
+disclosure. This is a design risk statement, not a discovered exploit or source verdict.
+D020 deliberately leaves external interference and existing-content suitability with the
+developer: fixed path is not physical identity/content policing. D012 retains explicit
+destructive reset; failure need not undo prior effects. No retry, replay, copying,
+relocation, prefix repair, crash-safe/exactly-once durability or secure erasure is added.
+Framing is not redaction. No new privacy, retention, compliance or identity guarantee is
+selected; M4-B2 automatic-session/fallback behavior is not implemented or promoted here.
+
+### Status And Dependent Gate
+
+**Status refresh: 2026-09-27, after parent Final.** The absent-parent, unapproved-creation
+and unimplemented state recorded in [promotion 22](../../../.agent-runs/20260927-1431-logger-m4b-continuation/22-m4b1-security-documentation.md)
+is historical. [Direct approval 23](../../../.agent-runs/20260927-1431-logger-m4b-continuation/23-temp-directory-authorization.md)
+and [provisioning 24](../../../.agent-runs/20260927-1431-logger-m4b-continuation/24-m4b1-parent-provision.md)
+record the same `C:/temp/logger tests/` parent created at 18:09:47 EDT with ordinary
+non-reparse ancestry. [SafeExecution closure 25](../../../.agent-runs/20260927-1431-logger-m4b-continuation/25-m4b1-safeexecution-closure.md)
+closes SE-M4B1-01, not the implementation or security gates. Separate parent-creation
+authority changes none of F5's owned-child-only cleanup limits.
+
+[Candidate audit 26](../../../.agent-runs/20260927-1431-logger-m4b-continuation/26-m4b1-specification-audit.md)
+is followed by the [frozen specification record](../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/m4b1-frozen-specifications-r1.json)
+and [implementation 27](../../../.agent-runs/20260927-1431-logger-m4b-continuation/27-m4b1-file-implementation.md).
+The current FileDestination source was reopened: B1 is implemented, without blanket
+sanitization of ordinary constructor errors. [Code review 28](../../../.agent-runs/20260927-1431-logger-m4b-continuation/28-m4b1-code-review.md)
+accepts its production code-review gate only and records all **62 frozen specification/helper
+inputs unchanged**. Reviewed red history remains separate from subsequent green results.
+
+The separately opened [parent Final](../../../.agent-runs/20260927-1431-logger-m4b-continuation/evidence/m4b1-final-20260927T223829-94a133d82dff4ba38dec2279dc382559-final.json)
+records **native 520/520 and physical 55/55 passed on each of net48 and net10.0,
+with 0 failed and 0 skipped**. These measured results are neither static counts nor the
+historical baseline relabeled as fresh; they define no new acceptance count. No product
+blocker is reported in the supplied status packet. Independent Security Reviewer v2 and
+post-document parent final acceptance remain pending: neither a preparation label nor
+green execution certifies the modeled source/fixture controls or supplies security clearance.
+No new Open Question, HTTP API Designer handoff or requirements review is introduced.
+No checks were executed here beyond document validation. B2 remains unimplemented;
+accepted controls, design limits and earlier history are unchanged.
