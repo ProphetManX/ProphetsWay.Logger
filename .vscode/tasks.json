@@ -817,6 +817,54 @@
 			"isBackground": false,
 			"group": "test",
 			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 session setup",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-2317-logger-m4b2-session/validate-session.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 session baseline",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-2317-logger-m4b2-session/validate-session.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 session compile",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-2317-logger-m4b2-session/validate-session.ps1' -Stage Compile",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 session candidate",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-2317-logger-m4b2-session/validate-session.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 session freeze",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-2317-logger-m4b2-session/validate-session.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 session final",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-2317-logger-m4b2-session/validate-session.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
 		}
 	]
 }
