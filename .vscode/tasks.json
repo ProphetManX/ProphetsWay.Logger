@@ -737,6 +737,86 @@
 			"isBackground": false,
 			"group": "test",
 			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 paths setup",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b2-paths.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 paths baseline",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b2-paths.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 paths candidate",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b2-paths.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 paths freeze",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b2-paths.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 paths final",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b2-paths.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 paths r2 setup",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b2-paths-r2.ps1' -Stage Setup",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 paths r2 baseline",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b2-paths-r2.ps1' -Stage Baseline",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 paths r2 candidate",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b2-paths-r2.ps1' -Stage Candidate",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 paths r2 freeze",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b2-paths-r2.ps1' -Stage Freeze",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M4-B2 paths r2 final",
+			"type": "shell",
+			"command": "& 'C:/Projects/ProphetManX/.agent-runs/20260927-1431-logger-m4b-continuation/validate-m4b2-paths-r2.ps1' -Stage Final",
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
 		}
 	]
 }
