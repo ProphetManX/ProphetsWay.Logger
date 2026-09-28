@@ -228,6 +228,41 @@ This remains an explicit-file implementation only. It does not claim automatic f
 replay, relocation, shared-session behavior, or publication/release qualification. The default change and
 the established file-output contract have major-version implications; the version file remains unchanged.
 
+## Automatic file destinations
+
+Automatic file output is now enabled as the implicit final `Trace` recipient for an ordinary route and
+for each exact declared-metadata-type route when that route has no enabled compatible explicit
+registration. An enabled explicit destination that rejects or fails still suppresses that route's
+automatic output; automatic output does not rescue it, and a label denial remains a deliberate
+non-failure. Ordinary and typed automatic routes share one session and one selected pathname, while
+remaining distinct for rendering and metadata retention. The typed route preserves its declared
+metadata, including `null` or `default(T)`.
+
+The default primary directory is the consuming host's `AppContext.BaseDirectory`. Before the first
+automatic attempt, applications may select a different primary directory:
+
+```csharp
+Logger.ConfigureAutomaticFileHostDirectory(directory);
+```
+
+The path is normalized when configured and must be supplied before automatic establishment starts;
+configuration performs no directory or permission probe and cannot reset failure state or move an
+existing file. If the captured primary location is unavailable during initial establishment, the
+session tries one application-associated directory under
+`Environment.SpecialFolder.LocalApplicationData`. It selects one UTF-8 file named with the UTC
+allocation timestamp and a GUID token, creates missing directories and avoids an existing-name
+collision. The selected pathname is retained for the session, and later records append one
+`Environment.NewLine` after the complete native rendered record.
+
+Initial inability to establish either location is remembered: the automatic attempt returns a
+mandatory output failure on that call and later calls do not keep probing or silently switch
+locations. After a pathname is selected, a later open, write, flush or disposal failure also remains
+an output failure; the record is not replayed, relocated or retried. Consumers should handle the
+existing `LogDispatchException` failure contract and should configure the primary directory before
+the first log call when the host's base directory is not an appropriate output location. This is
+additive API surface within the unreleased v4-direction change, whose automatic output, fallback
+suppression and failure semantics are breaking behavior decisions; the version file remains `3.0.1`.
+
 # v3.0.1
 ### Build target for Net 6.0
 Library now targets .Net 6.0

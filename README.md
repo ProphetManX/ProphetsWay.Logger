@@ -8,7 +8,8 @@ Route log messages to console, file, event, or custom destinations with per-dest
 > whole-entry label selection are now implemented alongside the six native severities.
 > M4-A adds shared UTC event time, invariant value rendering and quoted single-line text
 > with native scope boundaries. M4-B1 implements explicit-file append/reset, fixed-path output
-> and physical encoding/termination. Automatic-session coordination and recovery (M4-B2) remain pending.
+> and physical encoding/termination. M4-B2 now integrates ordinary and exact-`T` automatic output
+> into one shared UTF-8 session file, with initial-only recovery and remembered initialization failure.
 > Supplied destinations use guarded entrypoints and protected `LogCore` hooks; subclasses
 > must migrate their old `Log` overrides. This describes current source, not the published
 > NuGet package, a completed final acceptance gate, or release certification.
@@ -109,6 +110,7 @@ unchanged default `Debug` mask does not accept Trace.
 `Logger.ClearDestinations()` clears plain registrations; `Logger.ClearDestinations<T>()`
 clears registrations for that metadata type. Removing or clearing does not dispose your
 destinations. Do not log after removing the last destination unless you intend fallback.
+For no-setup output and optional startup configuration, see [Automatic File Output](#automatic-file-output).
 
 ### Evaluate A Label Policy
 
@@ -437,6 +439,7 @@ The tables summarize the current declarations, not proposed APIs.
 | `DestinationLabelPolicy.Mode` / `Labels` | Read the selected mode and copied, unique, read-only membership. |
 | `DestinationLabelPolicy.Allows(IEnumerable<SensitivityLabel> effectiveLabels)` | Synchronous Boolean membership decision; no output operation. |
 | `Logger.AddDestination` / `RemoveDestination` / `ClearDestinations` | Manage plain registrations; generic overloads manage registrations keyed by `T`. |
+| `Logger.ConfigureAutomaticFileHostDirectory(string directory)` | Set only the automatic file's primary directory before initial establishment starts; no filesystem I/O or recipient registration. |
 | `ILoggerMetadata` / `MetadataExtensions` | Optional empty marker and the six metadata extension helpers below. |
 
 ### Native Scope And Delivery Members
@@ -693,11 +696,13 @@ what to print. See the real call patterns in
 Ordinary explicit registrations and every exact declared-`T` route are independent, including
 interface types such as `T = ILoggingDestination`. Typed routing does not search base types,
 implemented interfaces, or the metadata object's runtime subtype. If that exact type has no
-enabled registered destination, current typed logging still falls back to plain logging **without
-the metadata**, preserving the already captured annotation, native scopes and UTC event time.
-Register an enabled typed destination to retain metadata; typed calls do not automatically broadcast
-to plain destinations when that route is enabled, even if all its recipients reject the entry.
-Independent explicit routes do not imply completed independent automatic-file routes.
+enabled registered destination, its automatic recipient uses the native typed renderer and the
+same session file as ordinary automatic output. It retains metadata, including null/default values,
+with the original annotation, native scopes and UTC event time. Rendering still follows the
+[closed scalar rules](#scalars-and-explicit-formatting), not arbitrary object serialization.
+Typed calls never forward to ordinary registrations. Any enabled compatible explicit recipient
+suppresses only its own route's automatic output, even when it rejects or fails; another route
+can still use the shared file.
 
 ### Implement A Guarded Custom Destination
 
@@ -1039,7 +1044,7 @@ cleanup errors are local errors too, not `LogDispatchException` or `DispatchFail
 
 ### Failure Reports And Return Policy
 
-On configured routes and supplied guarded direct calls, failure handling depends on the observed
+On explicit or automatic routes and supplied guarded direct calls, failure handling depends on the observed
 boundary, not foreign exception text or type. Valid severity/label rejection is not a failure and
 does not activate fallback. Independent recipients are attempted once in captured order, without
 rollback or retries; another recipient succeeding does not cancel a mandatory failure.
@@ -1048,6 +1053,7 @@ rollback or retries; another recipient succeeding does not cancel a mandatory fa
 | --- | --- | --- |
 | Logger-invoked severity callback throws | `LogFailureStage.Eligibility = 1` | Throw `LogDispatchException`. |
 | Selected legacy/contextual invocation, delivery hook, rendering or callback throws | `LogFailureStage.Output = 2` | Throw `LogDispatchException`. |
+| Automatic initial establishment fails at both locations, remembered initial failure, or automatic output fails | One `LogFailureStage.Output` descriptor at the implicit slot after all captured explicit slots; no core-capture failure | Throw `LogDispatchException`; qualifying initial secondary success is normal success. |
 | Opted-in label-policy evaluation unexpectedly fails | `LogFailureStage.LabelCheck = 3` | Withhold that recipient, report and return unless a mandatory failure also occurred. |
 | Shared entry/context capture unexpectedly fails | `CoreCaptureFailureCount = 1`, no recipient descriptor | Withhold the incomplete entry from all affected recipients, report and return. |
 
@@ -1055,6 +1061,14 @@ No strict-mode selector is supplied by these APIs. A normal return proves neithe
 successful capture/checks. Value/scope construction and argument errors remain local exceptions,
 not fabricated dispatch failures. A mandatory failure still throws if its descriptor falls beyond
 the retained limit; result selection is not inferred from the truncated descriptor list.
+
+If neither initial automatic location is usable, Logger remembers a safe failure marker, not
+the raw causes. Later default-dependent calls get fresh reports/correlations and exceptions without
+new path or permission probes. `LogDispatchException.Message`, `ToString()` and best-effort stderr
+give fixed guidance to make an appropriate default location writable or configure a compatible
+destination, never the resolved path or payload. Fixing permissions alone does not retry this session:
+use a compatible enabled explicit recipient to bypass failure **only on its route**, or start a fresh
+loaded Logger session. Removing/disabling/clearing that recipient exposes the same remembered failure.
 
 `LogFailureReport` contains a generated `CorrelationId`, at most eight immutable `Failures` in
 encounter order, `OverflowCount` for further failed recipients, and `CoreCaptureFailureCount`
@@ -1095,11 +1109,11 @@ they are not the bounded diagnostic channel. Custom inspection and retention rem
 
 ### Current Logging And Text Output
 
-- With no enabled plain destination, Logger adds a timestamp-named relative file destination using local
-    time and the current `FileDestination` defaults, now append rather than reset. This default-argument
-    change does not implement the M4-B2 automatic-session coordinator or recovery behavior.
-    Its `Debug` mask still excludes Trace: **no-setup Trace delivery is not provided**.
-    Configure an explicit `Trace` destination for all six severities.
+- With no enabled compatible explicit recipient on the captured ordinary or exact-`T` route,
+    Logger selects one implicit automatic recipient without registering it or consulting another
+    route. It uses `Trace` and no label filter, covering all six bits and valid composite levels.
+    Ordinary and typed automatic records share one UTF-8 session file; typed metadata is retained.
+    See [Automatic File Output](#automatic-file-output) for location, configuration and failure rules.
 - Explicit registration uses reference identity, never recipient equality or hashing. Distinct
     equal objects remain distinct; the same instance may register on different compatible routes.
     Duplicate same-route adds leave membership unchanged. Removal targets only the exact reference;
@@ -1116,9 +1130,59 @@ they are not the bounded diagnostic channel. Custom inspection and retention rem
     Stop producers and await synchronous calls before disposing your recipients. Membership capture
     does not serialize callers or shared recipients, impose cross-thread delivery order, or freeze
     custom recipient state, eligibility results, metadata or exception graphs.
-- The failure rules above cover configured dispatch and supplied guarded direct attempts, not
-    qualification of unconfigured file establishment, arbitrary independent direct code or a
-    guarantee that all I/O completes. Borrowed lifetime and retained-object responsibilities remain.
+- The failure rules above cover explicit and automatic dispatch and supplied guarded direct attempts,
+    not arbitrary independent direct code or a guarantee that all I/O completes. Borrowed lifetime
+    and retained-object responsibilities remain.
+
+#### Automatic File Output
+
+Ordinary and every exact-`T` automatic route share one session in the loaded static Logger state.
+Separate processes, AppDomains or independently loaded assembly copies do not share that state.
+An enabled compatible explicit recipient suppresses only its own route, including rejection or
+failure. Removing or disabling the last one resumes the same automatic session, not a new file.
+
+The normal primary directory is the host's `AppContext.BaseDirectory`, not the current working
+directory, Logger's assembly location or the `dotnet` installation. To choose a different primary,
+configure it during startup before any automatic establishment begins:
+
+> **Illustrative** — not currently present in the repo.
+
+`ProphetsWay.Utilities.Logger.ConfigureAutomaticFileHostDirectory("logs");`
+
+Then, with no enabled ordinary recipient, `ProphetsWay.Utilities.Logger.Trace("Startup");`
+uses automatic output. The relative `logs` directory is resolved once against the current directory
+**at configuration time** using `DirectoryInfo.FullName`. Configuration creates no directory/file,
+checks no permissions and registers no recipient. Later successful configuration calls replace the
+override only before initialization; once establishment starts, even the same path is rejected with
+`InvalidOperationException`. Null throws `ArgumentNullException`; empty or framework-rejected path
+syntax throws `ArgumentException`. Other path-normalization errors remain ordinary local errors,
+not sanitized dispatch diagnostics. Failed calls change nothing; invalid-input/state precedence is
+unspecified. Null/empty are not reset requests.
+
+Only initial primary establishment failure permits a secondary attempt: one `app-` directory
+component followed by the full 64 lowercase SHA-256 hex digits of the normalized host-base key,
+directly under `Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)`.
+The key comes from the captured host base, **not the primary override**. Unavailable naming/root
+inputs fail that location; Logger does not substitute CWD or another profile. This is host-base
+association, not logical-application identity: equal keys share the directory, and physical aliases
+need not share a key. It supplies no tenant isolation, ACL protection or confidentiality.
+
+Filesystem establishment waits for a selected, fully rendered record. Initial allocation uses
+`Default Log <UTC>-<Guid token>.log`, invariant UTC and exclusive `CreateNew`, leaving occupied
+candidates untouched. Once selected, every later call appends or creates a missing file at that
+**same pathname**, regardless of later CWD changes or route suppression/reactivation. Each record
+is UTF-8 with one `Environment.NewLine` suffix, no added BOM and no leading blank line. Existing
+content is neither inspected nor repaired. See the exact path rules in
+[AutomaticFilePaths.cs](ProphetsWay.Logger/AutomaticFilePaths.cs) and session behavior in
+[AutomaticFileSession.cs](ProphetsWay.Logger/AutomaticFileSession.cs).
+
+File effects are serialized across automatic routes and handles close after each attempt; rendering,
+callbacks, registration changes and reporting remain outside that coordination. Once a path is
+selected, write/flush/close failures or later open failures cannot select the secondary, replay the
+entry or allocate another session filename. A later call is a new attempt at the selected path.
+There is no crash-durability or cross-process ordering guarantee, public session reset, disposal,
+strict-mode selector or selected-path inspection API. Intended records are not redacted; choose
+explicit destinations and filesystem access/retention controls for your deployment.
 
 #### Explicit File Output
 
@@ -1193,7 +1257,8 @@ redaction, confidentiality, lossless object serialization or proof of downstream
 Each text base builds the whole record before one `PrintLogEntry` call. That string is non-null,
 single-line and **has no terminator**; the sink owns termination. Console retains its `WriteLine`
 handoff. `FileDestination` appends one `Environment.NewLine` suffix using the selected encoding,
-as described above. This explicit-file behavior does not qualify automatic-file lifecycle or recovery.
+as described above. Automatic output uses the same suffix with UTF-8; its separate lifecycle and
+initial-only recovery rules are described under [Automatic File Output](#automatic-file-output).
 
 #### Scalars And Explicit Formatting
 
@@ -1262,14 +1327,13 @@ and independent-attempt reporting rules. This source status is not full-v4 or re
 the permanent regression, compiled-example and parent final acceptance gates remain separate.
 
 M4-B1 now implements append-by-default explicit files, construction-only reset, fixed selected paths
-and physical record encoding/termination. M4-B2 automatic-session coordination, owned-resource
-lifetime, fixed automatic-file recovery/reuse and remembered initialization failure remain
-unimplemented. Both Microsoft logging bridges remain outside this native slice (M5).
-Unconfigured typed fallback still forwards to ordinary logging; the existing default-file path is
-not qualified by the in-memory rendering checks. Preserving its captured context/time is not a
-fallback lifecycle fix. Explicit membership safety is not a guarantee of all
-concurrency safety. Microsoft severity conversion/None handling is not supplied by this native enum.
-The implemented configured-route failure behavior above is not delivery of every policy in
+and physical record encoding/termination. M4-B2 now integrates the shared automatic session,
+primary configuration, typed metadata retention, initial-only recovery, fixed-path reuse and
+remembered initialization failure. Its final documentation-compilation and independent code/security
+gates remain separate; this is not a claim that the whole B2 acceptance target is complete.
+Both Microsoft logging bridges remain outside this native slice (M5). Explicit membership safety
+is not a guarantee of all concurrency safety. Microsoft severity conversion/None handling is not
+supplied by this native enum. The implemented failure behavior above is not delivery of every policy in
 [docs/requirements.md](docs/requirements.md). Requirements readiness is not delivery.
 
 A false policy result is an ordinary mismatch, not an output failure or instruction to activate
@@ -1341,7 +1405,11 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
     existing bytes and unterminated prefixes are not repaired. Reject undefined encodings during
     setup, and handle ordinary constructor errors locally without expecting console echo or safe
     dispatch diagnostics. Guarded output failures still report safely and must throw. These are
-    unreleased v4 behavioral changes, not a completed automatic-fallback feature or a patch-safe update.
+    unreleased v4 behavioral changes, not a patch-safe update.
+- Review no-setup file assumptions: automatic output now uses the host base or a pre-initialization
+    override, initial-only secondary recovery and one shared UTF-8 file with Trace coverage and typed
+    metadata. It no longer forwards typed fallback to ordinary recipients. Clearing registrations
+    cannot reset the selected path or remembered initial failure.
 
 ## Architecture And Design Decisions
 
@@ -1360,7 +1428,7 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
 
 The accepted direction is recorded in [docs/decision-log.md](docs/decision-log.md).
 M4-A implements native rendering/framing and M4-B1 implements the explicit-file sink behavior above;
-automatic-session lifecycle and bridge work remain separate.
+M4-B2 integrates the automatic session. Final integration gates and the M5 bridges remain separate.
 
 ## Building And Testing Locally
 

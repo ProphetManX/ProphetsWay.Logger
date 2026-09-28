@@ -1081,3 +1081,101 @@ specification quality. The parent must verify the combined document scope and fi
 preservation checks; this verdict substitutes for neither those gates nor publication
 authority. Later consumer/release reviews retain advisory, data-handling and integration
 work outside this target. **No security review is exhaustive.**
+
+## M4-B2 Public Automatic Integration
+
+_Reviewed 2026-09-28 against the promoted [B2 threat model](threat-model.md#L716)
+and [B2 data classification](data-classification.md#L632), including AS1-AS6,
+AS-C1-AS-C7, accepted S01-S30 and owner B11._
+
+### M4-B2 Verdict
+
+**No blocking issues found in the scoped public integration.** Ordinary/exact-T
+selection does not rescue rejected or failed explicit output. The automatic bridge
+turns initial/remembered failure into fresh bounded facts and fixed guidance without
+exposing paths, host keys/digests, payloads or foreign exception graphs. Thrown rendering
+or selected-file failures remain non-initial Output failures. This is code-time review,
+not whole-environment certification, parent acceptance or release permission.
+
+### M4-B2 Findings
+
+Critical 0; High 0; Medium 0; Low 0; Informational 0. No correction, new policy,
+accepted-risk entry or waiver is proposed. No secret literal was observed in the three
+reviewed sources; repository/history secret scanning was not performed.
+
+### M4-B2 Scope And Evidence
+
+Read the complete actual ordinary Logger, generic Logger and LogDispatchException;
+opened the owner, native handoffs/renderers, report carrier, and focused fixture/canary
+paths. The target is [M4B2-integration-r1](../../../.agent-runs/20260927-2317-logger-m4b2-session/slice-02-r1.md).
+Reused [owner review14](../../../.agent-runs/20260927-2317-logger-m4b2-session/14-session-security-review.md)
+only after matching its 33 unchanged supporting production identities, including owner,
+resolver and native rendering. The three changed sources match author28's exact subject.
+[Offline reconciliation](../../../.agent-runs/20260927-2317-logger-m4b2-session/evidence/s33-offline-binding-r1.json)
+also verifies 79 specification inputs, 47 frozen review inputs, 34 setup inputs, 24
+output/compiler manifests, recorded tools and all twelve raw TRXs against their records.
+
+Author28's [bound Final](../../../.agent-runs/20260927-2317-logger-m4b2-session/evidence/integration-final-20260928T075653-5d6be71c2bd94e9a8c77b2fabee40658-final.json)
+records **672 passed, zero failed/skipped per net48/net10.0**: Native 520, Physical 55,
+Paths 37, Session 46, Integration 14. The original eight groups retain exact identities,
+methods and outcomes; new membership matches the audited candidate, whose red history
+is preserved. Two separate readiness executions passed one case each, not extra full-host
+membership. Both library/example build records succeeded; initializer/public-surface
+checks passed. These are verified recorded results, not tests executed by this reviewer.
+
+Authorized README/changelog/security-document edits invalidate whole-old-execution
+manifest reuse, not the separately checked source/specification/tool/TRX bindings.
+The old README compilation does not certify the updated README. **Parent
+post-documentation Final remains required**, including this appended review.
+
+### M4-B2 Coverage
+
+| Area / obligation | Reviewed | Evidence and disposition / limit |
+| --- | --- | --- |
+| Access control first; AS-C1 / AS2 | Both complete dispatchers and native handoffs | [Ordinary selection](../../ProphetsWay.Logger/Logger.cs#L401) and [exact-T selection](../../ProphetsWay.Logger/Generics/Logger.cs#L183) use captured enabled membership. Enabled rejection/failure suppresses fallback; no ordinary forwarding, resnapshot or implicit registration. Trace/NoFilter adapters retain original context/time and typed metadata. Labels/routes are delivery gates, not caller/tenant authentication. |
+| Frozen roots and no-clobber; AS-C2 / AS1, AS3 | Shared-owner integration plus bound review14 | [One inert owner](../../ProphetsWay.Logger/Logger.cs#L188), [configuration forwarding](../../ProphetsWay.Logger/Logger.cs#L772) and unchanged [exclusive reservation](../../ProphetsWay.Logger/AutomaticFileSession.cs#L201) preserve freeze, conditional host-key selection and positive-collision handling. No new allocator, precheck, overwrite or path getter. Ordinary local configuration errors are outside sanitized dispatch. |
+| Uncertain output; AS-C3 / AS3 | Bridge and unchanged owner boundary | [Selected-path output](../../ProphetsWay.Logger/AutomaticFileSession.cs#L166) appends/creates at the same path. Selection precedes encoding/write/flush/disposal; the [bridge catch](../../ProphetsWay.Logger/Logger.cs#L470) cannot replay, relocate or initiate recovery. Same pathname is not persistent physical identity. |
+| Failure memory; AS-C4 / AS4 | State, route bypass and recursive path | [Remembered false](../../ProphetsWay.Logger/AutomaticFileSession.cs#L138) performs no root/key/probe work. Enabled explicit membership bypasses it only for that route; clear/new T cannot reset it. Each failure constructs a fresh [safe report](../../ProphetsWay.Logger/LogFailureReport.cs#L27). |
+| Disclosure and guidance; AS-C5 / AS5, B11 | Every changed failure path and safe carrier | [Call-local Boolean](../../ProphetsWay.Logger/Logger.cs#L470) consumes false directly; caught exceptions force non-initial classification without inspecting causes. One Output position follows all captured slots, core count zero. [Exception construction](../../ProphetsWay.Logger/LogDispatchException.cs#L24) retains only immutable report/category and fixed text: no path/key/digest, payload, foreign Message/StackTrace/Data/InnerException or control backlink. Initial inherited properties retain their safe contract; CLR inspection and later mutation remain excluded. |
+| Reporter containment and bounds; AS-C5 / AS5 | Completion, exception text and canaries | [Completion](../../ProphetsWay.Logger/Logger.cs#L606) contains each subscriber/stderr failure, restores thread-local notification state in finally and still propagates the original mandatory result. Recursive logging runs without recursive notification or remembered-state reprobes. Literal-derived conservative stderr maximum is 258 UTF-16 units including newline, below 512; eight-descriptor accumulation remains. No cross-thread-cycle or rate-limit guarantee. |
+| Locks and resources; AS-C6 / AS4 | Native print closure, completion and bound owner | Rendering finishes before the owner call; reporting follows its return/unwind, outside owner/registry gates. [Per-attempt using](../../ProphetsWay.Logger/AutomaticFileSession.cs#L169) retains owned handles only for that attempt. Borrowed recipients remain borrowed; trusted dependencies are not consumer extension points. |
+| Physical test safety; AS-C7 / AS6 | Bound physical26/specification27 and actual focused helper | [Fresh-copy constructor](../../ProphetsWay.Logger.Test/AutomaticFileIntegrationFixture.cs#L32) and [one-time binding](../../ProphetsWay.Logger.Test/AutomaticFileIntegrationFixture.cs#L83) preserve the real owner/dispatcher and restrict controlled dependencies to unused state. Current source-initializer guard/readiness passed. Controlled fresh copies and owned paths do not prove unmodified actual profile/installation output or hostile-filesystem isolation. |
+| Injection, crypto, secrets and deserialization | Changed sources plus bound native/path controls | No new SQL/command/HTML sink, URL fetch, deserializer, credential or TLS mechanism. Native framing precedes the file sink; it is not redaction. Unchanged SHA-256 host spelling is not authentication/anonymization. No secret literal found in scope; no history, pipeline, cloud or bundled-binary sweep. |
+| Availability, authentication, audit and compliance | Complete scoped checklist / accepted limits | No HTTP/auth/session service, identity-bearing data read, retention/erasure service or tamper-proof audit store. Payload size, file growth, I/O duration and executable consumer hooks remain unbounded by design. AS-A1 provisional Confidential treatment remains; consumers own readership, storage/export protection and minimization. |
+| Dependencies and execution | Offline binding, not new execution | Dated scan reuse below; no tests, fixtures, examples, restore or network operation run. Deployment permissions, actual data/readers, other platforms, OS/runtime servicing and crash durability were not assessed. |
+
+### M4-B2 Dependency Vulnerabilities
+
+Three actual public NuGet queries ran on **2026-09-27 at 18:57 EDT**, using SDK
+10.0.401 `dotnet package list --vulnerable --include-transitive --no-restore` for the
+library, tests and example. This invocation ran **zero new queries**. Fresh
+[offline dependency verification](../../../.agent-runs/20260927-2317-logger-m4b2-session/evidence/s33-dependency-reuse-r1.json)
+matched 21/21 project/restore/tool inputs to those query identities and independently
+parsed seven current resolved graphs containing 41 distinct package/version identities.
+All three recorded commands, public source/project identities, successful exits and
+before/after fingerprint bindings agree. Clean query JSON omits framework arrays;
+the saved resolved-graph inventory supplies that coverage, not an inferred zero graph.
+
+| Package | Version | Advisory | Severity | Direct/Transitive | Fixed in |
+| --- | --- | --- | --- | --- | --- |
+| None reported by the three dated queries | n/a | None at recorded times | n/a | Both included | n/a |
+
+This is limited dated evidence under the continued assignment, not current-feed,
+bundled/native-binary, runtime-servicing or whole-repository historical-CVE clearance.
+
+### M4-B2 Worth Checking And Handoff
+
+No unresolved in-scope suspicion or unmet scoped threat-model control was identified.
+Files remain unredacted and are not promised private by default: every authorized file
+reader sees all accepted records. Deployment readership/ACLs, actual data classification,
+retention and onward export require consumer assessment; they are not new B2 defects.
+Local configuration errors and CLR diagnostic facilities retain their documented limits.
+No new authentication, tenancy, privacy or retention policy was selected.
+
+Code Reviewer v2's report29 and Test Auditor v2's reports26/27 remain separate gates;
+no new cross-owner finding arose. Vanguard must consume this review and its
+[report33](../../../.agent-runs/20260927-2317-logger-m4b2-session/33-integration-security-review.md),
+then run the authorized post-documentation Final and final scope/binding check before
+checkpoint evaluation. No fix, version/Git change, merge, deployment or release is
+authorized by this verdict. Earlier review history is preserved. **No security review
+is exhaustive.**

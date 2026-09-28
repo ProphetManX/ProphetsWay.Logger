@@ -182,7 +182,8 @@ namespace ProphetsWay.Utilities
 
 			if (!Array.Exists(destinations, registration => registration.Settings.Enabled))
 			{
-				DispatchOrdinary(annotations, level, message, ex, context);
+				DispatchAutomatic(destinations.Length + 1,
+					print => new AutomaticTypedDestination<T>(print).LogCaptured(context, level, metadata, message, ex));
 				return;
 			}
 
@@ -246,6 +247,21 @@ namespace ProphetsWay.Utilities
 			}
 
 			CompleteDispatchFailure(failures, overflowCount, 0, mustThrow);
+		}
+
+		private sealed class AutomaticTypedDestination<T> : LoggerDestinations.GenericTextBasedDestination<T>
+		{
+			private readonly Action<string> _print;
+
+			internal AutomaticTypedDestination(Action<string> print) : base(LogLevels.Trace)
+			{
+				_print = print;
+			}
+
+			protected override void PrintLogEntry(string message)
+			{
+				_print(message);
+			}
 		}
 
 		private sealed class TypedRegistration

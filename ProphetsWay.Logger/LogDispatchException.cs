@@ -10,15 +10,27 @@ namespace ProphetsWay.Utilities
 	/// only; wording is unspecified. StackTrace returns null, not erasure of CLR diagnostic state.
 	/// Inherited post-catch mutation, reflection, TargetSite, debugger and serialization are outside
 	/// the sanitized interface. Default-return capture/check failure alone produces no such exception.
-	/// No strict-selection surface or raw diagnostic channel is introduced.</remarks>
+	/// No strict-selection surface or raw diagnostic channel is introduced.
+	/// <para>S21-S25: mandatory automatic output failure uses this same exception and
+	/// report shape. When both initial default locations failed, including a later call
+	/// using remembered failure, Message and ToString include fixed guidance to make
+	/// an appropriate host-application-base or application-specific LocalApplicationData
+	/// location writable, or configure a compatible destination. Exact wording remains
+	/// unspecified. No actual path, host/application name, payload, raw cause or reporter
+	/// failure is included. The report is freshly correlated to this failed call and
+	/// has the same safe values supplied to notification, if notification is attempted.</para></remarks>
 	public sealed class LogDispatchException : Exception
 	{
 		private const string FailureMessage = "Configured log dispatch failed.";
+		internal const string InitialFailureGuidance = "Make the host-application-base or application-specific LocalApplicationData location writable, or configure a compatible destination.";
 		private readonly LogFailureReport _report;
+		private readonly bool _initialFailure;
 
-		internal LogDispatchException(LogFailureReport report) : base(FailureMessage)
+		internal LogDispatchException(LogFailureReport report, bool initialFailure = false)
+			: base(initialFailure ? FailureMessage + " " + InitialFailureGuidance : FailureMessage)
 		{
 			_report = report;
+			_initialFailure = initialFailure;
 			Source = "ProphetsWay.Logger";
 		}
 
@@ -50,7 +62,7 @@ namespace ProphetsWay.Utilities
 		/// Exact formatting is unspecified; this is not serialization of the exception graph.</remarks>
 		public override string ToString()
 		{
-			return FailureMessage;
+			return _initialFailure ? FailureMessage + " " + InitialFailureGuidance : FailureMessage;
 		}
 	}
 }

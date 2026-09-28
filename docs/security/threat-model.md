@@ -710,5 +710,143 @@ blocker is reported in the supplied status packet. Independent Security Reviewer
 post-document parent final acceptance remain pending: neither a preparation label nor
 green execution certifies the modeled source/fixture controls or supplies security clearance.
 No new Open Question, HTTP API Designer handoff or requirements review is introduced.
-No checks were executed here beyond document validation. B2 remains unimplemented;
-accepted controls, design limits and earlier history are unchanged.
+No checks were executed here beyond document validation. Later B2 status is recorded in
+the [B2 addendum](#m4-b2-automatic-session-addendum); this B1 history remains unchanged.
+
+## M4-B2 Automatic-Session Addendum
+
+**Promotion checkpoint: 2026-09-28. SourceNoCodeVerdict.** Promote accepted
+[threat input 08](../../../.agent-runs/20260927-1431-logger-m4b-continuation/08-m4b2-session-threat-input.md),
+[design 07](../../../.agent-runs/20260927-1431-logger-m4b-continuation/07-m4b2-session-contract.md)
+composed with [repair 10](../../../.agent-runs/20260927-1431-logger-m4b-continuation/10-m4b2-session-contract-repair.md)
+under [acceptance 11](../../../.agent-runs/20260927-1431-logger-m4b-continuation/11-m4b2-session-rereview.md),
+and current [owner B01-B12](../../../.agent-runs/20260927-2317-logger-m4b2-session/02-session-internal-contract.md).
+[Assignment r1](../../../.agent-runs/20260927-2317-logger-m4b2-session/assignment-r1.md)
+and [M4B2-integration-r1](../../../.agent-runs/20260927-2317-logger-m4b2-session/slice-02-r1.md)
+authorize this scoped promotion. Earlier M4-A/B1 requirements/history remain; this is not
+a new whole-repository audit, security verdict or release certification.
+
+The actual [ordinary dispatcher/bridge](../../ProphetsWay.Logger/Logger.cs),
+[exact-T dispatcher](../../ProphetsWay.Logger/Generics/Logger.cs),
+[safe exception](../../ProphetsWay.Logger/LogDispatchException.cs),
+[session owner](../../ProphetsWay.Logger/AutomaticFileSession.cs) and
+[path resolver](../../ProphetsWay.Logger/AutomaticFilePaths.cs) were opened. They locate
+the implemented boundary to which the accepted requirements below apply; source presence
+does not establish independent security clearance. The
+[B2 field inventory](data-classification.md#m4-b2-automatic-session-addendum) covers the
+new carriers and retains AS-A1's unbounded, provisional Confidential treatment.
+
+### Interview, Flows And Exposure
+
+Actors remain the consumer configurator, host/operator, producer, selected executable
+recipient/formatter, diagnostic observer and filesystem reader/writer. Topology is
+synchronous local capture, route selection, native rendering, shared-owner OS file I/O
+and separate bounded failure reporting. Executable consumer code has host-process rights.
+D013 leaves deployment readers, tenancy, retention/erasure and OS/storage protection to
+consumers; none is silently supplied by a shared file or deterministic directory name.
+No unanswered scoped actor/tenancy/topology question blocks this utility design.
+
+AS1-AS6 retain 08's identifiers. There is no HTTP response, business-row retrieval,
+password store or soft-delete entity. For file readback the ownership rule is explicit:
+only consumer-authorized OS readers should read it, enforced by the consumer's filesystem
+and any export layer, not Logger. All such readers see all records in that file. Route,
+severity and label selection are delivery gates, not tenant or per-record file ACLs.
+
+| Boundary | Flow / permitted exposure | Required withholding and enforcement |
+| --- | --- | --- |
+| AS1 Host to selection | Public primary configuration; captured host base, lexical key/digest/component and conditional local-data root to private selection/OS | Configurator supplies primary only; resolver uses no payload/tenant identity. No public path/key/digest getter or dynamic safe guidance. Ordinary configuration errors retain local contracts. |
+| AS2 Capture to route | One captured ordinary or exact declared-T plan/context/time to native text, retaining typed metadata including null/default(T) | Logger/native guards withhold the entire denied entry before payload work. One route's enabled explicit registration suppresses only its own implicit recipient even when it rejects/fails; never ordinary forwarding/resnapshot/rescue. |
+| AS3 Owner to filesystem | Exclusive first reservation, then complete UTF-8 records at one selected path | Owner preserves occupied candidates, appends/creates without reset, and never replays/relocates uncertain writes. Consumer controls readers and external interference; selected path is not physical identity. |
+| AS4 Route/lifetime to state | Per-call adapters share one owner in loaded static Logger state; private path/failure marker survives route changes | Owner coordinates state/file effects and per-attempt owned handles. No public reset, route-policy sharing, last-record/raw-cause archive or borrowed disposal. |
+| AS5 Failures to observer/caller | Existing bounded generated facts and fixed guidance through DispatchFailed, stderr and LogDispatchException | Bridge/completion exclude payload, resolved paths, host/key/digest, foreign Message/StackTrace/Data/causes and control backlinks. Reports are not log-payload sinks. |
+| AS6 Fixture to environment | Fresh isolated host copies, synthetic data and controlled roots/faults | Separate fixture/setup authority proves child ownership/containment before effects; no actual profile/install writes, unrelated cleanup, link escape, ACL/elevation or network operations follow. |
+
+### Required Controls And Abuse Cases
+
+These are retained design obligations, not findings against the implemented source.
+Priorities express modeled consequence; all seven AS-C controls remain P1.
+
+| Control / crossing | Actor, goal and path | Required property / accepted trace |
+| --- | --- | --- |
+| AS-C1 / AS2, AS4 | Producer or integration routes typed confidential data to an ordinary-only recipient, or uses rejection to reach fallback | Independent captured ordinary/exact-T selection; Trace/NoFilter automatic coverage of all six bits; native original context/time/metadata and whole-entry guards before hooks/output. S01-S08; inherited M4-1/M4-4/M4-7. |
+| AS-C2 / AS1, AS3, AS4 | Concurrent caller or competing process collides with an occupied name or redirects initial output | One coordinated exclusive UTC/token allocation; no overwrite/precheck-based reservation. Freeze primary configuration at initialization; capture host once; secondary uses accepted host-key derivation, not override/CWD/payload. S09-S13/S26-S28; B01-B05. |
+| AS-C3 / AS3 | Failing storage induces partial acceptance then duplicate replay to a secondary/new file | Secondary only for initial location/naming/preparation/reservation failure. Publish selected path before record work; encoding/seek/write/flush/close or later-open failures preserve it and propagate, never replay/copy/relocate. Later calls append/create at that same path. S14/S17-S19; B06-B09. |
+| AS-C4 / AS4, AS5 | Repeated calls exhaust probing after double failure, or cached failure blocks unrelated explicit routes | Remember only bounded initial-failure state, with no new lookup/key derivation/probe. Enabled compatible explicit routes bypass it only for themselves, including rejection; reactivation does not reset state. Fresh report/correlation for each failed call. S15-S16; B06/B11. |
+| AS-C5 / AS5 | Filesystem/formatter injects path/payload diagnostics, or a throwing/reentrant observer masks original failure | Per-call false means initial failure; thrown output means non-initial failure. One implicit Output descriptor after all captured explicit slots, never per root or core capture. Mandatory safe propagation, fixed initial guidance, original report bounds and contained reporters outside gates. S21-S25; B11. |
+| AS-C6 / AS2-AS4 | Reentrant callbacks or concurrent route mutation deadlock output, interleave records or close another call's stream | One session gate for state and each complete physical attempt; no registry lock nesting. Native rendering, consumer callbacks and reporting stay outside. Trusted platform dependencies run inside, cannot reenter/log/notify/acquire registry locks, and are not consumer extension points. Owned returned streams are disposed per attempt; no persistent-stream retirement service. S20; B09-B10/B12. |
+| AS-C7 / AS6 | Stale names, process-global changes or redirected paths make tests damage unrelated storage | Fresh owned children under the settled test parent, component-aware containment/reparse rejection, isolated loaded state, bounded authorized effects and quiesced owned cleanup. Fault wrappers preserve real owner/stream behavior; synthetic fixture output is not real-profile proof. D021/AC-22.4; B12; current assignment. |
+
+**Selection and recovery detail:** normal primary is captured `AppContext.BaseDirectory`;
+the public override uses configuration-time `DirectoryInfo.FullName` and freezes before
+establishment. Configuration alone performs no file work. At first eligible completed
+record, resolve full host availability once even with an override; an unavailable host
+does not defeat a usable override. Normal host/local roots must be fully qualified before
+BCL normalization. Missing/unavailable inputs do not authorize another root or CWD.
+
+Only qualifying initial primary failure resolves the secondary: root-preserving trailing
+separator removal, Windows slash conversion, otherwise ordinal case/Unicode preservation;
+strict UTF-8 key; SHA-256, all 64 lowercase hex digits prefixed `app-`, directly beneath
+the conditional LocalApplicationData root. Unavailable key means no local-root lookup;
+unavailable naming/root is failed establishment, not a fabricated file-open attempt.
+Successful primary never resolves unused secondary inputs. Shared keys share a directory;
+aliases/casing/Unicode variants need not. This is neither authentication, tenant separation,
+logical-application uniqueness, anonymization nor a hash-collision/physical-identity guarantee.
+
+Initial reservation uses exclusive creation; only a positive already-exists result changes
+the token, retaining allocation UTC. No overwrite, generic I/O-as-collision retry or cleanup
+of incidental abandoned artifacts. Secondary success is normal success without an
+intermediate failure report. Both locations unusable yields remembered failure, not a
+cached exception. Established output appends UTF-8 plus exactly one suffix newline, without
+preamble, leading separator, content/binary inspection or prefix repair. Missing file means
+same-path creation; missing parent/later open failure is output failure, not recovery.
+
+**Safe failure detail:** one positive implicit position follows preceding disabled explicit
+slots. Preserve at most eight descriptors during accumulation plus overflow, existing
+core-capture semantics, fresh correlation and stderr's 512 UTF-16-unit inclusive-terminator
+limit. Only initial/remembered failure adds fixed location-kind/configure-destination
+guidance to Message/ToString and bounded stderr; no new public failure shape or raw cause.
+Rendering failures cannot masquerade as location failures. Subscriber/stderr exceptions
+cannot replace the original result; managed-thread recursive-notification suppression
+does not suppress nested logging or guarantee protection from cross-thread cycles.
+Ordinary explicit construction/configuration errors remain outside this safe channel.
+
+### B2 STRIDE By Crossing
+
+| Crossing | Spoofing | Tampering | Repudiation | Information disclosure | Denial of service | Elevation of privilege |
+| --- | --- | --- | --- | --- | --- | --- |
+| AS1 | Host/digest is not authenticated identity | Frozen lexical selection, no payload redirection | Configuration is not audit evidence | Path/key/digest excluded from safe output | Unavailable roots fail; no remembered-state reprobes | Host OS rights, no path sandbox |
+| AS2 | T/labels/time are not principals | Original route/context and native framing | No receipt/idempotence | Whole-entry guard; no cross-route fallback | Hooks/record size remain unbounded | Consumer code retains process rights |
+| AS3 | Filename does not prove ownership | Exclusive initial allocation; fixed append/create, no replay | Flush/return is not durable audit | Shared readers see every accepted record | Collision pressure, blocking/full storage; no quota/pruning | No external-writer or physical-identity isolation |
+| AS4 | New T/clear is not a new session | Coherent state; independent suppression | Failure marker is not history | No retained record/raw failure graph | Owned handles; no callback lock inversion | One route cannot redefine another's policy |
+| AS5 | Generated IDs are not credentials | Immutable original facts; reporter failure contained | Notification may be absent | Bounded safe interface only, not CLR serialization | Per-call bounds, not rate limits | No cause/control backlink through reports |
+| AS6 | A fresh-looking name is not ownership proof | Containment and real production-boundary exercise | Preserve evidence, not fabricated success | Synthetic data/controlled roots only | Quiesce hosts/handles before cleanup | No elevation or unrelated-root authority |
+
+### Status, Limits And Handoff
+
+[Implementation report 28](../../../.agent-runs/20260927-2317-logger-m4b2-session/28-integration-implementation.md)
+records its bound Final run: **672 passed per net48/net10.0, zero failed/skipped**, including
+14 integration cases per framework, with both library assets/example built. This is dated
+reported execution, not a new acceptance count, rerun or independently reproduced result
+by this author. Actual implementation is present; it is not described as untested merely
+because external deployment conditions remain unverified. Bounded fresh-copy tests use
+controlled owned roots; they do not prove unmodified real host/profile behavior, deployed
+readership/permissions, cross-platform fidelity, crash durability or security clearance.
+
+Highest-consequence modeled exposure remains unbounded typed payload crossing into the
+wrong recipient/file readership. Require **AS-C1 first**; AS-C5 separately protects the
+diagnostic channel. These are requirements, not a new vulnerability verdict. No new
+accepted risk is invented: D012/D020 deliberately provide quick-start fixed-path output,
+leaving existing-content suitability and external interference to developers; D013 leaves
+readers, storage, costs and retention with consumers. No authentication, ACL, privacy,
+redaction, quota, retention, replay, global ordering, exactly-once or durability service
+is added. Attempted disposal cannot prove a defective trusted dependency/OS released its
+resource; failure still propagates, without retries or retained causes (B09).
+
+**Open Questions proposed:** none for this promotion. AS-A1 is the only retained
+classification assumption, replaced by inspected consumer data/configuration. No new
+legal obligation or consent rule follows; actual personal data plus jurisdiction/role
+facts would trigger the consumer compliance questions in the classification document.
+Independent **Security Reviewer v2, report 33**, must assess current source/evidence
+against AS1-AS6/AS-C1-AS-C7 and inherited controls. Its verdict and parent acceptance
+remain separate. No HTTP API Designer workstream, release approval or implementation
+security clearance is supplied here.

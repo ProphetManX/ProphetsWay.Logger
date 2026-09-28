@@ -47,8 +47,8 @@ namespace ProphetsWay.Utilities
 	/// resources. Retaining recipients own capture before return and later completion/cleanup.
 	/// Fallback is selected only for a route without an enabled compatible explicit registration,
 	/// never because of denial or failure. Ordinary and exact-T routes remain distinct, including
-	/// when another route is populated. File establishment/recovery and adaptation behavior remain
-	/// their separately specified dependencies, not implemented by this contract snapshot.
+	/// when another route is populated. Automatic file behavior follows the session contract below;
+	/// adaptation is outside this slice.
 	/// Reports expose only generated identifiers, boundary codes and counts, never entry/context,
 	/// raw failure causes or backlinks. Secondary reporters cannot change original result policy.
 	/// Recursive notification suppression is not entry suppression or a scope-propagation store.
@@ -58,7 +58,105 @@ namespace ProphetsWay.Utilities
 	/// event timestamp before recipient callbacks as part of its completed context.
 	/// Trusted handoffs and any internal forwarding of that same invocation retain
 	/// its time and membership; recursive calls capture anew. The timestamp is
-	/// independent of filename allocation and promises neither uniqueness nor order.</para></remarks>
+	/// independent of filename allocation and promises neither uniqueness nor order.</para>
+	/// <para>S01-S08: ordinary and each exact declared-T route select their automatic
+	/// recipient only when the original captured route has no enabled compatible
+	/// explicit registration. An enabled rejecting or failing recipient still suppresses
+	/// that route's default. An automatic recipient is an implicit final captured slot,
+	/// not a published explicit registration or a forward to another route. Its mask is
+	/// Trace and it adds no label filter. Typed fallback uses the native typed renderer
+	/// and retains metadata, including null/default(T), with the original captured
+	/// context and event time. No public direct-call guard is re-entered.</para>
+	/// <para>S09-S20: all automatic routes of this loaded static Logger session share
+	/// one owner and one selected UTF-8 pathname. Eligibility and complete native
+	/// rendering precede initial establishment. ConfigureAutomaticFileHostDirectory
+	/// can replace only the primary root, and only before establishment starts; it
+	/// does not determine the secondary component. The normal primary is the consuming
+	/// host's AppContext.BaseDirectory. The secondary is one application-associated
+	/// component directly under Environment.GetFolderPath with
+	/// Environment.SpecialFolder.LocalApplicationData, as specified below.</para>
+	/// <para>S09.A-C: on the coordinated transition to Initializing, freeze the selected
+	/// primary override and capture AppContext.BaseDirectory once, resolving its full
+	/// path or unavailable result. This happens in guarded automatic output, not in
+	/// configuration or static initialization. Null, empty, failed retrieval, a path
+	/// that is not fully qualified, or Path.GetFullPath failure means unavailable.
+	/// Require full qualification before normalization: a complete platform root
+	/// independent of current directory, current drive and per-drive current directory.
+	/// On Windows, drive-relative C:folder and current-drive-rooted \folder are not
+	/// fully qualified; complete drive-absolute/UNC roots follow the executing BCL's
+	/// supported filesystem-path rules. On Unix the root is /. Do not manually trim
+	/// whitespace, expand environment variables, substitute roots, inspect permissions
+	/// or existence, or resolve physical identity/links. Otherwise use the executing
+	/// BCL's full-path semantics and preserve case for filesystem use. An unavailable
+	/// host base cannot prevent using a configured primary override. Do not recapture
+	/// the host value for secondary selection or later calls.</para>
+	/// <para>S09.D-E: derive the secondary naming key from that full host base, never
+	/// from the explicit override. Remove trailing native or alternate directory
+	/// separators only while the string is longer than Path.GetPathRoot(fullHostBase),
+	/// retaining the complete root. On Windows replace backslashes in that result
+	/// with /. On other platforms leave remaining characters unchanged. Preserve case
+	/// and every other character ordinally; do not normalize Unicode, trim additional
+	/// whitespace, expand variables or extract a filename/stem. Only this key is
+	/// transformed, not the filesystem root. Encode the complete key as strict UTF-8
+	/// without a BOM, equivalent to new System.Text.UTF8Encoding(false, true).GetBytes(key).
+	/// An unpaired UTF-16 surrogate makes derivation unavailable, not a replacement
+	/// character or fallback name. SHA-256 those bytes and render all 32 digest bytes
+	/// in order as 64 lowercase ASCII hexadecimal digits, without separators or
+	/// truncation. Prefix exactly app- to form one 68-character component. No salt,
+	/// randomness, event time, process ID or per-run token participates; derivation
+	/// failure makes the component unavailable. Record encoding remains S19's rule.</para>
+	/// <para>S09.F-G: only after qualifying initial primary failure, attempt secondary
+	/// resolution. Derive the component first from the captured host base. If that base
+	/// or derivation is unavailable, fail this secondary attempt without looking up
+	/// LocalApplicationData or trying a substitute location. Otherwise obtain the
+	/// stated LocalApplicationData value once and apply the same full-path availability
+	/// rules. If unavailable, fail secondary establishment without substitution.
+	/// Otherwise use exactly Path.Combine(fullLocalApplicationData, component), prepare
+	/// the directory and perform S10/S11 exclusive allocation there. Path construction,
+	/// preparation or reservation failure is establishment failure. No alternative
+	/// profile/root, shortened name, CWD, Logger/entry/calling assembly, process
+	/// installation, payload, metadata, labels, scopes or tenant identity supplies a
+	/// fallback. A missing normal-primary base is an initial primary resolution failure
+	/// only when no explicit override supplies that root. A successful primary never
+	/// resolves the component or LocalApplicationData and is not failed by an unused
+	/// secondary's unavailability. Location resolution is part of the required
+	/// secondary attempt; failure to name it does not claim a file was opened.</para>
+	/// <para>S09.H-I: equal naming keys share a component, including logical applications
+	/// sharing a host base. Missing or shared entry assemblies do not affect selection.
+	/// Physical aliases, casing and Unicode variants need not share a key/component,
+	/// and digest collisions are not promised impossible. This is host-base association,
+	/// not logical-application uniqueness, authentication, tenant separation, physical
+	/// ownership, anonymization, confidentiality or a filesystem sandbox. Shared
+	/// directories still require exclusive session-file allocation. Host paths, naming
+	/// keys, components and digests stay out of safe reports and dynamic guidance.
+	/// No new public identity input, reset or lifecycle service follows.</para>
+	/// <para>S10-S20: invariant UTC session naming with exclusive collision allocation
+	/// is independent of event time. One coordinated initial attempt establishes the
+	/// primary or, only on initial pre-record primary establishment failure, the
+	/// secondary. Successful secondary recovery is not a failed recipient. Unavailable
+	/// required location/naming inputs count as establishment failure; record-rendering
+	/// or record-encoding failure alone does not. If neither initial location is usable,
+	/// remember a safe failure marker without caught causes and apply S21-S25's one
+	/// Output failure, fresh safe guidance and mandatory propagation. Later
+	/// default-dependent calls do not look up host/root inputs, derive names or probe
+	/// paths/permissions again. After selection, append or create at that same pathname;
+	/// writing or uncertain acceptance never permits replay, relocation or another
+	/// session filename. Host, environment and CWD changes cannot move it. Removing or
+	/// disabling explicit routes never resets path or failure memory. An explicit route
+	/// bypasses that memory only for itself. A new loaded session starts fresh. Ordinary
+	/// explicit construction/configuration errors remain local, not sanitized dispatch
+	/// reports. No automatic cleanup of incidental failed-allocation artifacts follows.</para>
+	/// <para>S18-S25: append one completed native record and a suffix Environment.NewLine
+	/// using UTF-8, without an encoding preamble, leading separator or content/identity
+	/// policing. Session-owned file effects are serialized and handles released per
+	/// attempt; rendering, consumer callbacks, registration publication and reporting
+	/// remain outside session coordination. No global caller ordering or durability
+	/// follows. A failed automatic recipient contributes one Output descriptor at its
+	/// captured position, not a core capture count or one descriptor per attempted root.
+	/// Apply existing independent attempts, bounded safe reporting and mandatory
+	/// LogDispatchException. Failed initial establishment includes fixed private-path-safe
+	/// guidance; secondary reporting cannot change the original result. Existing local
+	/// argument errors, capture/check treatment and explicit borrowed ownership remain.</para></remarks>
 	public static partial class Logger
 	{
 		/// <summary>Notifies observers of one bounded safe original-failure report.</summary>
@@ -87,6 +185,7 @@ namespace ProphetsWay.Utilities
 		private const int RetainedFailureLimit = 8;
 		[ThreadStatic]
 		private static bool _reportingFailure;
+		private static readonly AutomaticFileSession AutomaticSession = new AutomaticFileSession();
 
 		/// <summary>Registers a borrowed recipient on the ordinary route with no added restrictions.</summary>
 		/// <param name="newDest">Required non-null ordinary destination.</param>
@@ -264,7 +363,7 @@ namespace ProphetsWay.Utilities
 			DispatchOrdinary(null, level, message, ex);
 		}
 
-		private static void DispatchOrdinary(LogAnnotations annotations, LogLevels level, string message, Exception ex, LogContext capturedContext = null)
+		private static void DispatchOrdinary(LogAnnotations annotations, LogLevels level, string message, Exception ex)
 		{
 			OrdinaryRegistration[] destinations;
 			LogContext context;
@@ -274,21 +373,12 @@ namespace ProphetsWay.Utilities
 				{
 					destinations = OrdinaryDestinations.ToArray();
 				}
-				context = capturedContext ?? LogScopeHandle.Capture(annotations, DateTimeOffset.UtcNow);
+				context = LogScopeHandle.Capture(annotations, DateTimeOffset.UtcNow);
 			}
 			catch (Exception)
 			{
 				CompleteDispatchFailure(null, 0, 1, false);
 				return;
-			}
-
-			if (!Array.Exists(destinations, registration => registration.Settings.Enabled))
-			{
-				AddDestination(new FileDestination($"Default Log {DateTime.Now:yyyy-MM-dd hh-mm}.log"));
-				lock (DestinationLock)
-				{
-					destinations = OrdinaryDestinations.ToArray();
-				}
 			}
 
 			DestinationLabelPolicy[] intrinsicPolicies;
@@ -305,6 +395,13 @@ namespace ProphetsWay.Utilities
 			catch (Exception)
 			{
 				CompleteDispatchFailure(null, 0, 1, false);
+				return;
+			}
+
+			if (!Array.Exists(destinations, registration => registration.Settings.Enabled))
+			{
+				DispatchAutomatic(destinations.Length + 1,
+					print => new AutomaticOrdinaryDestination(print).LogCaptured(context, level, message, ex));
 				return;
 			}
 
@@ -368,6 +465,41 @@ namespace ProphetsWay.Utilities
 			}
 
 			CompleteDispatchFailure(failures, overflowCount, 0, mustThrow);
+		}
+
+		private static void DispatchAutomatic(int registrationId, Action<Action<string>> render)
+		{
+			var initialFailure = false;
+			try
+			{
+				render(record => initialFailure = !AutomaticSession.TryWriteRecord(record));
+				if (!initialFailure)
+					return;
+			}
+			catch (Exception)
+			{
+				initialFailure = false;
+			}
+
+			List<LogFailureDescriptor> failures = null;
+			var overflowCount = 0;
+			RecordFailure(ref failures, ref overflowCount, registrationId, LogFailureStage.Output);
+			CompleteDispatchFailure(failures, overflowCount, 0, true, initialFailure);
+		}
+
+		private sealed class AutomaticOrdinaryDestination : TextBasedDestination
+		{
+			private readonly Action<string> _print;
+
+			internal AutomaticOrdinaryDestination(Action<string> print) : base(LogLevels.Trace)
+			{
+				_print = print;
+			}
+
+			protected override void PrintLogEntry(string message)
+			{
+				_print(message);
+			}
 		}
 
 		internal static void DispatchDirect(LoggingDestinationCore destination, LogContext context, LogLevels level, Action<LogContext> deliver)
@@ -471,7 +603,7 @@ namespace ProphetsWay.Utilities
 			CompleteDispatchFailure(failures, overflowCount, 0, true);
 		}
 
-		private static void CompleteDispatchFailure(List<LogFailureDescriptor> failures, int overflowCount, int coreCaptureFailureCount, bool mustThrow)
+		private static void CompleteDispatchFailure(List<LogFailureDescriptor> failures, int overflowCount, int coreCaptureFailureCount, bool mustThrow, bool initialFailure = false)
 		{
 			if (failures == null && coreCaptureFailureCount == 0)
 				return;
@@ -500,8 +632,9 @@ namespace ProphetsWay.Utilities
 					try
 					{
 						Console.Error.Write(string.Format(CultureInfo.InvariantCulture,
-							"Log dispatch failed. CorrelationId={0:D}; failures={1}; overflow={2}.\n",
-							report.CorrelationId, (long)report.CoreCaptureFailureCount + report.Failures.Count + report.OverflowCount, report.OverflowCount));
+							"Log dispatch failed. CorrelationId={0:D}; failures={1}; overflow={2}.{3}\n",
+							report.CorrelationId, (long)report.CoreCaptureFailureCount + report.Failures.Count + report.OverflowCount, report.OverflowCount,
+							initialFailure ? " " + LogDispatchException.InitialFailureGuidance : string.Empty));
 					}
 					catch (Exception)
 					{
@@ -514,7 +647,7 @@ namespace ProphetsWay.Utilities
 			}
 
 			if (mustThrow)
-				throw new LogDispatchException(report);
+				throw new LogDispatchException(report, initialFailure);
 		}
 
 		/// <summary>Logs a message with the exact TraceOnly bit.</summary>
@@ -605,6 +738,42 @@ namespace ProphetsWay.Utilities
 				throw new ArgumentNullException(nameof(message));
 
 			Log(LogLevels.Critical, message, ex);
+		}
+
+		/// <summary>Configures the primary host directory for this run's automatic file before initial establishment starts.</summary>
+		/// <param name="directory">Required nonempty directory path. Relative paths use the current directory at this configuration call, not at a later log call.</param>
+		/// <exception cref="ArgumentNullException">directory is null; ParamName is directory.</exception>
+		/// <exception cref="ArgumentException">directory is empty or the executing framework rejects its path syntax; ParamName is directory for the ordinary argument mapping.</exception>
+		/// <exception cref="InvalidOperationException">Automatic initial establishment has already started, succeeded or failed; configuration is unchanged.</exception>
+		/// <exception cref="Exception">Other framework path-normalization errors propagate under their ordinary local contracts, without a dispatch report.</exception>
+		/// <remarks>
+		/// <para>S26-S28: normalize once using the executing framework's DirectoryInfo
+		/// full-path semantics, then publish the complete primary-directory override
+		/// atomically while the shared automatic session is Uninitialized. Null and
+		/// empty are invalid, not requests to reset or restore a default. No competing
+		/// invalid-argument or invalid-state precedence is promised. A failed call
+		/// publishes nothing. Do not trim, reinterpret the path as a filename or add
+		/// an existence, writability, content or filesystem-identity precondition.</para>
+		/// <para>Before initialization, later successful calls replace the earlier
+		/// primary override; repeating the same selected directory has the same
+		/// effective configuration. At transition to Initializing the selected
+		/// configuration is frozen. A concurrent configuration/initialization race
+		/// publishes a complete override before that transition or rejects configuration
+		/// without changing it. Every call after that transition is rejected, even for
+		/// the same directory. It cannot move an established file or erase failure memory.</para>
+		/// <para>S08/S09/S16/S20/S30: this synchronous operation performs no directory
+		/// creation, file open, permission probe, logging, notification or recipient
+		/// callback. It does not register a recipient, change ordinary/exact-T policy,
+		/// configure the secondary application's identity, modify scope state or dispose
+		/// anything. It owns no caller resource and introduces no async/cancellation
+		/// or lifetime handle. Paths and local path exceptions are ordinary configuration
+		/// information, not promised sanitized dispatch diagnostics. The default without
+		/// an override is the consuming host application's base directory. Secondary
+		/// recovery and actual output remain subject to Logger's automatic-session rules.</para>
+		/// </remarks>
+		public static void ConfigureAutomaticFileHostDirectory(string directory)
+		{
+			AutomaticSession.ConfigureHostDirectory(directory);
 		}
 	}
 }

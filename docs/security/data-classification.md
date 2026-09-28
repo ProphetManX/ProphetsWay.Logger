@@ -626,4 +626,99 @@ a rebranding of the historical baseline or new fixed acceptance counts. No check
 rerun here beyond document validation. Independent Security Reviewer v2 and post-document
 parent final acceptance remain pending; preparation labels and green execution alone
 certify neither source nor fixture controls. No product blocker is reported in the supplied
-status packet. B2 remains unimplemented; this refresh changes no design or security verdict.
+status packet. For later B2 implementation/design status, see the
+[B2 addendum](#m4-b2-automatic-session-addendum); this B1 refresh supplies no security verdict.
+
+## M4-B2 Automatic-Session Addendum
+
+**Promotion checkpoint: 2026-09-28. SourceNoCodeVerdict.** This extends, rather than
+re-audits, the preceding M4-A/B1 inventories. The companion
+[B2 threat model](threat-model.md#m4-b2-automatic-session-addendum) binds accepted
+AS1-AS6, the composed S01-S30 design and current owner B01-B12. No new classification,
+authorization, privacy, ACL, redaction, quota, retention or release policy is selected.
+
+Opened the actual integration in [Logger.cs](../../ProphetsWay.Logger/Logger.cs),
+[Generics/Logger.cs](../../ProphetsWay.Logger/Generics/Logger.cs) and
+[LogDispatchException.cs](../../ProphetsWay.Logger/LogDispatchException.cs), plus the
+complete [AutomaticFileSession.cs](../../ProphetsWay.Logger/AutomaticFileSession.cs)
+and [AutomaticFilePaths.cs](../../ProphetsWay.Logger/AutomaticFilePaths.cs). These
+definitions ground the following inventory, not a verdict that their controls pass.
+Inherited native fields and safe-report properties retain their individual M4-A rows;
+opaque nested consumer fields are not reclassified or guessed from their CLR types.
+
+### Fields And Exposure
+
+**AS-A1, retained from accepted threat input 08:** unseen path, host, key/digest,
+existing-file, record and foreign-diagnostic meanings remain **unbounded, provisionally
+Confidential (C)**. This is not evidence of actual PII, Sensitive PII or Secret values.
+An inspected consumer inventory replaces the assumption. Internal (I) and Public (P)
+retain the earlier baselines. C requires consumer-controlled readership, encrypted
+storage when persisted and protected transport when exported, defending against
+unauthorized readers, stolen media and interception; Logger adds none of those services.
+
+All crossings below are local configuration/call/OS boundaries. "Exposure" identifies
+input-only, private-only and permitted local output, not invented HTTP DTOs.
+
+| Field/carrier | Class / rationale | At rest | In transit | In logs | Exposure |
+| --- | --- | --- | --- | --- | --- |
+| Captured host base / normalized host directory | C; unbounded operational location | Initialization-local value | Host provider to resolver | Excluded from safe reports | Private selection; no path getter |
+| `directory` / `_hostDirectoryOverride` | C; supplied location | Captured full primary root | Configurator to owner | No dispatch diagnostic echo | Input-only public configuration; ordinary local errors are not sanitized reports |
+| LocalApplicationData root / `secondaryRoot` | C; possible profile association | Conditional selection-local value | Host provider to resolver/OS | Generic location kind only in safe guidance | Private; no actual user/profile path in failure output |
+| `key` | C; lexical host association | Temporary string | Resolver only | Excluded | Private; preserves case/Unicode, not physical identity |
+| `keyBytes` | C; strict UTF-8 host key | Temporary bytes | Resolver to SHA-256 | Excluded | Private; hashing input is not redacted data |
+| SHA-256 digest bytes | C; deterministic host association | Temporary digest | Resolver only | Excluded | No secrecy, anonymization or authentication claim |
+| `component` / application-associated directory name | C; same association | Filesystem namespace | Resolver to OS | Excluded from safe guidance/reports | Private selection; `app-` plus 64 lowercase hex digits is not a tenant identifier |
+| Candidate `path` / `_selectedPath` / filename components | C; combined location/activity | Selected pathname retained; OS namespace | Owner to file operations | No safe-report field | Private; fixed logical path, not persistent physical identity |
+| Allocation UTC / `allocationTimestamp` | I; allocation activity | Candidate filename | Naming operation only | Filename, not event-time substitution | No new diagnostic field or authentication |
+| Generated `token` | I; collision discriminator | Candidate filename | Exclusive allocation | Filename only | Not an ownership credential or uniqueness proof without exclusive creation |
+| `_state` / remembered initial failure | I; bounded operational state | Loaded-session lifetime | Owner coordination | Fresh safe facts per failed call | Private; no public reset/history/status API |
+| `allocationTimeSampled` | I; per-initialization control | Temporary local state | Allocation coordination | Not reported | Private; no record-derived input |
+| `TryWriteRecord` Boolean / per-call `initialFailure` / exception `_initialFailure` | I; bounded outcome category | Per call; immutable category on safe exception | Trusted bridge to safe completion | Selects fixed guidance only | No shared last-error query or new public failure field |
+| `_gate` | I; synchronization capability | Owner lifetime | Private coordination | Never serialized | No consumer access or control backlink |
+| `_hostDirectoryProvider` | I; trusted executable dependency | Private owner reference | Deferred host lookup under gate | Never serialized | Internal/test-host only; reachable results remain C |
+| `_localApplicationDataProvider` | I; trusted executable dependency | Private owner reference | Conditional lookup under gate | Never serialized | Not a consumer extension point |
+| `_utcNowProvider` | I; trusted allocation clock | Private owner reference | Naming under gate | Value only in filename | Not trusted event identity |
+| `_tokenProvider` | I; trusted allocation source | Private owner reference | Naming under gate | Value only in filename | Not a credential service |
+| `_createDirectory` | I; trusted OS operation | Private owner reference | Initial preparation under gate | Never serialized | No caller callback or reset authority |
+| `_openFile` / returned `stream` | I; trusted operation/owned handle | Delegate retained; stream per attempt only | Owner to OS | Never serialized | No handle escape; borrowed recipients remain borrowed |
+| Adapter `_print` / per-call render closure | I; executable handoff | Per-call reference only | Completed native text to owner | Not a report field | Private adapter; captured payload remains C |
+| `completedRecord` | C; inherited unbounded intended payload | Temporary native text, then file | Permitted renderer to owner | Accepted record, not sanitized content | No denied-recipient or safe-report exposure |
+| Record `bytes` | C; encoded payload | Temporary bytes, then file | UTF-8 to owned stream | Record plus one suffix newline | No buffer retained between attempts or public byte getter |
+| Existing target bytes | C; uninspected/unbounded content | Consumer-controlled file | Append positioning; no content discovery | Preserved, not repaired/transcoded | No library read/export service |
+| Foreign failure `Message` | C; unbounded path/payload text | No raw-failure archive | Guarded automatic boundary | Excluded from safe output | No raw cause handed to observers/caller |
+| Foreign failure `StackTrace` | C; location/diagnostic text | No raw-failure archive | Same guarded boundary | Excluded | No foreign stack exposure through safe interface |
+| Foreign failure `Data` | C; arbitrary values/capabilities | No raw-failure archive | Same guarded boundary | Excluded | No raw-data/control backlink |
+| Foreign failure `InnerException` / cause | C; nested diagnostic graph | Never cached as failure memory | Same guarded boundary | Excluded | No retained cause in session/report/safe exception |
+| Fixed guidance, filename/encoding/grammar literals | P; authored vocabulary | Constants | Existing text/failure channels | Generic location kinds are permitted | No substitution of actual path, host name, key, digest or payload |
+
+Generated correlation, positive implicit position, `Output`, counts and immutable report
+members keep their M4-A I rows and bounds. Allocation/event time, route type names,
+configuration and complete records do not thereby become safe-report fields. The report
+is not a log-payload sink. Never blanket-serialize a context, file object, metadata or
+exception under a framing or label-match claim; inherited CLR diagnostic exclusions remain.
+
+### Minimization And Limits
+
+The automatic ordinary/exact-T file combines accepted records, not reader permissions:
+every consumer-authorized file reader can read all its records. The consumer selects
+necessity, recipients, OS readership and onward export. Minimize submitted details first;
+do not retain a last record, byte buffer or raw error merely to explain remembered failure.
+Logger performs no silent truncation, redaction, hashing of payloads or secure erasure.
+
+Host-key hashing is filename spelling, not privacy protection: equal lexical keys share
+a directory; physical aliases/case/Unicode variants need not; collisions are not promised
+impossible. Exclusive session-file allocation is still required. No real host/profile
+value, file content, tenant deployment or storage permissions were inspected here.
+
+The existing credential prohibition applies: passwords are hashed with a salted,
+memory-hard password KDF, never encrypted or logged; ProphetsWay.Hasher/general-purpose
+hashes must never be used for credentials. Storage encryption protects stolen disks or
+backups, not compromised applications, over-permissive reads or accepted raw callbacks.
+No field encryption, consent, retention period or erasure policy is invented. No new
+compliance trigger was observed; actual personal-data/jurisdiction/role facts would require
+the consumer assessment already described above. No scoped product question remains.
+
+Implementation is present; the companion model records report 28's green execution and
+its controlled-root limits. Independent Security Reviewer v2 remains the next gate, not
+an approval supplied by this classification. Earlier M4-A/B1 history remains unchanged
+apart from the stale B2 status pointer above.
