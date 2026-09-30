@@ -8,11 +8,16 @@
 		<RootNamespace>ProphetsWay.Utilities</RootNamespace>
 		<AssemblyName>ProphetsWay.Logger</AssemblyName>
 		<PackageId>ProphetsWay.Logger</PackageId>
-		<RepositoryType>GitHub</RepositoryType>
+		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/ProphetManX/ProphetsWay.Logger</RepositoryUrl>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<ApplicationIcon />
 		<Win32Resource />
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<SignAssembly>false</SignAssembly>
 		<PackageIcon>profile.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -38,14 +43,18 @@ Logger.Debug("Hello World!");
 		<Version />
 
 		<Copyright />
-		<PackageProjectUrl />
-		<PackageTags />
+		<PackageProjectUrl>https://github.com/ProphetManX/ProphetsWay.Logger</PackageProjectUrl>
+		<PackageTags>logging;logger;diagnostics</PackageTags>
 		<PackageReleaseNotes />
 		<NeutralLanguage />
 		<AssemblyVersion />
 		<FileVersion />
 		<InformationalVersion />
 		
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TF_BUILD)' == 'True'">
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
 	<ItemGroup>

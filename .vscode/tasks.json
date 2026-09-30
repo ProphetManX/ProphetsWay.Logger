@@ -921,6 +921,141 @@
 			"isBackground": false,
 			"group": "test",
 			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 preparation validate setup",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260928-1946-logger-m5-m6/validate-preparation.ps1",
+			"args": ["-Stage", "Setup"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 preparation Windows baseline",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260928-1946-logger-m5-m6/validate-preparation.ps1",
+			"args": ["-Stage", "Baseline"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 preparation Windows check",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260928-1946-logger-m5-m6/validate-preparation.ps1",
+			"args": ["-Stage", "Check"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 approved public restore",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260928-1946-logger-m5-m6/validate-preparation.ps1",
+			"args": ["-Stage", "Restore"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M6 project setup",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260928-1946-logger-m5-m6/validate-m6-project.ps1",
+			"args": ["-Stage", "Setup"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M6 project bind review",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260928-1946-logger-m5-m6/validate-m6-project.ps1",
+			"args": ["-Stage", "BindReview"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M6 project baseline",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260928-1946-logger-m5-m6/validate-m6-project.ps1",
+			"args": ["-Stage", "Baseline"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M6 project check",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260928-1946-logger-m5-m6/validate-m6-project.ps1",
+			"args": ["-Stage", "Check"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M6 project inspect package",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260928-1946-logger-m5-m6/validate-m6-project.ps1",
+			"args": ["-Stage", "Package"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger renewal setup",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-closeout.ps1",
+			"args": ["-Stage", "Setup"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger renewal bind review",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-closeout.ps1",
+			"args": ["-Stage", "BindReview"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger renewal Windows baseline",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-closeout.ps1",
+			"args": ["-Stage", "Baseline"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger renewal Windows check",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-closeout.ps1",
+			"args": ["-Stage", "Check"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger renewal package",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-closeout.ps1",
+			"args": ["-Stage", "Package"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger renewal freeze checkpoint",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-closeout.ps1",
+			"args": ["-Stage", "FreezeCheckpoint"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
 		}
 	]
 }

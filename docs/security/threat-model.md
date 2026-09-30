@@ -850,3 +850,187 @@ Independent **Security Reviewer v2, report 33**, must assess current source/evid
 against AS1-AS6/AS-C1-AS-C7 and inherited controls. Its verdict and parent acceptance
 remain separate. No HTTP API Designer workstream, release approval or implementation
 security clearance is supplied here.
+
+## M5 Controlled Bridge Threat Addendum
+
+**Design checkpoint: 2026-09-28. SourceNoCodeVerdict.** Focused input for
+[M5-SHAPE-r1](../../../.agent-runs/20260928-1946-logger-m5-m6/slice-01-shape-r1.md),
+under [assignment-r1](../../../.agent-runs/20260928-1946-logger-m5-m6/assignment-r1.md)
+and [activation-r2](../../../.agent-runs/20260928-1946-logger-m5-m6/activation-r2.md).
+All preceding native/file sections and historical statuses remain unchanged. This
+is an approved-design standard for both explicitly selected Microsoft logging
+bridge directions, not review of bridge implementation, dependency clearance or
+completion of G5. No independently authored, unfinished contract report is used.
+
+Reopened [requirements.md](../requirements.md), R-04 through R-24 and G5, and
+[decision-log.md](../decision-log.md), especially D010/D011/D013/D014/D017,
+D018-D022's clause-specific failure amendments and D023/D024's scope limits.
+The owner ratified P01-P12: "Accept all recommendations for items P01 thru P12,
+all of them as recommended." The current activation records permission to proceed
+through M5/M6, not permission to invent security/privacy policy. Exact bridge
+names, signatures and metadata keys remain the contract author/reviewer's work.
+
+### M5 Source Basis And Interview
+
+The following local definitions were opened to identify the native boundaries,
+not to grade their implementation:
+
+- Dispatch and direct selection: [Logger.cs](../../ProphetsWay.Logger/Logger.cs), [Generics/Logger.cs](../../ProphetsWay.Logger/Generics/Logger.cs), [BaseLoggingDestination.cs](../../ProphetsWay.Logger/BaseLoggingDestination.cs), [LoggingDestinationCore.cs](../../ProphetsWay.Logger/LoggingDestinationCore.cs), [DestinationRegistrationSettings.cs](../../ProphetsWay.Logger/DestinationRegistrationSettings.cs) and [DestinationLabelPolicy.cs](../../ProphetsWay.Logger/DestinationLabelPolicy.cs).
+- Capture and raw delivery: [LogContext.cs](../../ProphetsWay.Logger/LogContext.cs), [LogScopeFrame.cs](../../ProphetsWay.Logger/LogScopeFrame.cs), [LogAnnotations.cs](../../ProphetsWay.Logger/LogAnnotations.cs), [LogLabelContext.cs](../../ProphetsWay.Logger/LogLabelContext.cs), [LogLabelOrigin.cs](../../ProphetsWay.Logger/LogLabelOrigin.cs), [LogScopeHandle.cs](../../ProphetsWay.Logger/LogScopeHandle.cs) and [GenericEventDestination.cs](../../ProphetsWay.Logger/LoggerDestinations/GenericEventDestination.cs).
+- Reporting: [LogFailureReport.cs](../../ProphetsWay.Logger/LogFailureReport.cs), [LogFailureDescriptor.cs](../../ProphetsWay.Logger/LogFailureDescriptor.cs) and [LogDispatchException.cs](../../ProphetsWay.Logger/LogDispatchException.cs).
+
+`DispatchOrdinary`, `DispatchTyped`, `DispatchDirect` and `CompleteDispatchFailure`
+locate selection, raw delivery and reporting. Native context owns completed
+membership; the raw event retains original values. Neither is a bridge contract.
+The [M5 field inventory](data-classification.md#m5-controlled-bridge-field-addendum)
+separately identifies D011's semantic carriers and existing native fields, without
+inventing public declarations or unseen business schemas.
+
+| Interview item | Answer and scope |
+| --- | --- |
+| Actors/trust | The developer/configurator, host/operator, integration author and participating logging systems are the actors in the opened [product brief](../product-brief.md). Producers, mappers, formatters, scope providers, recipients and reporters may execute consumer code with host-process privileges. An upstream-influenced producer is an abuse scenario, not a claimed deployed principal. D013 supplies no sandbox. |
+| Tenancy/ownership | No tenant, business row, authenticated retrieval or HTTP API is selected. This is not an assumption of single-tenant deployment: D013/R-24 leave any consumer's tenancy, authorized readers and reference distribution with that consumer. Labels/categories/types do not establish those rights. |
+| Topology | Synchronous in-process native and Microsoft logging calls through explicitly configured, controlled adapters (D005/D011). A selected external provider may have further effects, but no real backend, network/storage topology or deployment is selected or assessed here. |
+| Retention/erasure | D006/D013 assign retained or queued copies and later cleanup to consumers. No duration, secure-erasure, consent, remote completion or storage promise is added. Scope end/provider disposal does not erase previously delivered objects. |
+| Compliance/data | Synthetic evidence only under R-24/G5. No real data or jurisdiction/organizational facts were supplied. Consumer-specific unknowns block that consumer's assessment, not this defined utility boundary. |
+
+**M5-A1:** Unseen raw category/event/state, text, exception/metadata/property/scope
+graphs, label meanings and origins, callback closure contents and foreign failures
+are **unbounded, provisionally Confidential**. This is precautionary analysis, not
+an assertion of inspected PII/Secret values or a library classification policy.
+Only an actual consumer inventory/classification replaces it. No other actor,
+tenancy, topology or privacy assumption is needed for this bounded model.
+
+### M5 Crossings And Exposure
+
+These are logical call, data and ownership crossings, not mutually isolated processes.
+
+| Boundary | Crossing | Ownership/exposure rule and trace |
+| --- | --- | --- |
+| M5-B1 Configuration | Host selects an inbound provider or outbound destination, category routing, mapping and borrowed logger/factory references. | Each direction is explicit; no automatic reverse installation. Host chooses trusted code and readers. Factory category/default versus fixed-logger origin metadata follows AC-18.3; no call-stack inference. R-11/R-17/R-24. |
+| M5-B2 Producer capture | Raw category/event/state/formatter/message/exception, recognized property membership and logical scopes enter the bridge representation; explicit application mapping supplies labels. | Preserve available data, including opaque/scalar state. Copy membership synchronously, not nested graphs. Mapping/producer code already holding payload is outside recipient withholding; no partial entry or permissive rescue on shared capture failure. R-04/R-14/R-17/R-18. |
+| M5-B3 Recipient selection | Captured native route/settings, intrinsic restrictions and complete effective labels determine whether a native recipient or outbound bridge receives the entry. | Whole-entry withholding precedes recipient-local formatting/callback/export; apply supplied direct-call guards too. Inbound logging enforces enablement even without a precheck; a true level/route precheck is not label acceptance. R-06/R-09/R-10/R-19. |
+| M5-B4 Accepted export | Selected outbound bridge hands available record information and distinct ordered scope frames to the supplied Microsoft logger/factory path. | Keep bridge-owned metadata separate from original event entries and current host scopes; preserve repeated names, label origins and original mask. Exported frames unwind in reverse. Accepted local handoff authorizes neither external persistence nor arbitrary provider fidelity. R-17/R-18. |
+| M5-B5 Controlled return | An entry returns through a controlled adapter to a route it has already visited. | Only private per-entry route context governs cyclic-return suppression. Editable application properties, labels, category, text and report IDs are not guard authority. Exception-safe cleanup leaves other original recipients and independent entries eligible. R-19. |
+| M5-B6 Lifetime | Registration/provider retirement meets captured callers, owned adaptation resources, borrowed recipients and temporary exported scope handles. | Disable only provider-owned registrations, allow captured calls to finish, and retire owned resources after users finish. Never dispose supplied logger/factory/destination resources on removal. Host quiesces borrowed users. R-10/R-11; D006/D023/D024. |
+| M5-B7 Failure reporting | Capture/check/format/export failures produce safe notification, bounded stderr and required propagated summaries. | Only generated identifiers, stages and counts cross the safe boundary. No raw payload, cause, path, callback, route-context or object backlink. Reporter failure never replaces the original failure facts or suppresses mandatory propagation. R-15/R-16; D018/D022. |
+
+| Entity/carrier | Permitted local response or accepted handoff | Input-only/private/withheld part |
+| --- | --- | --- |
+| Bridge entry | Available category, event identity, original state, producer formatter association/formatted message, exception, ordered properties, scopes and original severity information under D011. | Entire payload is withheld from denied recipients. Raw preservation does not authorize blanket serialization of reachable objects or a new external response. |
+| Native annotations/context/origins | Completed labels, full scope frames, duplicate occurrences and per-origin associations to eligible contextual recipients. | Membership matching may deduplicate identities; transport may not discard origins. `ScopeIndex` indexes the label-only `ScopeAnnotations`, not full `Scopes`. No current-scope handle or live-stack backlink is added to native capture. |
+| Producer/mapping/formatter inputs | Selected producer/mapping code may inspect original data; permitted recipient formatters see their accepted inputs. D011 preserves available producer formatter information. | These are executable capabilities, not sanitized data. A retained formatter in the bridge representation does not authorize adding formatter backlinks to native `LogContext` or to safe reports. |
+| Scope state versus scope handles | Original scope data and distinct captured frames may cross the accepted bridge. | Temporary export handles are cleanup capabilities, not exported record fields. Never substitute host-scope replacement or a merged dictionary for ordered frames. |
+| Route/configuration/lifetime state | Existing local configuration and enablement results; no business-row authorization follows. | Private visited-route identity/membership and cleanup state stay outside application-editable properties and safe reports. No new public reset/drain/history API. |
+| Safe report/propagated summary | Existing `CorrelationId`, captured `RegistrationId`, `Stage`, bounded `Failures`, `OverflowCount` and `CoreCaptureFailureCount`, plus allowed fixed prose. | No category/event/state/formatter result, label/origin, scope/property data, raw failure, actual path or user name. Original cause means safe provenance, not retaining the original throwable. |
+
+Every local retrieval is by code holding the relevant reference; D013 places control
+over those holders and onward readers above the utility. There is no server-only
+business field or identifier-only row API to invent. Blanket serialization of a
+bridge entry, context or exception can expose raw values, closures and capabilities
+that native text rendering never inspected. Severity/label permission is not
+recipient authentication, data suitability or authorization to publish those graphs.
+
+### M5 Ranked Obligations
+
+Priorities rank design consequences, not findings against code. All obligations
+below trace to approved behavior; proposed evidence is not a new security policy.
+
+| Priority / control | Required property and threat defended against | Trace |
+| --- | --- | --- |
+| P1 / M5-C1 | Enforce native whole-entry severity/label/route eligibility before recipient-local formatter, raw callback or export, including supplied direct paths. Inbound delivery checks enablement without relying on an earlier precheck. No all-rejected recipient formatting or fallback rescue. Prevents denied data from escaping through an ostensibly disabled or filtered bridge. | R-05/R-06/R-09/R-14; AC-19.2; D010/D013 |
+| P1 / M5-C2 | Only explicit application mapping turns external information into native labels; a sensitivity-looking key has no authority by itself. Accumulate inherited labels and retain every origin despite membership deduplication. Prevents accidental classification, inherited-label subtraction and lost origin evidence, not dishonest in-process producers. | R-04/R-05; AC-18.1-2; D011/D013 |
+| P2 / M5-C3 | Capture producer-formatted text once when delivery is needed and copy recognized property/scope membership synchronously; preserve original state and nested values without arbitrary getter discovery, implicit object ToString or reverse parsing text. Prevents inconsistent fanout, fabricated structure and unintended default execution. Membership capture is not deep freezing or sanitization. | R-12/R-14/R-17; D008/D011 |
+| P2 / M5-C4 | Preserve available category, event identity, formatter/message, exception, opaque/scalar state, ordered repeated properties and composite bits in distinct bridge-owned representation. Do not overwrite application keys. Map one outbound record explicitly from the lowest native bit; mask 9 becomes Critical while retaining 9. None is disabled/no-op; reject unknown Microsoft ordinals without imposing convenience-helper null rules on raw records. Prevents lossy reconstruction, key collision and routing misrepresentation. | AC-07.2; R-08/R-17/R-18; D002/D007/D011 |
+| P2 / M5-C5 | Export separate ordered frames without overwriting event entries or current host scopes; dispose export frames in reverse and preserve exception-safe private-context cleanup. Preserve normal logical-flow inheritance/isolation and conventional non-transferable handle limits. Prevents scope contamination of later calls; adds no universal inherited-handle misuse detector. | AC-11.3/AC-18.1/AC-19.1; D006/D023/D024 |
+| P1 / M5-C6 | Keep visited-route identity/context private and per entry, outside editable application properties. Suppress only a return to a visited route; do not suppress other original recipients, unrelated nested calls or fresh identical-text entries. Clean up on exceptions. Prevents controlled feedback loops, property-spoofed guard resets and accidental global log suppression. | AC-19.1-2; D011 |
+| P1 / M5-C7 | Preserve boundary-specific withholding, independent attempts and safe original-failure precedence. Retain at most eight safe recipient descriptors plus overflow and the existing one-core-capture fact; stderr remains bounded to 512 characters. Exclude payloads, foreign causes and actual paths, including through backlinks; isolate reporters and never report by ordinary fanout. Prevents diagnostic exfiltration and secondary failure masking. | R-14/R-15/R-16; D018/D022; native report contract |
+| P2 / M5-C8 | Keep supplied factories/loggers/destinations borrowed; owned adaptation resources retire after captured users finish. Provider disposal is idempotent/nonthrowing, disables only its registrations, lets captured calls finish, and makes later logging no-op, enablement false and new scopes inert. Prevents use-after-retirement and disposal of another owner's resource, without immediate revocation or remote completion promises. | R-10/R-11; D006 |
+| P2 / M5-C9 | Install each direction explicitly; preserve independent ordinary/exact-T routes and accepted fallback behavior. Factory use selects supplied/configurable default category; fixed logger keeps its category with origin metadata where supported. No reverse auto-install, stack inference, rescue destination, replay, storage service or reset API. Prevents undisclosed routes and broadening the approved export surface. | R-09/R-17; AC-18.3; R-20/R-21/R-24; D011 |
+
+**Callback/failure distinction:** producer formatting and mapping needed to form
+the shared entry are not recipient-local formatting. R-06 does not sandbox them
+or imply no producer/mapping code can execute for a subsequently rejected entry.
+It does require recipient withholding; R-14 governs producer text when delivery
+is needed. A failure forming shared capture withholds the incomplete entry and
+reports one core failure, never a partial/unlabeled substitute. A failed opted-in
+label check withholds that recipient. These retain AC-15.3's default/explicit-strict
+policy where applicable; no new strict selector is selected. Configured recipient
+render/export failures require propagation after independent attempts and safe
+reporting; D022 separately covers custom severity-callback failure. The reviewed
+contract must place mapping, export and scope-callback failure sites in the existing
+categories by their role, not by foreign exception text or a blanket callback rule.
+This model chooses no new competing-error precedence.
+
+**Raw payload versus failure:** the exception being logged is intentional D011
+payload for eligible recipients, potentially including `Data` and nested causes.
+An exception thrown while capturing, mapping or exporting is not permission to
+expose its graph through R-16. Transport approval never relaxes safe reporting.
+Native text framing still applies where native text is actually rendered; it is
+neither redaction nor proof that arbitrary external providers escape their output.
+
+### M5 Abuse Cases And STRIDE
+
+| Actor and goal | Concrete path | Required defense or accepted limit |
+| --- | --- | --- |
+| Upstream-influenced producer reaches a denied output | Skip an inbound precheck or send an inherited-only denied label to a bridge that formats/exports before selection. | M5-C1/C2; no raw-state, exception, scope or formatter/export canary reaches the denied recipient. Producer code already holding data is not sandboxed. |
+| Producer impersonates classification or routing authority | Add application properties resembling sensitivity or visited-route keys, or edit/copy such properties during a round trip. | M5-C2/C6; only explicit label mapping and private route context have their respective authority. Neither authenticates the producer. |
+| Integration loses restricted origins or event identity | Flatten duplicate event keys and several scope frames into one dictionary, overwriting a bridge metadata key or current host scope. | M5-C2/C4/C5; separate ordered metadata and origins, not a last-write-wins reconstruction. |
+| Faulty producer/mapper creates inconsistent or partial delivery | Formatter throws with sensitive-looking text, or sequence access fails after a valid prefix; retry formatting per recipient or continue with missing labels. | M5-C3/C7 and the boundary-specific failure rules; no incomplete shared entry or permissive rescue. No rollback of arbitrary callback effects. |
+| Malicious or faulty reporter leaks a raw cause | Copy a category, formatter result, actual path, exception Message/StackTrace/Data/InnerException into notification or propagated error; make a subscriber/stderr writer throw. | M5-C7; bounded original safe facts survive, raw causes/backlinks do not cross, and independent reporters/required propagation remain. |
+| Misconfigured controlled bridges amplify or erase logs | Enable both directions, cycle an entry, then create unrelated nested calls and fresh equal-text entries. | M5-C6/C9; suppress only the visited-route return, never text/global deduplication. Context-discarding third-party providers are outside the guarantee. |
+| Faulty exporter contaminates subsequent scope state | Fail while exporting under several nested frames and leave an export scope/private route context active. | M5-C5/C6; reverse frame cleanup and exception-safe private context. Exact failure-site mapping belongs to contract review; no new retry or global cleanup service. |
+| Host or callback invalidates another user's resource | Retire the provider or remove a route while a captured call is active, disposing a supplied logger/factory used elsewhere. | M5-C8; borrowed non-disposal, provider-local disablement and captured-user retirement. No cancellation of already captured disclosure. |
+| Executable input stalls or discloses beyond the bridge | Supply a blocking mapper, formatter, enumerator or recipient, or a raw value holding capabilities; mutate a nested object after membership capture. | M5-C3 and D008/D013 limits: not a sandbox, graph freeze, quota, deadline or effect rollback. Producer mutation during capture is unsupported. |
+
+| Crossing | Spoofing | Tampering | Repudiation | Information disclosure | Denial of service | Elevation of privilege |
+| --- | --- | --- | --- | --- | --- | --- |
+| M5-B1 | Category/configuration is not a principal. | Explicit independent installation/routing. | No configuration audit added. | Host controls recipient references/readers. | Factory/custom setup can block/fail. | No auth or process isolation supplied. |
+| M5-B2 | Property names are not native classification. | Preserve ordered membership and originals; no fabricated parsing. | Formatter output is not authenticated provenance. | Unbounded originals/closures retained intentionally. | Executable capture/mapper cost unbounded. | Existing object capabilities remain. |
+| M5-B3 | Precheck/label match is not clearance. | Complete settings and all required gates. | Acceptance is not a delivery receipt. | Withhold whole payload before recipient work. | No registry lock through callbacks; no timeout promise. | No tenant/row rights from eligibility. |
+| M5-B4 | Origin metadata is not identity proof. | Distinct keys/frames and original mask; reverse cleanup. | Synchronous return is not durable audit. | External readers/persistence remain consumer-owned. | Export/scope code may block/fail. | Selected code keeps host privileges. |
+| M5-B5 | Editable keys cannot manufacture guard authority. | Private per-entry context with exception cleanup. | Cycle suppression is not anti-replay evidence. | No guard backlink in payload properties/reports. | Controlled cycles suppressed, not arbitrary custom recursion. | Guard is not a security principal or sandbox. |
+| M5-B6 | Reference possession is not authenticated ownership. | Provider-local retirement; preserve captured users. | Disposal is not erasure evidence. | Old captures/copies may still expose data. | No self-drain/global-shutdown requirement. | Never dispose another owner's borrowed resource. |
+| M5-B7 | Generated correlation is not authentication. | Original safe facts survive reporter failure. | Notification may be absent/unobserved. | No raw payload/cause/path/control backlinks. | Per-call bounds, not rate or global recursion limits. | Safe descriptors grant no object/control access. |
+
+### M5 Review Evidence And Limits
+
+The first required control is **M5-C1**, eligibility before recipient payload work.
+The highest-consequence modeled exposure is an unbounded raw state/exception/scope
+graph, potentially containing credentials or personal data, reaching a denied
+recipient or the safe diagnostic channel. Those contents are possibilities, not
+inspected values or discovered vulnerabilities; M5-C7 protects the second path.
+
+For contract/test/implementation reviewers, R-24/G5 call for controlled synthetic
+canaries that distinguish the following properties; none were executed here:
+
+- Denied ordinary/exact-T/direct recipients observe no raw or formatted payload; inbound enablement holds without a prior precheck. Include inherited-only labels, None/unknown ordinals, permitted absences and composite mask 9.
+- Round trips retain opaque/scalar state, producer formatter/message information, repeated application names, separate empty/unlabeled/labeled frames and origins, without overwriting current host scopes. Later membership edits are distinct from permitted mutation of original nested values.
+- Throwing shared capture, recipient formatting/export and reporters exercise the different failure policies and raw-diagnostic exclusions. Bound safe descriptors and overflow, not recipient attempts; reporting never becomes bridge fanout.
+- Scope/export and cycle-context cleanup survive failure; provider retirement preserves captured users/borrowed objects. A cyclic return, an unrelated nested call and a fresh identical-text entry have different required outcomes even when application properties are edited.
+
+Accepted limits remain those of D008/D011/D013: fidelity concerns available
+information through controlled adapters, not arbitrary CLR graph serialization,
+external sink confidentiality, storage fidelity, exactly-once delivery or remote
+durability. Producer/custom code can inspect, retain, mutate, block or recurse.
+D024 deliberately avoids speculative creator/fork detection for unsupported handle
+misuse. No new risk is accepted on the owner's behalf. Existing M4 fallback/file
+and safe-path rules remain in force, without a new file lifecycle assessment here.
+
+No compliance obligation is inferred. Actual personal data plus applicable
+territorial/organizational facts could trigger a consumer privacy assessment;
+synthetic labels and the choice of Microsoft logging do not. A conditional question
+for a future **consumer deployment/data stream**, not a blocker or new M5 policy,
+is: "Which real fields and readers will the selected provider expose or persist,
+and which jurisdictions, processing role, retention, erasure and lawful-processing
+requirements apply?" No consent basis, duration or erasure mechanism is invented.
+
+**Open Questions proposed for M5:** None. Exact public representation, names and
+failure-site bindings await the independent C# contract gate, not a new policy
+interview. Security Reviewer v2 later compares actual bridge code and fresh scoped
+evidence with this standard; dependency assessment/resolved-graph review is separate.
+API Designer v2 has no HTTP workstream here; the exposure table feeds Interface
+Architect and Contract Reviewer instead. D017 retains Windows-first execution and
+deferred Mac/Linux/full cross-platform proof. This author ran no build, test,
+restore, Git, service or backend operation, and provides no implementation verdict,
+external persistence assurance, package qualification or release approval.

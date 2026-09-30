@@ -1,5 +1,18 @@
 # Unreleased
 
+## Packaging and debugging metadata
+
+The Logger package project now declares its GitHub project URL and `logging;logger;diagnostics`
+tags, uses the standard `git` repository type, and opts into XML documentation, repository metadata,
+embedded untracked sources, portable symbol generation, and `.snupkg` symbol packaging. CI-only
+`ContinuousIntegrationBuild` is enabled when `TF_BUILD` is `True`, so deterministic CI build metadata
+is separated from local builds. These are additive packaging and debuggability improvements; they do
+not add runtime API or decide the overall v4 compatibility and versioning question.
+
+The XML documentation setting currently surfaces 58 `CS1591` compiler occurrences, which remain
+unresolved. The project metadata has been updated, but package contents, evaluated local-versus-CI
+properties, remote Source Link/debugger retrieval, and binary reproducibility are not claimed here.
+
 ## Support and tooling
 
 The library target set is now `netstandard2.0;net10.0`. This removes dedicated assets for the

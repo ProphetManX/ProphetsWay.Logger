@@ -65,6 +65,29 @@ There is no separate `net48` library asset. Older modern runtimes compatible wit
 automatically strand them. Consumers requiring pre-Standard-2.0 reach cannot use this
 new target set. Verification is currently Windows-focused, not equivalent Mac/Linux proof.
 
+### Package Contents And Source Metadata
+
+The unreleased M6 packaging update retains both library assets above. A local package
+inspection verified these outputs from the current source, not a published v4 package:
+
+| Package detail | Verified output or setting |
+| --- | --- |
+| Library and XML documentation | The `.nupkg` contains DLL/XML pairs for `netstandard2.0` and `net10.0`, with 177 documented member entries per XML file. `GenerateDocumentationFile` is `true`; missing public XML comments still produce compiler warnings, so this is not complete API documentation. |
+| Symbols | `IncludeSymbols=true` and `SymbolPackageFormat=snupkg` produce a separate `.snupkg` with one portable PDB per library asset. |
+| Source metadata | `PublishRepositoryUrl=true` and `EmbedUntrackedSources=true` are enabled. Each inspected PDB has 38 document records, two embedded sources and a Source Link map targeting commit `e7cbc016ffe47a66559ed67750d87641c6e7ca6b`. This does not mean every source file is embedded. |
+| Package metadata | The package retains its README, changelog and icon, and now carries the repository homepage, tags `logging`, `logger`, `diagnostics`, and repository kind `git`. |
+
+These settings are in the [library project](ProphetsWay.Logger/ProphetsWay.Logger.csproj).
+Its reproducibility-related `ContinuousIntegrationBuild` setting is `true` only when
+`TF_BUILD` is `True`; local evaluation left it unset, while CI-mode evaluation returned `true`.
+Property evaluation is not proof of reproducible binaries. The measured Source Link metadata
+also does not prove remote-source availability or an end-to-end debugger experience.
+
+This is partial M6 evidence, not full qualification or release approval. M5 bridges are not
+delivered; remaining assertion migration, the owner-handled test-project rename, broader
+consumer/security qualification and deferred non-Windows proof remain separate. The version
+file still selects `3.0.1`; this update changes neither that selection nor publication status.
+
 ## Quick Start
 
 Each C# block below is independent, with its own imports, enclosing types and static entry

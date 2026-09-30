@@ -722,3 +722,178 @@ Implementation is present; the companion model records report 28's green executi
 its controlled-root limits. Independent Security Reviewer v2 remains the next gate, not
 an approval supplied by this classification. Earlier M4-A/B1 history remains unchanged
 apart from the stale B2 status pointer above.
+
+## M5 Controlled Bridge Field Addendum
+
+**Design checkpoint: 2026-09-28. SourceNoCodeVerdict.** Additive classification
+input for [M5-SHAPE-r1](../../../.agent-runs/20260928-1946-logger-m5-m6/slice-01-shape-r1.md)
+under [activation-r2](../../../.agent-runs/20260928-1946-logger-m5-m6/activation-r2.md).
+All preceding fields, native/file controls and historical statuses remain unchanged.
+The [M5 threat addendum](threat-model.md#m5-controlled-bridge-threat-addendum)
+identifies M5-B1 through M5-B7, the opened native definitions and required controls.
+Reopened [requirements.md](../requirements.md), R-04 through R-24/G5, and
+[decision-log.md](../decision-log.md), especially D011/D013 and D018/D022.
+
+The bridge rows inventory **semantic carriers expressly named by D011/R-17-R-19**,
+not invented C# fields, member names, metadata keys or an unfinished concurrent
+contract snapshot. Existing native context, frame, annotation, origin, settings,
+raw event and safe-report declarations were read as listed in the companion model;
+their individual field rows above remain the native inventory. Exact public bridge
+member coverage must be bound to the independently reviewed declarations later.
+No actual consumer values, nested business schemas or external persisted rows were
+inspected. An opaque object is classified as an unbounded carrier, not as imagined
+business fields or an assurance that it contains no sensitive data.
+
+### M5 Classification And Handling Basis
+
+**M5-A1:** Actual category/event/state/text/exception/property/scope/metadata
+contents, labels/origins, callback closure contents and foreign diagnostics are
+**unbounded, provisionally Confidential (C)**. An actual consumer inventory and
+classification decision replaces this precaution. Synthetic examples cannot do so.
+Internal (I) denotes control/configuration facts, not harmlessness of a reachable
+graph; Public (P) denotes fixed vocabulary, not consumer-supplied lookalike values.
+No actual PII, Sensitive PII or Secret field value is asserted identified.
+
+The existing baselines apply: P needs no confidentiality control for the fixed
+literal; I needs consumer-controlled access; C additionally needs protected transport
+and encrypted storage if the consumer exports/persists it, defending against
+unintended readers, interception and stolen media. These describe consumer handling
+under D013, **not new bridge authentication, encryption, redaction or storage
+promises**. Local references do not isolate process memory or protect dumps.
+"Retained" below means a referenced value/copy, not a selected archive or duration.
+Every payload row is withheld from a denied recipient before that recipient's
+formatter, callback or export, but not from producer/mapping code already holding it.
+
+### M5 Approved Payload Carriers
+
+| Field/carrier | Class and rationale | At rest | In transit | In logs | Local response/exposure |
+| --- | --- | --- | --- | --- | --- |
+| Original/source category | C; unbounded application/location meaning | Available retained string | Controlled bridge preserves it | Accepted payload only; never a safe-report name | Origin, not authentication; no call-stack inference |
+| Supplied/configured outbound category | C; unbounded routing/configuration text | Consumer/adapter configuration | Factory uses supplied category or configured default | Not dynamic failure guidance | Configuration input; fixed logger keeps its own category |
+| Origin category metadata for a fixed logger | C; source-category association | Available bridge representation | Accepted metadata where supported | Intended record information, not safe diagnostics | Does not claim the fixed logger changed category |
+| Event identity | C; unbounded application identifier/name meaning | Preserve available original value | Controlled inbound/outbound record | Accepted event data; excluded from safe reports | Not an authenticated event, durable identity or replay key; exact members await contract review |
+| Original state, including opaque/scalar state | C; unbounded graph, not necessarily a dictionary | Original value/reference remains available | Controlled typed representation | Intended accepted raw state; no invented text-derived properties | No arbitrary deep clone, getter discovery or automatic classification |
+| Producer formatter reference/association | I as executable capability; reachable content is separately C | Available original association under D011 | Controlled representation/capture, not safe diagnostics | No implicit serialization of delegate/target | Preservation does not sandbox it or add a native-context formatter backlink |
+| Formatter/mapper target or closure contents | C; unbounded reachable data/capabilities | Consumer-owned graph can remain reachable | Same-process executable input | Not default object serialization or safe-report content | Not inspected, frozen, stripped or made safe by an I control reference |
+| Producer-formatted message | C; unbounded derived text | Captured once when delivery is needed | Shared completed text through controlled adapters | Accepted content, not a safe summary | No parsing into fabricated templates/properties; not redacted |
+| Native original message / event RawMessage | C; unbounded original text | Original string/copies | Accepted native/bridge handoff | Existing raw/massaged distinction preserved | Permitted absence stays absent; helper null rules do not redefine Microsoft raw inputs |
+| Raw exception being logged / event Exception | C; unbounded diagnostic graph | Original reference may be retained | Accepted raw handoff | Intended payload, not the failure-report channel | Exceptionless records remain legal; no confidentiality assurance from acceptance |
+| Logged exception Message | C; unbounded diagnostic text | Original/derived string | Reachable through accepted exception/formatter input | Available content under existing rendering rules | Not a sanitized caller-facing failure summary |
+| Logged exception StackTrace | C; unbounded location/diagnostic text | Original/derived string | Reachable through accepted raw exception | May be intended record content | Actual paths remain forbidden in R-16 reports even if present in accepted payload |
+| Logged exception Data | C; arbitrary unbounded keys/values/capabilities | Original reachable graph | Accessible to accepted raw recipient | No new default dictionary serializer | Preserving the exception permits raw access, not blanket serialization approval |
+| Logged exception InnerException / nested causes | C; unbounded nested diagnostics | Original reachable graph | Accessible to accepted raw recipient | Existing available detail, not a new graph walker | No deep-freeze/erasure/recursion-bound promise |
+| Original typed metadata | C; arbitrary unconstrained value/graph | Original value/reference | Exact declared-T route and permitted bridge representation | Accepted payload; not inferred labels | Even annotation-shaped metadata is not an implicit label source |
+| Recognized event-property membership/order | C; unbounded associations | Synchronously copied membership | Controlled representation retains repeats/order | Intended structured data | No dictionary flattening or bridge-key overwrite; original state remains separately available |
+| Event/scope application property key | C; unbounded string meaning | Captured key | Ordered original pair | Accepted content; native text framing where applicable | Sensitivity-looking/guard-looking names grant no native classification or cycle authority |
+| Event/scope application property value | C; unbounded scalar/object/capability | Original value/reference; membership alone copied | Accepted pair/raw state | Closed native defaults or explicit formatting as applicable | Nested mutations remain possible; no implicit graph inspection/sanitization |
+| Original logical scope state and frame order | C; unbounded context and associations | Captured membership, original nested state | Distinct ordered frames through controlled adapters | Intended accepted scope data | Preserve separate frames, including empty/unlabeled native frames; not a merged host dictionary |
+| Native LogScopeFrame.Annotations / Properties | C; attachment and ordered property associations | Completed immutable membership | Accepted context/frame export | Individual native field treatments above remain | No live-stack/handle/recipient/history backlink added; original nested capabilities may exist |
+| LogAnnotations.LabelOccurrences | C; unbounded label associations | Copied ordered occurrences | Preserve duplicates and separate attachments | Accepted transport, not safe diagnostics | Effective-set deduplication cannot replace occurrences |
+| EntryAnnotations / ScopeAnnotations | C; unbounded attachment meaning | Completed entry and label-only scope projection | Accepted native/bridge context | Preserve null versus present-empty and separate origins | Cannot subtract inherited labels; ScopeAnnotations is not the full frame list |
+| LogLabelOrigin.Label | C; opaque application identity | Immutable label | Per-occurrence origin transport | Accepted payload only | Identity is ordinal, not classification or producer authenticity |
+| LogLabelOrigin.ScopeIndex | C; relationship to an attachment | Immutable local association | Preserve origin correspondence | Accepted structural data | Null means entry; otherwise indexes ScopeAnnotations, not LogContext.Scopes |
+| LogLabelOrigin.OccurrenceIndex | C; occurrence relationship | Immutable local index | Preserve repeated occurrences | Accepted structural data | Not a principal, persistent scope ID or private cycle marker |
+| EffectiveLabels / explicit mapping result | C; unbounded classification associations | Completed membership | Native selection after explicit mapping | Never new safe-report detail | NoFilter/match proves no sensitivity assessment; failed capture/check cannot become permissive unlabeled data |
+| Distinct ordered bridge-owned metadata | C; combined origin/payload associations | Typed representation, not a merged application map | Controlled export/return | Accepted record data | Preserve application entries and host scopes; exact keys await review; contains no editable guard authority |
+| Original native composite mask | I; entry routing/importance | Retained original value | Preserve bits alongside explicitly mapped Microsoft level | Intended record metadata | Mask 9 becomes one Critical record retaining 9; not a numeric enum cast |
+| Microsoft level / native eligibility result | I; routing/control facts | No decision archive selected | Inbound validation/precheck/delivery and outbound mapping | Not sensitivity clearance or an audit receipt | None is disabled/no-op; unknown ordinal rejected; precheck true does not promise label acceptance |
+| LogContext.EventTimestampUtc / legacy event Timestamp | I; activity association | Existing captured/native event values | Existing accepted context/event treatment | Native timestamp/framing rules remain | No freshness, anti-replay, uniqueness or cycle identity derives from time |
+| Fixed level/field vocabulary and default ProphetsWay.Logger literal | P; authored vocabulary only | Constants | Documented default/control use | Fixed vocabulary is not a consumer value | Exact new member/key spellings are not invented by this inventory |
+
+The exception **being logged** and a failure **thrown while logging** have different
+exposure rules even if they could reference the same kind of object. D011 permits
+available raw payload transport to eligible recipients; R-16 excludes raw failures
+from safe diagnostics. Neither rule cancels the other. Native event massaged text
+and original raw fields keep their existing distinct meanings; external output is
+not certified single-line or confidential merely because native text is framed.
+
+### M5 Control And Failure Carriers
+
+Private cycle/lifetime rows are required logical state from R-11/R-19, not newly
+declared public members or a chosen implementation mechanism. The native capture
+contract still excludes library-added live-stack/handle/formatter/recipient/history
+backlinks. Original raw state/property values and D011's formatter association do
+not acquire that exclusion as a promise to strip their existing capabilities.
+
+| Field/carrier | Class and rationale | At rest | In transit | In logs | Local response/exposure |
+| --- | --- | --- | --- | --- | --- |
+| Explicit direction/provider/destination registration and settings | I; host control choices; configured labels retain C | Captured immutable native settings/membership | Configuration and native gates | No configuration dump or new diagnostic field | Input/control use; no reverse auto-install, route aliasing or auth implication |
+| Supplied logger/factory/destination reference | I; executable/control capability; reachable data not downgraded | Borrowed reference held for permitted use | Configuration and accepted handoff | Never a safe-report backlink | Removal does not dispose it; host owns quiescence/disposal |
+| Explicit application label-mapping callback | I; executable consumer policy; closure contents C | Consumer-selected reference | Producer/mapping boundary, not a payload-free precheck | No automatic delegate serialization | May inspect supplied payload; no sandbox, redaction or new label taxonomy |
+| Capture enumerable/enumerator and sequence access | I as execution/control input; yielded data retains C | No lazy enumerator backing for completed membership | Synchronous recognized membership capture | No implicit sequence serialization | Original state may itself be enumerable; preserving it is distinct from retaining lazy capture backing |
+| Temporary exported scope handle | I; cleanup capability, not scope payload | Live for the exported scope | Local scope begin/end only | No record/report field | Reverse disposal; no disposal of raw property values or host-owned logger/factory |
+| Provider disposed/retirement state and captured-user bookkeeping | I; private lifetime control | Provider/adaptation lifetime | Local disablement/retirement | No lifetime archive/status API added | Idempotent nonthrowing disposal; captured users finish; later log no-op, enablement false, new scopes inert |
+| Private per-entry route identity | I; internal cycle control, not authenticated identity | Entry-bound control context | Controlled adapter path only | Not application metadata or safe-report data | No public/editable property may manufacture/reset guard authority |
+| Private visited-route membership | I; route provenance/control topology | Entry-bound membership, not global history | Controlled return checks | Not a serialized application field | Suppresses only visited-route return, not equal text, other original recipients or independent nested calls |
+| Private cycle/scope cleanup state | I; local lifetime coordination | Only required control lifetime; no new retention duration | Exception-safe unwind | No control backlink in reports | No public reset/drain, anti-replay store or universal context-loss protection |
+| Foreign capture/mapping/export failure Message | C; unbounded payload/path/name text | No library raw-failure archive | Caught failure boundary only | Excluded from safe reporting | Not forwarded as a safe error or substituted for original safe facts |
+| Foreign failure StackTrace | C; unbounded application/location diagnostics | No raw-failure archive | Same boundary | Excluded | Authored safe interface is not CLR-state erasure |
+| Foreign failure Data | C; unbounded values/capability backlinks | No raw-failure archive | Same boundary | Excluded | No object/callback/route-context escape through summaries |
+| Foreign failure InnerException / original cause | C; nested unbounded graph | Never a retained raw-cause channel | Same boundary | Excluded | No raw inner exception in propagated safe error |
+| LogFailureReport.CorrelationId | I; generated operational identifier | Immutable report | Subscriber/caller | Allowed generated fact | Not payload-derived, authorization or cycle identity |
+| LogFailureReport.Failures | I; bounded safe facts | At most eight retained descriptors | Subscriber/caller | Allowed bounded facts | Read-only membership, no raw backlinks; not a recipient-attempt limit |
+| LogFailureDescriptor.RegistrationId | I; captured recipient position | Immutable descriptor | Safe report | Allowed generated position | Not recipient name, lookup capability or durable identity |
+| LogFailureDescriptor.Stage | I; observed boundary | Immutable descriptor | Safe report | Allowed stage code | Never inferred from foreign text/cause; fixed vocabulary itself P |
+| LogFailureReport.OverflowCount | I; excess recipient-failure count | Immutable count | Safe report | Allowed count | Nine recipient failures retain eight descriptors plus overflow one |
+| LogFailureReport.CoreCaptureFailureCount | I; shared incomplete-entry fact | Zero-or-one report count | Safe report | Allowed count | Counts once, not once per recipient; no raw capture error |
+| LogDispatchException.Report and authored summary/stderr | I; generated safe facts/fixed prose | Existing safe report, not raw archive | Caller/individual subscribers/stderr | R-16 bounds/exclusions; stderr at most 512 characters | No actual paths/category/event/state/text/labels/origins/callbacks/causes; original facts survive reporter failure |
+
+Safe propagation follows the existing failure categories, not the callback's name
+or inferred severity of its exception. Shared capture and opted-in label checks
+retain their AC-15.3 policy; configured render/export and D022 custom-severity
+failures require propagation after independent attempts/safe reporting. Ordinary
+construction/argument errors keep their local contracts, not a new blanket
+sanitization promise. Inherited post-catch exception mutation, reflection, debugger
+inspection and whole-CLR serialization remain outside the authored safe interface.
+
+### M5 Minimization And Coverage Limits
+
+Data not supplied cannot leak through these carriers. Under D013, consumers should
+first ask whether each category, event identifier, state member, message, stack,
+property, scope and label association is needed, or a non-identifying token or
+upstream-sanitized value would serve. This reduces unnecessary disclosure and
+retention before capture; it grants Logger no silent truncation, hashing, rewriting
+or redaction that would contradict approved D011 transport. Capturing original
+state plus structured membership/formatted text can retain more than one view of
+the same information. Membership immutability and provider/scope disposal are not
+deep freezing, deletion of other copies or secure erasure.
+
+The existing credential guidance applies: do not place credentials in logs or
+recoverable diagnostic copies. A consumer password store, if one exists, needs a
+salted memory-hard password KDF, never reversible encryption or fast hashes.
+ProphetsWay.Hasher must never be used for credentials. No password/key/token store
+is selected or classified as present by this M5 inventory.
+
+Consumer storage encryption addresses stolen disks/backups, not a compromised
+application, an over-permissive reader or a permitted raw callback. Transport
+encryption addresses interception at an actual network boundary, not an in-process
+bridge. No field-level encryption is selected; it would require real field and
+access decisions and affect searching/sorting. Real PII would require the consumer
+to settle minimization, retention limits, erasure and log-redaction treatment; the
+bridge does not supply those decisions or guarantee that a label denotes them.
+
+Coverage includes every approved M5 semantic payload/control carrier above and
+all M5-B1 through M5-B7 crossings. Native fields retain their individual existing
+rows. Arbitrary nested object members, exact future public bridge members and any
+external provider's persisted schema have not been invented or certified. This is
+complete scoped design input, not an exact bridge declaration or external schema
+review. No API response/tenant/business-row/soft-delete contract is introduced;
+local reference access and onward readership remain consumer-owned under D013.
+
+**Open Questions proposed for M5:** None. Exact names/signatures/metadata keys and
+failure-site binding remain the independent contract stream. If a real provider
+deployment is later selected, the conditional question is: "Which real fields and
+readers will the selected provider expose or persist, and which jurisdictions,
+processing role, retention, erasure and lawful-processing requirements apply?"
+It blocks that consumer deployment/data assessment, not this synthetic controlled
+bridge slice. Actual personal data plus applicable territorial/organizational
+facts could trigger a privacy regime; none was observed, and no compliance,
+consent, retention period or erasure obligation is asserted from inference.
+
+Controlled roundtrip fidelity is not external persistence, confidentiality,
+durability or arbitrary context-discarding-provider fidelity. Dependency/restore
+assessment and actual implementation review remain separate; this author performed
+no build/test/restore/Git/live operation and issued no code-security verdict.
+D017's Mac/Linux and full cross-platform evidence remain deferred, not established
+by this document or by future Windows-only execution. No M6 package/release or
+owner-deferred test-project rename completion is implied.

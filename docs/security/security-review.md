@@ -1179,3 +1179,162 @@ then run the authorized post-documentation Final and final scope/binding check b
 checkpoint evaluation. No fix, version/Git change, merge, deployment or release is
 authorized by this verdict. Earlier review history is preserved. **No security review
 is exhaustive.**
+
+## M6 Project And Package Output
+
+_Reviewed 2026-09-29 EDT. Scope: M6-PROJECT-r1's nine-property delta and the actual
+Windows Debug archives produced on 2026-09-28 EDT. Package-exposure assessment uses
+general security practice, with the current [native threat context](threat-model.md#L716)
+and [data classification](data-classification.md#L632). Their
+[M5 addenda](threat-model.md#L854) describe future bridge obligations, not implemented
+controls cleared by this review. Earlier reviews retain their original scope and dates._
+
+### M6 Scoped Verdict
+
+**No blocking issues found in the bounded project/package change.** The inspected
+archives contain the expected library assets, consumer documents, icon, XML and
+portable symbols. No credential candidate, unrelated embedded source, new runtime
+dependency or executable packaging hook was identified. Actual source mappings and
+embedded contents were inspected; property values alone were not treated as evidence.
+This completes this slice's security review only, not M5, full M6, G4/G5, parent
+acceptance, a checkpoint or permission to publish, merge or deploy.
+
+### M6 Findings
+
+Critical 0; High 0; Medium 0; Low 0; Informational 0. No correction, new security
+policy, accepted-risk waiver or fix is proposed. No secret value was found in scope.
+The local paths described below are build-location metadata, not observed user
+payloads, credentials or a breach of the runtime safe-report contract.
+
+### M6 Subject And Binding
+
+Read the actual three projects and Git diff. The
+[library project](../../ProphetsWay.Logger/ProphetsWay.Logger.csproj#L11) changes
+only RepositoryType, PackageProjectUrl, PackageTags, GenerateDocumentationFile,
+PublishRepositoryUrl, EmbedUntrackedSources, IncludeSymbols, SymbolPackageFormat
+and the [TF_BUILD-conditioned property](../../ProphetsWay.Logger/ProphetsWay.Logger.csproj#L56).
+No imports, targets, package references, version fields, pack items, source or tests
+were added or changed by this delta. The
+[test references](../../ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj#L13)
+and [example project](../../ProphetsWay.Logger.Example/ProphetsWay.Logger.Example.csproj#L5)
+remain unchanged. The library remains netstandard2.0/net10.0, tests net48/net10.0,
+and example net10.0; no Microsoft bridge package is present.
+
+Authority and actual author evidence were reopened: [M6-PROJECT-r1][m6s-target],
+assignment-r1/activation-r2 and [Modernizer16][m6s-author]. Independent read-only
+comparison of the [65 original source/project inputs][m6s-sources] found only the
+approved library project changed, with no additions/removals; all
+[26 specification inputs][m6s-tests] and [710 resolved inputs][m6s-resolved] match.
+This is preservation evidence, not a fresh review of every native implementation.
+
+Reconciled [parent Check f43b7f91][m6s-check] against its actual records and TRXs:
+three successful builds; all ten selected test groups match the baseline's exact
+identities and outcomes, totaling 672 passed, zero failed/skipped per framework.
+TRX hashes and execution windows match. No build or test was executed by this reviewer.
+All six archived DLL/XML/PDB entries match that Check's recorded build hashes.
+The two actual archive hashes match the [Package output manifest][m6s-outputs].
+
+### M6 Actual Exposure
+
+Directly opened both ZIP archives named in [Package 2ecca7f05][m6s-package], without
+extracting or executing their contents:
+
+| Artifact | Actual contents and security observation |
+| --- | --- |
+| nupkg | 11 entries: two framework DLLs, two XML files, README, changelog, icon, nuspec and three NuGet/OPC metadata entries. No scripts, build targets, configuration, test output, logs, credentials files or extra payload. Entry names contain no absolute/traversal path. |
+| snupkg | 6 entries: two portable PDBs, nuspec and three NuGet/OPC metadata entries; no loose source tree or runtime data. |
+| Nuspecs and XML | Both packages identify ProphetsWay.Logger **1.0.0**, a local default, not an approved release identity. Empty dependency groups name net10.0 and .NETStandard2.0. XML parsed with DTD/external resolution disabled; each documentation file has 177 members. OPC relationships have no external targets. |
+| Managed DLLs | Metadata-only inspection found framework references only and no embedded manifest resources: netstandard on the Standard asset; System.Runtime, System.Security.Cryptography, System.Collections, System.Threading, System.Text.Encoding.Extensions and System.Console on net10.0. No package code was loaded/executed. |
+| Portable PDB documents | **38 per asset**: 36 library-source documents and two generated assembly-attribute documents, all under this repository. Every document's SHA-256 checksum matches the corresponding local file. |
+| Embedded source | Exactly **two per PDB**: the target-framework AssemblyAttributes file and ProphetsWay.Logger.AssemblyInfo.cs under obj/Debug for that target. Decoded the actual blobs and verified their checksums. They contain framework/assembly declarations, existing company/product/description, local 1.0.0 version and RepositoryUrl, not logs, private configuration or unrelated source. |
+| Source Link | One mapping per PDB, from this checkout's root wildcard to HTTPS raw.githubusercontent.com/ProphetManX/ProphetsWay.Logger at commit e7cbc016ffe47a66559ed67750d87641c6e7ca6b. No credential, user-info or query component. The mapping is commit-pinned; remote availability was not tested. |
+| Build paths | PDB document/mapping keys expose the local repository checkout root; DLL CodeView entries expose the corresponding obj/Debug PDB paths. These reveal build layout, not an actual consumer log path, profile, payload or secret. The actual local archives are not asserted path-normalized CI outputs. |
+| Text/binary exposure checks | Checked 52 archive/source text inputs, including all decoded embedded files and mapped library sources, plus UTF-8/UTF-16 strings in both DLLs/PDBs for credential markers. No candidate was found. Actual build metadata was inspected in context; this is not an exhaustive secret-history or binary-forensics audit. |
+
+The icon matches the current source asset. **The archived README and changelog no
+longer match their concurrently edited worktree files.** This verdict binds the
+inspected pre-documentation archives and the separately verified unchanged
+project/source, not the later documents or future archive bytes. Parent Check and
+Package after all authorized documentation changes remain required; that expected
+final gate does not make this completed scoped review blocked.
+
+Recorded local/CI evaluations were opened: ContinuousIntegrationBuild is empty
+locally and true with TF_BUILD=True; the other five source/XML/symbol properties
+are enabled as approved. This is property evaluation, **not** a CI artifact build
+or reproducible-binary proof. The actual author library warning record linked from
+[step 9][m6s-step9] contains **58 CS1591 occurrences**. The later incremental
+Check's zero warning count does not establish complete XML coverage or their repair.
+
+### M6 Dependency Vulnerabilities
+
+This reviewer ran a **fresh invocation for each of the three current projects**,
+without restore, using only the explicit public source:
+
+```text
+dotnet list <absolute-project.csproj> package --vulnerable --include-transitive --no-restore --source https://api.nuget.org/v3/index.json --format json
+```
+
+All three completed successfully during this review and returned the requested
+project, only that public source, and no problems or vulnerable-package rows.
+Existing assets were independently inventoried: library 2 implicit packages on
+netstandard2.0 and 0 on net10.0; tests 34 on net48 and 28 on net10.0, repeated in
+their win-x86 targets; example 0 on net10.0. The union is 41 distinct package/version
+pairs. All three assets hashes still match [dependency07][m6s-dependency].
+
+| Package | Version | Advisory | Severity | Direct/Transitive | Fixed in |
+| --- | --- | --- | --- | --- | --- |
+| None reported by these three scans | n/a | None returned | n/a | Both included | n/a |
+
+This is a fresh CLI scan invocation of the **existing** graph, subject to published
+advisory coverage and NuGet caching/ingestion limits, not proof of security or a new
+independent advisory-feed crawl. Report07's proposed Microsoft graph remains
+**unrestored and unscanned as a resolved graph**. No bridge package was added and no
+future graph, upstream binary, OS/SDK/runtime servicing or private feed is cleared.
+
+### M6 Coverage
+
+| Area / obligation | Reviewed | Disposition / limit |
+| --- | --- | --- |
+| Access control first; native AS-C1/AS-C5 | Preservation only | No new principal, identifier-based data read, recipient path or safe-report channel. Unchanged source/specifications and parent evidence preserve the scope boundary; not a new whole-native-code verdict. |
+| Nine-property project boundary | Yes | Exact diff, all three project declarations, preserved source/resolved inputs and archived build binding. No hidden runtime/lifetime or dependency change identified. |
+| Sensitive-data/source disclosure | Yes, actual outputs | All archive entries, PDB document names/checksums, Source Link mappings, decoded embedded source, CodeView paths, package text and bounded binary-string inspection. No credential candidate; checkout metadata is explicitly disclosed above. |
+| Injection and deserialization | Package boundary | No executable packaging hook, unsafe archive entry or external OPC target; XML inspected structurally. No new SQL/command/HTML/URL-fetch or runtime deserializer introduced. |
+| Cryptography, secrets, TLS | Package boundary | HTTPS source mapping without authentication material; no key/credential content identified. Runtime crypto, external storage protections and Git history were not re-audited. |
+| Authentication/session, availability, audit/compliance | Change assessment | No new service/session, request surface, retention or audit mechanism. Existing in-process/consumer-owned limits remain; no new quotas, sandbox, privacy or erasure policy is invented. |
+| Existing dependencies | Yes | Three fresh public no-restore scans, seven target/RID graphs and unchanged assets; no reported vulnerability. M5 candidate graph excluded. |
+| G4 / AC-23.1 | Bounded contribution only | Actual metadata/assets/XML/symbol/source inspection supplied. Full XML coverage, reproducibility, intended consumer proof, release identity and deferred non-Windows evidence remain uncleared. |
+| G5 / M5-C1 through M5-C9 | Not cleared | Native context read for preservation; missing bridges, controlled round trips, private cycle context and their implementation/lifetime/canary evidence remain separate required work. |
+| Current documents and final package | Not reviewed by this artifact verdict | Concurrent README/changelog changes require their owners' reviews and the parent's post-documentation Check/Package and final binding. |
+| Deployment, history and supply-chain authenticity | Excluded | No live services, private feeds, history-secret sweep, upstream implementation/signature/provenance attestation, arbitrary consumer data or non-Windows execution. |
+
+### M6 Worth Checking And Handoff
+
+No unresolved suspicion or unmet security control was identified **within this
+bounded package delta**. Inspect final release/CI artifacts under their separate
+authority; current property evaluation and local paths do not prove future source
+mapping, path normalization, release identity or reproducibility.
+
+- **Interface Architect v2 / Vanguard v2:** retain the measured XML-documentation gap in full M6 qualification; it is not a dependency vulnerability or a new security finding.
+- **README Author v2 / Changelog Author v2:** own the concurrent consumer-document changes; their current content is not certified by the older packaged copies.
+- **Security Reviewer v2, later M5 gate:** review actual implemented bridges and the freshly restored graph when they exist; this review does not satisfy M5-C1-C9.
+
+Exact next owner: **Vanguard v2** consumes [report20][m6s-report], reruns the already
+authorized Check and Package after documentation work, reconciles final artifacts
+against this inspected subject, and retains all remaining M5/M6/G4/G5 and release
+gates. A material source/dependency/source-exposure change needs a newly scoped
+security review. No operation permission is supplied here. **No security review
+is exhaustive.**
+
+[m6s-target]: ../../../.agent-runs/20260928-1946-logger-m5-m6/slice-02-m6-project-r1.md
+[m6s-author]: ../../../.agent-runs/20260928-1946-logger-m5-m6/16-m6-project-modernization.md
+[m6s-sources]: ../../../.agent-runs/20260928-1946-logger-m5-m6/evidence/m6-project-original-sources-r1.json
+[m6s-tests]: ../../../.agent-runs/20260928-1946-logger-m5-m6/evidence/m5-preparation-original-tests-r1.json
+[m6s-resolved]: ../../../.agent-runs/20260928-1946-logger-m5-m6/evidence/m6-project-resolved-inputs-r1.json
+[m6s-check]: ../../../.agent-runs/20260928-1946-logger-m5-m6/evidence/m6-project-check-f43b7f91e1c54310bf6998d772900f03-check.json
+[m6s-package]: ../../../.agent-runs/20260928-1946-logger-m5-m6/evidence/m6-project-package-2ecca7f05f0147c9b0862a4eeaf84166-package.json
+[m6s-outputs]: ../../../.agent-runs/20260928-1946-logger-m5-m6/evidence/m6-project-package-2ecca7f05f0147c9b0862a4eeaf84166-package-outputs.json
+[m6s-step9]: ../../../.agent-runs/20260928-1946-logger-m5-m6/evidence/m6-project-check-00e1b84628d1439ab53ae222d5f28ea0-check.json
+[m6s-dependency]: ../../../.agent-runs/20260928-1946-logger-m5-m6/07-m5-dependency-security.md
+[m6s-report]: ../../../.agent-runs/20260928-1946-logger-m5-m6/20-m6-package-security.md
+
+
