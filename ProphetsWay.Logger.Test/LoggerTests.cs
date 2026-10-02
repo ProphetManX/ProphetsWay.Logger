@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
-using FluentAssertions;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
 using Shouldly;
@@ -902,7 +901,7 @@ namespace ProphetsWay.Logger.Test
 			try
 			{
 				Utilities.Logger.Debug("Hello World!");
-				triggered.Should().BeTrue();
+				triggered.ShouldBeTrue();
 			}
 			finally { Utilities.Logger.RemoveDestination(dest); }
 		}
@@ -918,7 +917,7 @@ namespace ProphetsWay.Logger.Test
 			try
 			{
 				Utilities.Logger.Info("Hello World!");
-				triggered.Should().BeTrue();
+				triggered.ShouldBeTrue();
 			}
 			finally { Utilities.Logger.RemoveDestination(dest); }
 		}
@@ -949,7 +948,7 @@ namespace ProphetsWay.Logger.Test
 			try
 			{
 				Utilities.Logger.Warn("Hello World!");
-				triggered.Should().BeTrue();
+				triggered.ShouldBeTrue();
 			}
 			finally { Utilities.Logger.RemoveDestination(dest); }
 		}
@@ -965,7 +964,7 @@ namespace ProphetsWay.Logger.Test
 			try
 			{
 				Utilities.Logger.Error(new Exception("Hello World!"));
-				triggered.Should().BeTrue();
+				triggered.ShouldBeTrue();
 			}
 			finally { Utilities.Logger.RemoveDestination(dest); }
 		}

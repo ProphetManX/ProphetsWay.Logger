@@ -13,6 +13,10 @@ The XML documentation setting currently surfaces 58 `CS1591` compiler occurrence
 unresolved. The project metadata has been updated, but package contents, evaluated local-versus-CI
 properties, remote Source Link/debugger retrieval, and binary reproducibility are not claimed here.
 
+## Logging abstractions dependency
+
+The Logger library now directly references `Microsoft.Extensions.Logging.Abstractions` `10.0.12`. Consumers should account for the corresponding transitive restore closure, including `Microsoft.Extensions.DependencyInjection.Abstractions` and the supporting `System.*` packages selected for the target framework. This records dependency adoption only; it does not add a Microsoft logging bridge or claim that the current build, tests, or package qualification have completed.
+
 ## Support and tooling
 
 The library target set is now `netstandard2.0;net10.0`. This removes dedicated assets for the

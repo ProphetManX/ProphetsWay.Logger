@@ -1056,6 +1056,276 @@
 			"isBackground": false,
 			"group": "test",
 			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 representation setup",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-representation.ps1",
+			"args": ["-Stage", "Setup"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 representation bind review",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-representation.ps1",
+			"args": ["-Stage", "BindReview"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 representation baseline",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-representation.ps1",
+			"args": ["-Stage", "Baseline"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 representation public restore",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-representation.ps1",
+			"args": ["-Stage", "Restore"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 representation existing checks",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-representation.ps1",
+			"args": ["-Stage", "Existing"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 representation candidate",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-representation.ps1",
+			"args": ["-Stage", "Candidate"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 representation freeze specs",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-representation.ps1",
+			"args": ["-Stage", "FreezeSpecs"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "M5 representation final",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-representation.ps1",
+			"args": ["-Stage", "Final"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger assertion migration setup",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-assertions.ps1",
+			"args": ["-Stage", "Setup"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger assertion migration bind review",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-assertions.ps1",
+			"args": ["-Stage", "BindReview"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger assertion migration baseline",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-assertions.ps1",
+			"args": ["-Stage", "Baseline"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger assertion migration candidate",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-assertions.ps1",
+			"args": ["-Stage", "Candidate"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger assertion migration final",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-assertions.ps1",
+			"args": ["-Stage", "Final"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger assertion migration freeze checkpoint",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260929-1958-logger-m5-m6/validate-assertions.ps1",
+			"args": ["-Stage", "FreezeCheckpoint"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct1 reconciliation setup",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260930-2214-logger-m5-m6/validate-assertions-closeout.ps1",
+			"args": ["-Stage", "Setup"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct1 reconciliation bind review",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260930-2214-logger-m5-m6/validate-assertions-closeout.ps1",
+			"args": ["-Stage", "BindReview"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct1 reconciliation public restore",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260930-2214-logger-m5-m6/validate-assertions-closeout.ps1",
+			"args": ["-Stage", "Restore"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct1 reconciliation baseline",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260930-2214-logger-m5-m6/validate-assertions-closeout.ps1",
+			"args": ["-Stage", "Baseline"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct1 reconciliation candidate",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260930-2214-logger-m5-m6/validate-assertions-closeout.ps1",
+			"args": ["-Stage", "Candidate"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct1 reconciliation final",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260930-2214-logger-m5-m6/validate-assertions-closeout.ps1",
+			"args": ["-Stage", "Final"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct1 reconciliation package",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260930-2214-logger-m5-m6/validate-assertions-closeout.ps1",
+			"args": ["-Stage", "Package"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct1 reconciliation freeze checkpoint",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20260930-2214-logger-m5-m6/validate-assertions-closeout.ps1",
+			"args": ["-Stage", "FreezeCheckpoint"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct2 reconciliation setup",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261001-1823-logger-m5-m6/validate-reconciliation.ps1",
+			"args": ["-Stage", "Setup"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct2 reconciliation bind review",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261001-1823-logger-m5-m6/validate-reconciliation.ps1",
+			"args": ["-Stage", "BindReview"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct2 reconciliation verify recorded restore",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261001-1823-logger-m5-m6/validate-reconciliation.ps1",
+			"args": ["-Stage", "VerifyRestore"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct2 reconciliation baseline",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261001-1823-logger-m5-m6/validate-reconciliation.ps1",
+			"args": ["-Stage", "Baseline"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct2 reconciliation candidate",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261001-1823-logger-m5-m6/validate-reconciliation.ps1",
+			"args": ["-Stage", "Candidate"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct2 reconciliation final",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261001-1823-logger-m5-m6/validate-reconciliation.ps1",
+			"args": ["-Stage", "Final"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct2 reconciliation package",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261001-1823-logger-m5-m6/validate-reconciliation.ps1",
+			"args": ["-Stage", "Package"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger Oct2 reconciliation freeze checkpoint",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261001-1823-logger-m5-m6/validate-reconciliation.ps1",
+			"args": ["-Stage", "FreezeCheckpoint"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
 		}
 	]
 }

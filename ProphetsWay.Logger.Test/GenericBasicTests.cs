@@ -1,5 +1,5 @@
 ﻿using System;
-using FluentAssertions;
+using Shouldly;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
 using Xunit;
@@ -36,7 +36,7 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Debug(msg, obj);
 
 			//assert 
-			evtMessage.Should().Contain(msg);
+			evtMessage.ShouldContain(msg, Case.Sensitive);
 
 			//cleanup
 			Utilities.Logger.RemoveDestination(d);
@@ -57,7 +57,7 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Error(e, obj, "Goodbye Everyone");
 
 			//assert
-			evtMessage.Should().Contain(e.Message);
+			evtMessage.ShouldContain(e.Message, Case.Sensitive);
 
 			//cleanup
 			Utilities.Logger.RemoveDestination(d);
@@ -79,9 +79,17 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Error(e, obj, msg);
 
 			//assert
-			evtObject.Should().NotBeNull();
-			evtObject.Name.Should().Be(obj.Name);
-			evtObject.Value.Should().Be(obj.Value);
+			evtObject.ShouldNotBeNull();
+			var actualName = evtObject.Name;
+			var expectedName = obj.Name;
+			actualName.ShouldNotBeNull();
+			actualName.Length.ShouldBe(expectedName.Length);
+			for (var characterIndex = 0; characterIndex < expectedName.Length; characterIndex++)
+			{
+				string.Equals(actualName[characterIndex].ToString(), expectedName[characterIndex].ToString(),
+					StringComparison.CurrentCulture).ShouldBeTrue();
+			}
+			evtObject.Value.ShouldBe(obj.Value);
 
 			//cleanup
 			Utilities.Logger.RemoveDestination(d);
@@ -111,11 +119,19 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Error(e, obj, msg);
 
 			//assert
-			evtMessage.Should().Contain(msg);
-			exMessage.Should().Contain(e.Message);
-			evtObject.Should().NotBeNull();
-			evtObject.Name.Should().Be(obj.Name);
-			evtObject.Value.Should().Be(obj.Value);
+			evtMessage.ShouldContain(msg, Case.Sensitive);
+			exMessage.ShouldContain(e.Message, Case.Sensitive);
+			evtObject.ShouldNotBeNull();
+			var actualName = evtObject.Name;
+			var expectedName = obj.Name;
+			actualName.ShouldNotBeNull();
+			actualName.Length.ShouldBe(expectedName.Length);
+			for (var characterIndex = 0; characterIndex < expectedName.Length; characterIndex++)
+			{
+				string.Equals(actualName[characterIndex].ToString(), expectedName[characterIndex].ToString(),
+					StringComparison.CurrentCulture).ShouldBeTrue();
+			}
+			evtObject.Value.ShouldBe(obj.Value);
 
 			//cleanup
 			Utilities.Logger.RemoveDestination(d);

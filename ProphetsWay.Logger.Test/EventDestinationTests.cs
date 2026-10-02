@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Xunit;
+﻿using Xunit;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
 using System;
@@ -193,7 +192,7 @@ namespace ProphetsWay.Logger.Test
 			Utilities.Logger.Debug("Hello World!");
 
 			//assert
-			triggered.Should().BeTrue();
+			triggered.ShouldBeTrue();
 
 			//cleanup
 			Utilities.Logger.RemoveDestination(dest);

@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Moq;
+﻿using Moq;
 using Xunit;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;

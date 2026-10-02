@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
-using FluentAssertions;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
 using Shouldly;
@@ -492,7 +491,7 @@ namespace ProphetsWay.Logger.Test
             try
             {
                 Utilities.Logger.Debug(msg);
-                evtMessage.Should().Contain(msg);
+                evtMessage.ShouldContain(msg, Case.Sensitive);
             }
             finally { Utilities.Logger.RemoveDestination(d); }
         }
@@ -509,7 +508,7 @@ namespace ProphetsWay.Logger.Test
             try
             {
                 Utilities.Logger.Error(e, "Goodbye Everyone");
-                evtMessage.Should().Contain(e.Message);
+                evtMessage.ShouldContain(e.Message, Case.Sensitive);
             }
             finally { Utilities.Logger.RemoveDestination(d); }
         }
@@ -527,7 +526,9 @@ namespace ProphetsWay.Logger.Test
             try
             {
                 Utilities.Logger.Error(e, msg);
-                evtMessage.Should().Contain(msg).And.Contain(e.Message);
+                var actualMessage = evtMessage;
+                actualMessage.ShouldContain(msg, Case.Sensitive);
+                actualMessage.ShouldContain(e.Message, Case.Sensitive);
             }
             finally { Utilities.Logger.RemoveDestination(d); }
         }
@@ -544,7 +545,7 @@ namespace ProphetsWay.Logger.Test
             try
             {
                 Utilities.Logger.Debug(msg);
-                evtMessage.Should().Contain(msg);
+                evtMessage.ShouldContain(msg, Case.Sensitive);
             }
             finally { Utilities.Logger.RemoveDestination(d); }
         }
@@ -569,7 +570,7 @@ namespace ProphetsWay.Logger.Test
             try
             {
                 Utilities.Logger.Debug(msg);
-                evtMessage.Should().Contain(msg);
+                evtMessage.ShouldContain(msg, Case.Sensitive);
             }
             finally { Utilities.Logger.RemoveDestination(d); }
         }

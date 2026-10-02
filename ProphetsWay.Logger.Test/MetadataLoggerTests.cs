@@ -1,5 +1,4 @@
 ﻿using System;
-using FluentAssertions;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.Generics;
 using ProphetsWay.Utilities.LoggerDestinations;
@@ -28,7 +27,7 @@ namespace ProphetsWay.Logger.Test
             try
             {
                 ctx.Debug("Hello World!");
-                triggered.Should().BeTrue();
+                triggered.ShouldBeTrue();
             }
             finally { Utilities.Logger.RemoveDestination(dest); }
         }
@@ -45,7 +44,7 @@ namespace ProphetsWay.Logger.Test
             try
             {
                 ctx.Info("Hello World!");
-                triggered.Should().BeTrue();
+                triggered.ShouldBeTrue();
             }
             finally { Utilities.Logger.RemoveDestination(dest); }
         }
@@ -78,7 +77,7 @@ namespace ProphetsWay.Logger.Test
             try
             {
                 ctx.Warn("Hello World!");
-                triggered.Should().BeTrue();
+                triggered.ShouldBeTrue();
             }
             finally { Utilities.Logger.RemoveDestination(dest); }
         }
@@ -95,7 +94,7 @@ namespace ProphetsWay.Logger.Test
             try
             {
                 ctx.Error(new Exception("Hello World!"));
-                triggered.Should().BeTrue();
+                triggered.ShouldBeTrue();
             }
             finally { Utilities.Logger.RemoveDestination(dest); }
         }

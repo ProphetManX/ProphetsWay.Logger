@@ -1337,4 +1337,145 @@ is exhaustive.**
 [m6s-dependency]: ../../../.agent-runs/20260928-1946-logger-m5-m6/07-m5-dependency-security.md
 [m6s-report]: ../../../.agent-runs/20260928-1946-logger-m5-m6/20-m6-package-security.md
 
+## October 1 Dependency Preflight R2
+
+_Reviewed 2026-10-01 EDT against RECONCILIATION-r2 / RECONCILIATION-VALIDATION-r2,
+general dependency-security practice and the existing M5 threat/data boundaries.
+All preceding assessments and findings retain their historical scope and dates._
+
+### Scoped Verdict
+
+**Ready for approved public restore.** Overall preflight disposition: **Accept; no
+blocking issue found**. New findings: Critical 0, High 0, Medium 0, Low 0, Informational 0.
+The [completed preflight report][r2-preflight] binds exactly the
+[149-input SetupSubject][r2-preflight-subject], not a restored Candidate or final package.
+This is not a setup-audit substitute, implementation-security gate, runtime/canary result,
+checkpoint acceptance or permission to publish, merge or deploy. No security review is exhaustive.
+
+The actual [library project:64](../../ProphetsWay.Logger/ProphetsWay.Logger.csproj#L64)
+adds only the owner's unconditional Microsoft.Extensions.Logging.Abstractions **10.0.12**.
+Production source is unchanged and has no Microsoft bridge implementation. DI.Abstractions
+10.0.12 is transitive, not a new direct grant; no full Logging or DI implementation package
+was found. Existing native controls and M5-C1-C9 are not re-certified by adding a dependency.
+
+### Observations
+
+Three fresh SDK 10.0.401 queries ran **04:29:07-04:29:10 UTC on October 1**, one per
+library/test/example project, with `--vulnerable --include-transitive --no-restore`, explicit
+`--source https://api.nuget.org/v3/index.json`, and JSON output. Each exited 0 with the exact
+project/public source, zero problems, zero vulnerable rows, no stderr and no timeout.
+Fresh no-cache NuGet advisory-page retrieval at **04:31:06 UTC** corroborated no affected
+version among all **45** resolved package/version pairs. The feed's Moq range excludes 4.20.72.
+
+| Project | Observed graph package counts |
+| --- | --- |
+| Library | netstandard2.0: 11; net10.0: 2 |
+| Tests | net48 and net48/win-x86: 37 each; net10.0 and net10.0/win-x86: 30 each |
+| Example | net10.0: 2 |
+
+These seven graphs still list public NuGet **plus SDK-local sources**. Their automatic
+origin is unobserved; they are not proof of the approved public-only restore. All 776
+pre-restore inputs and 149 setup inputs matched before/after queries. Preserved history
+also matched; old report15's original binding comparisons remain failed, not rebaselined.
+
+All nine exact new-closure nuspecs matched fresh public metadata and declared MIT. Actual
+Standard2.0/net462/net10.0 asset selections are compatible metadata observations, not
+compile/load proof. Logging.Abstractions includes generators and buildTransitive targets;
+the selected targets manage analyzers, but analyzer/runtime binaries and package signatures
+were not verified. Aggregate third-party notices and final redistribution obligations remain
+separate from MIT declarations. No future version allowed by minimum ranges is cleared.
+
+### Coverage And Limits
+
+| Area | Reviewed | Limit |
+| --- | --- | --- |
+| Access control and M5 threat obligations | Change/model boundary | No new recipient or identity-bearing data path; M5-C1-C9 implementation gates remain later. |
+| Dependencies, assets, licenses, advisories | All three current graphs; exact nine-version closure; fresh scans/pages | Pre-restore observation only; no binary authenticity, legal or future-advisory clearance. |
+| Restore source and protected-input controls | Actual task, command arrays, binding/state/source checks and current configuration | No restore executed; public-source assertions and complete after-graph remain mandatory. |
+| Secrets and injection | Bounded project/package/configuration/command surface | No credential candidate found; no history, consumer-data, infrastructure or pipeline audit. |
+| Runtime and final artifacts | Not executed or accepted here | Original Windows, semantic, code, restored-graph and final-package gates remain separate. |
+
+The command retains both the approved public `--source` and `-p:NuGetAuditSources=...`.
+The installed targets do not establish that property as an independent audit-source override;
+the three inspected effective configs currently have no separate auditSources entries.
+Keep that environment assumption explicit and recheck it before parent binding/execution.
+Global cache origin is not authenticated by a source-list check. Details, exact commands,
+UTC bounds, package versions and proof limitations are in the preflight report.
+
+**Handoff:** parent independently verifies the named subject and completed setup review,
+binds this preflight, then alone performs the approved single Restore task. Review its actual
+resolved graph with fresh advisories before final verification, and review current package
+contents after Final/Package. Current documentation must bind those later artifacts. No fix,
+waived test/review, retry, new operation authority or historical-failure rewrite follows.
+
+[r2-preflight]: ../../../.agent-runs/20260930-2214-logger-m5-m6/11-dependency-preflight-r2.md
+[r2-preflight-subject]: ../../../.agent-runs/20260930-2214-logger-m5-m6/evidence/reconciliation-setup-f1df303a72b54b609ce00680fcca4629-setup-subject.json
+
+
+## October 1 Recorded Restore Reuse R3
+
+_Reviewed 2026-10-01 EDT against RECONCILIATION-r3 / RECONCILIATION-VALIDATION-r3,
+the owner's exact SDK-01 approval, general supply-chain practice and the existing M5
+threat/classification boundaries. Earlier sections and historical failures remain unchanged._
+
+### Scoped Verdict
+
+**Ready for recorded restore reuse.** Scoped disposition: **Accept; no blocking issue found**.
+New findings: Critical 0, High 0, Medium 0, Low 0, Informational 0. The
+[completed independent report][r3-reuse-review] binds exactly the [975-input SetupSubject][r3-reuse-subject].
+All three historical restore commands remain successful, but **the outer R2 Success=false and
+consumed dispatch remain unchanged**. This is the approved R3 reuse assessment, not another restore,
+parent binding, a runtime/bridge verdict, final-package acceptance or permission to release.
+
+### Current Observations
+
+The exact 975-input subject, 776-file graph, 34 SDK inputs, 65 source/project inputs, 26 specification
+inputs and 1,998-file observed history match. Reconstructed graph membership and all three complete
+target dictionaries also match. Recorded commands/seals, exact arguments and old execution windows
+were checked independently. The 105 setup controls are synthetic, not product execution.
+
+Actual SDK 10.0.401 targets explain the additional **C:/Program Files/dotnet/library-packs** source.
+Inspected 40 distinct SDK file/ancestor paths, including all 23 cache archives: no links and no
+ordinary-user mutation grants under Program Files. Owners are the expected system/servicing groups;
+the directory's source worthiness was assessed, not inferred merely from unchanged ACL text.
+Installed dotnet.exe, SDK dotnet.dll and MSBuild.dll have valid Microsoft Authenticode signatures.
+None of the 23 actual cache package identities overlaps Logger's resolved graph. This does not
+authenticate the original installer/downloads or the cache packages' publisher signatures.
+
+All three graphs list exactly nuget.org plus that SDK directory. The three effective configs have
+no credential or separate audit-source section; their Visual Studio offline source is not in the
+recorded graphs. The recorded NuGetAuditSources argument is not proved an independent override.
+Preserve and recheck this configuration assumption; no configuration or ACL was changed.
+
+Three fresh public `--vulnerable --include-transitive --no-restore` scans completed at
+**22:47:08-22:47:12 UTC**, all exit 0 with no problems or vulnerable rows returned. Fresh no-cache
+advisory index/base/update retrieval at **22:48:56 UTC** likewise found no affected version among
+all **45** resolved identities in seven target/RID graphs. No restore, build, test or package ran.
+
+All 45 local nuspecs were inspected; the nine exact approved new-closure nuspecs match fresh public
+metadata and declare MIT. Existing declarations include Apache-2.0/BSD-3-Clause and six legacy
+license-URL-only entries. Aggregate third-party notices and final redistribution limits remain.
+NuGet's APIs verified 45/45 content hashes against assets/metadata and 45/45 archive hashes against
+sidecars; these are distinct hash domains, not publisher authentication. One existing cache metadata
+record claims a historical Visual Studio local origin; source-list checks do not prove cache origin.
+
+### Coverage And Limits
+
+| Area | Reviewed | Limit |
+| --- | --- | --- |
+| SDK-01 trust | Actual ownership/access, links, target/import, tool signatures and configuration | No original installer, package-publisher or privileged-compromise assurance. |
+| Recorded restore | Commands, windows, seals, current full graph and preserved R2 failure | Parent must independently bind this exact subject before VerifyRestore; no retry authority. |
+| Dependencies | Actual projects/assets, licenses, fresh CLI scans and advisory pages | No legal, upstream binary, bundled-component, OS/runtime or future-advisory clearance. |
+| Access control and sensitive data | Unchanged source and existing model boundary; bounded config/command checks | No secret candidate found; no real-user-data, history-wide or deployment audit. |
+| M5-C1-C9 and final qualification | Not passed by this review | Bridges, semantic/runtime checks, final package and release gates remain separate. |
+
+**Handoff:** Vanguard opens the completed report, verifies current exact inputs/configuration and
+completed setup acceptance, then binds **Ready for recorded restore reuse** to
+RECONCILIATION-VALIDATION-r3 and the full named SetupSubject. Use VerifyRestore only. Freeze final
+document bytes before Final/Package; later final security may be report-only. No security review
+is exhaustive, and no full-v4, checkpoint, release, merge or deployment permission follows.
+
+[r3-reuse-review]: ../../../.agent-runs/20261001-1823-logger-m5-m6/03-recorded-restore-security-r3.md
+[r3-reuse-subject]: ../../../.agent-runs/20261001-1823-logger-m5-m6/evidence/reconciliation-setup-642a2d80493745da982def8082c3b9d1-setup-subject.json
+
 

@@ -65,10 +65,17 @@ There is no separate `net48` library asset. Older modern runtimes compatible wit
 automatically strand them. Consumers requiring pre-Standard-2.0 reach cannot use this
 new target set. Verification is currently Windows-focused, not equivalent Mac/Linux proof.
 
+The library's sole direct package reference is `Microsoft.Extensions.Logging.Abstractions`
+`10.0.12`, unconditional for both targets. It flows to consumers together with its normal
+transitive dependencies through NuGet resolution. Adding this reference does not implement
+either Microsoft logging bridge; both remain design-only.
+
 ### Package Contents And Source Metadata
 
-The unreleased M6 packaging update retains both library assets above. A local package
-inspection verified these outputs from the current source, not a published v4 package:
+The unreleased M6 packaging update retains both library assets above. The local package
+inspection on **2026-09-29 EDT** verified the outputs below before the
+`Microsoft.Extensions.Logging.Abstractions` dependency was added. These are historical
+observations, not a package built or validated from the current dependency-bearing candidate:
 
 | Package detail | Verified output or setting |
 | --- | --- |
@@ -83,7 +90,14 @@ Its reproducibility-related `ContinuousIntegrationBuild` setting is `true` only 
 Property evaluation is not proof of reproducible binaries. The measured Source Link metadata
 also does not prove remote-source availability or an end-to-end debugger experience.
 
-This is partial M6 evidence, not full qualification or release approval. M5 bridges are not
+As of **2026-10-01**, recorded restore reuse is accepted under the narrow SDK-01 exception
+for the SDK-owned library-packs source; restore was not rerun. The fresh R3 Windows baseline
+passed three builds and 672 selected tests on each of `net48` and `net10.0`, with zero failures,
+skips or test identity changes. Baseline results alone do not establish independent assertion equivalence,
+final verification, current-candidate package qualification or bridge completion. The earlier package
+observations above remain historical.
+
+This is historical, partial M6 evidence, not full qualification or release approval. M5 bridges are not
 delivered; remaining assertion migration, the owner-handled test-project rename, broader
 consumer/security qualification and deferred non-Windows proof remain separate. The version
 file still selects `3.0.1`; this update changes neither that selection nor publication status.

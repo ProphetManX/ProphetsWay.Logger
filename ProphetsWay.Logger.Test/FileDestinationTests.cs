@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
 using Shouldly;
@@ -30,7 +29,7 @@ namespace ProphetsWay.Logger.Test
 					Utilities.Logger.AddDestination(dest);
 					Utilities.Logger.Debug("Hello World!");
 					fi.Refresh();
-					fi.Exists.Should().BeTrue();
+					fi.Exists.ShouldBeTrue();
 				}
 				finally
 				{
@@ -54,7 +53,7 @@ namespace ProphetsWay.Logger.Test
 					Utilities.Logger.Debug(msg);
 					using (var tr = fi.OpenText())
 						contents = tr.ReadToEnd();
-					contents.Should().Contain(msg);
+					contents.ShouldContain(msg, Case.Sensitive);
 				}
 				finally
 				{
@@ -80,7 +79,9 @@ namespace ProphetsWay.Logger.Test
 					Utilities.Logger.Debug(msg);
 					using (var tr = fi.OpenText())
 						contents = tr.ReadToEnd();
-					contents.Should().NotContain(initialMsg).And.Contain(msg);
+					var actualContents = contents;
+					actualContents.ShouldNotContain(initialMsg, Case.Sensitive);
+					actualContents.ShouldContain(msg, Case.Sensitive);
 				}
 				finally
 				{
@@ -106,7 +107,9 @@ namespace ProphetsWay.Logger.Test
 					Utilities.Logger.Debug(msg);
 					using (var tr = fi.OpenText())
 						contents = tr.ReadToEnd();
-					contents.Should().Contain(initialMsg).And.Contain(msg);
+					var actualContents = contents;
+					actualContents.ShouldContain(initialMsg, Case.Sensitive);
+					actualContents.ShouldContain(msg, Case.Sensitive);
 				}
 				finally
 				{
