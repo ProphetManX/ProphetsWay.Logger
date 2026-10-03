@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Project Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <script defer src="lucide.min.js"></script>
+    <script defer src="data/dashboard-data.js"></script>
+    <script defer src="data/pilot-data.js"></script>
+    <script defer src="dashboard.js"></script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="workspace">
+        <aside class="sidebar">
+            <a class="brand" href="#overview" aria-label="Project overview">
+                <span class="brand-mark"><i data-lucide="layers" aria-hidden="true"></i></span>
+                <span><span class="brand-name">Prophet's Way</span><span class="brand-caption">Project workspace</span></span>
+            </a>
+            <div class="nav-caption">PROJECT</div>
+            <nav class="navigation" aria-label="Dashboard views">
+                <a href="#overview" data-view="overview"><i data-lucide="layout-dashboard" aria-hidden="true"></i><span>Overview</span></a>
+                <a href="#work" data-view="work"><i data-lucide="list-tree" aria-hidden="true"></i><span>Work plan</span></a>
+                <a href="#requirements" data-view="requirements"><i data-lucide="list-checks" aria-hidden="true"></i><span>Requirements</span></a>
+                <a href="#agents" data-view="agents"><i data-lucide="users" aria-hidden="true"></i><span>Agents</span></a>
+                <a href="#handoffs" data-view="handoffs"><i data-lucide="messages-square" aria-hidden="true"></i><span>Help &amp; reviews</span></a>
+                <a href="#history" data-view="history"><i data-lucide="history" aria-hidden="true"></i><span>Run history</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <span class="local-label"><i data-lucide="hard-drive" aria-hidden="true"></i> LOCAL SNAPSHOT</span>
+                <span id="sidebar-project">Local repository</span>
+                <span class="muted">Status records, not heartbeats</span>
+            </div>
+        </aside>
+        <div class="main-column">
+            <header class="topbar">
+                <div class="breadcrumb"><span>PROJECTS</span><i data-lucide="chevron-right" aria-hidden="true"></i><strong id="breadcrumb-project">Project</strong></div>
+                <div class="snapshot-controls">
+                    <span id="pilot-time" class="snapshot-time">Pilot not started</span>
+                    <span id="snapshot-time" class="snapshot-time">Snapshot unavailable</span>
+                    <button id="reload" class="icon-button" type="button" title="Reload published snapshot" aria-label="Reload published snapshot"><i data-lucide="refresh-cw" aria-hidden="true"></i></button>
+                </div>
+            </header>
+            <main id="main" tabindex="-1">
+                <div class="page-heading">
+                    <div><p id="eyebrow" class="eyebrow">PROJECT OVERVIEW</p><h1 id="page-title">Project</h1><p id="page-subtitle" class="page-subtitle"></p></div>
+                    <span id="project-status"></span>
+                </div>
+                <div id="notification" class="notice warning" role="status" hidden></div>
+                <div id="filters" class="filters" hidden>
+                    <label class="search-field"><i data-lucide="search" aria-hidden="true"></i><span class="sr-only">Search this view</span><input id="search" type="search" autocomplete="off" placeholder="Search"><button id="clear-search" type="button" class="icon-button small" title="Clear search" aria-label="Clear search" hidden><i data-lucide="x" aria-hidden="true"></i></button></label>
+                    <label id="status-filter-label" class="select-field"><span class="sr-only">Status</span><select id="status-filter" aria-label="Status"></select></label>
+                    <label id="run-filter-label" class="select-field" hidden><span class="sr-only">Run</span><select id="run-filter" aria-label="Run"></select></label>
+                    <span id="result-count" class="result-count" aria-live="polite"></span>
+                </div>
+                <div id="content"></div>
+                <footer class="page-footer"><span id="footer-counts"></span><span>Recorded evidence, not fresh certification</span></footer>
+            </main>
+        </div>
+    </div>
+    <dialog id="detail-dialog" aria-labelledby="detail-title">
+        <div class="dialog-header"><div><p id="detail-eyebrow" class="eyebrow"></p><h2 id="detail-title"></h2></div><button id="close-dialog" class="icon-button" type="button" title="Close details" aria-label="Close details"><i data-lucide="x" aria-hidden="true"></i></button></div>
+        <div id="detail-content" class="dialog-content"></div>
+    </dialog>
+    <noscript><p class="notice warning">JavaScript is disabled. The dashboard snapshot cannot be displayed.</p></noscript>
+</body>
+</html>
