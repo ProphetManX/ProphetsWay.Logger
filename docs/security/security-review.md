@@ -1479,3 +1479,93 @@ is exhaustive, and no full-v4, checkpoint, release, merge or deployment permissi
 [r3-reuse-subject]: ../../../.agent-runs/20261001-1823-logger-m5-m6/evidence/reconciliation-setup-642a2d80493745da982def8082c3b9d1-setup-subject.json
 
 
+## October 2 M5 Three-Carrier Source Assessment
+
+_Reviewed 2026-10-02 EDT against M5-REPRESENTATION-IMPL-r1, the
+[M5 threat model](threat-model.md#L854), [classification](data-classification.md#L726),
+and the independently reviewed B01-B32 representation contract. All preceding content
+and historical dispositions remain unchanged. This is source review before Final._
+
+### Scoped Verdict And Findings
+
+**Accept; no blocking issues found in the implemented representation.** New findings:
+Critical 0; High 0; Medium 0; Low 0; Informational 0. All three carrier files and the
+reused membership-copy implementation were read independently of passing tests.
+No secret candidate was identified in those sources or inspected configuration metadata.
+No fix, new policy or risk waiver is proposed. Raw state, nested capabilities, delegates
+and logged exceptions are intentionally retained under D010/D011, not sanitized.
+This is not an adapter, complete M5/G5, final-package, checkpoint or release verdict.
+
+### Source And Evidence
+
+The [entry constructor](../../ProphetsWay.Logger/LogBridgeEntry.cs#L56) rejects missing
+sequences and invalid native masks before enumeration, copies complete membership, and
+keeps six ordered bridge facts separate from application pairs. The
+[typed entry](../../ProphetsWay.Logger/LogBridgeEntryOfT.cs#L40) retains the original
+state/delegate and returns declared-type/common views without invocation. The
+[external frame](../../ProphetsWay.Logger/LogBridgeScope.cs#L31) copies pairs without
+ambient access or state inspection. All 25 declarations/XML match the reviewed snapshot
+under an independent C# 7.3 syntax-tree comparison; no source was compiled or executed here.
+
+[CopyMembership](../../ProphetsWay.Logger/LogContext.cs#L94) builds a private list before
+returning its sealed wrapper; [SyncRoot](../../ProphetsWay.Logger/LogContext.cs#L111)
+is a separate object, not writable membership. The private scope validator is consumed
+eagerly, not retained as lazy backing. Failed acquisition/iteration/current/disposal cannot
+return a usable carrier; local foreign construction errors are not safe dispatch reports.
+Only sequence infrastructure is disposed, never supplied state, exception or nested values.
+
+The [complete source-security report][m5-carriers-security] binds the
+[Candidate subject][m5-carriers-subject] and records exact scan and preservation provenance.
+The 1,442-input subject, 1,434 audited specification inputs, 45-file result seal and
+735 outputs matched. Reparsed author TRXs corroborate 65 new and 672 original passed cases
+per runtime, no failures/skips or identity changes; readiness is separate and overlaps an
+original selection. No test/build was run by this reviewer. Concurrent README/changelog
+edits differ from the broader Candidate snapshots and are not reviewed authority here.
+
+### Coverage And Deferred Controls
+
+| Area | Reviewed | Result and remaining obligation |
+| --- | --- | --- |
+| Access control / M5-C1 | Representation boundary first | No recipient, permission check or output path added. Possession is not authorization; denied ordinary/exact-T/direct and inbound-enablement canaries remain later. |
+| M5-C2 | Explicit attachments and native provenance | No property-name/state inference; original native context and separate external attachments survive. Adapter accumulation of inherited labels remains unimplemented here. |
+| M5-C3 | All capture/getter bodies and owned backing | Eager ordered copying; no implicit formatter, getter discovery, ToString, deep clone, ambient capture or lazy membership. Exactly-once producer formatting when needed remains an adapter canary. |
+| M5-C4 | Exact typed/raw/optional facts and metadata | Original state/delegate/exception, EventId absence, composite mask and repeated/null/default pairs retained without overwrite. Microsoft ordinal validation and lowest-bit export mapping remain later. |
+| M5-C5 | Separate ordered frame data | Native frames/indices unchanged; external frames remain distinct. Host-scope composition, reverse export disposal and exception cleanup are not passed. |
+| M5-C6 | Accessible surface and private state | No public guard authority or private cycle engine added. Edited-property round trips, cyclic return versus nested/fresh entries and cleanup canaries remain required. |
+| M5-C7 | Raw payload versus safe reporting boundary | No diagnostic sink or raw-cause/report backlink introduced. Constructor failures are not sanitized reports; later capture/export/reporter withholding, bounds and precedence remain required. |
+| M5-C8 | Payload ownership and read concurrency | No borrowed-payload disposal; completed membership is read-only, nested graphs remain mutable. Provider retirement/captured-user lifetime and disposal canaries remain later. |
+| M5-C9 | Data-only declarations and call sites | No installation, registration, routing, fallback, category inference or I/O added. Explicit-direction and ordinary/exact-T integration remain separate. |
+| Injection, deserialization, crypto, authentication, availability, audit/compliance | Entire new source boundary | No command/query/HTML/URL/serializer/authentication sink. Finite stable sequences required; no quota, timeout, sandbox, erasure or durable-audit promise. Consumer access/storage duties remain. |
+| Dependencies and SDK source | Current graph/configuration plus fresh advisories | Same 776 graph inputs, 34 SDK inputs, seven target/RID graphs and 45 exact versions; SDK-01 exception unchanged. Not upstream binary, publisher, OS/runtime or license clearance. |
+| Symbols | Actual Candidate build PDBs, not final archives | 41 documents per target with matching local checksums; only two generated sources embedded. HTTPS Source Link remains pinned to Candidate HEAD; checkout paths are exposed. Remote availability and final package binding remain unverified. |
+
+### Dependency Vulnerabilities
+
+Three fresh SDK 10.0.401 scans ran on October 2 at **04:22:58-04:23:01 UTC**, one per
+current library/test/example project, using `--vulnerable --include-transitive --no-restore`,
+explicit public `--source https://api.nuget.org/v3/index.json` and JSON output. Each exited
+0 with the exact project/source, no problems and no vulnerable rows. Fresh no-cache public
+index/base/update retrieval at **04:24:23 UTC** returned HTTP 200; NuGet.Versioning found
+no affected range among all 45 resolved versions. No restore or package operation occurred.
+
+| Package | Version | Advisory | Severity | Direct/Transitive | Fixed in |
+| --- | --- | --- | --- | --- | --- |
+| None reported in this graph | 45 exact pairs checked | No affected range matched | n/a | Both included | n/a |
+
+### Worth Checking And Handoff
+
+No unresolved in-scope security suspicion remains. Unbounded originals can retain sensitive
+data/capabilities; consumers own reference distribution, onward serialization and cleanup.
+No real data, backend, secret history, external provider, non-Windows behavior or full native
+implementation was audited. Advisory lag, unknown vulnerabilities and prior supply-chain/
+redistribution limits remain. **No security review is exhaustive.**
+
+**Vanguard v2:** independently verify this source assessment and current inputs before Final.
+After document owners finish, retain the separate Final, Code Reviewer, actual Package and
+report-only final-security binding gates. Do not bind an older R3 package review to these
+new carriers or treat this appendix as permission to checkpoint, publish, merge or deploy.
+
+[m5-carriers-security]: ../../../.agent-runs/20261001-1823-logger-m5-m6/30-carriers-source-security.md
+[m5-carriers-subject]: ../../../.agent-runs/20261001-1823-logger-m5-m6/evidence/carriers-candidate-90b7f74fdad84e318fbfec109ca30ebc-spec-subject.json
+
+

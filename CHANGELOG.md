@@ -280,6 +280,15 @@ the first log call when the host's base directory is not an appropriate output l
 additive API surface within the unreleased v4-direction change, whose automatic output, fallback
 suppression and failure semantics are breaking behavior decisions; the version file remains `3.0.1`.
 
+## Bridge carrier representation
+
+The Logger now exposes the assembly-created `LogBridgeEntry`, `LogBridgeEntry<TState>`, and
+`LogBridgeScope` carrier types. They preserve original typed or opaque state, declared state type,
+producer delegate, exception, cached text, ordered structured property and scope frames, annotations,
+and native source-origin context; their constructors remain assembly-only, and captured membership is
+read-only without deep-freezing nested caller-owned values. This is the carrier representation only:
+it does not add inbound or outbound adapters, activation, routing, loop guards, or lifecycle behavior.
+
 # v3.0.1
 ### Build target for Net 6.0
 Library now targets .Net 6.0

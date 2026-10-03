@@ -10,6 +10,8 @@ Route log messages to console, file, event, or custom destinations with per-dest
 > with native scope boundaries. M4-B1 implements explicit-file append/reset, fixed-path output
 > and physical encoding/termination. M4-B2 now integrates ordinary and exact-`T` automatic output
 > into one shared UTF-8 session file, with initial-only recovery and remembered initialization failure.
+> M5 adds [library-created carrier data](#m5-carrier-data) only; neither Microsoft logging bridge
+> is implemented.
 > Supplied destinations use guarded entrypoints and protected `LogCore` hooks; subclasses
 > must migrate their old `Log` overrides. This describes current source, not the published
 > NuGet package, a completed final acceptance gate, or release certification.
@@ -462,6 +464,39 @@ including direct calls, not its registration settings. Delivery must pass the re
 recipient severity permission, registration policy and supplied policy. Logger captures supplied
 policies before callbacks too; an earlier callback cannot change a later recipient's checks for
 the current call. No global transaction across separate destination objects is promised.
+
+### M5 Carrier Data
+
+The current source implements three public data types in `ProphetsWay.Utilities`, with
+internal, library-only constructors. There is no public construction or consumer factory,
+and no bridge provider creates entries for you.
+
+| Type | Captured data |
+| --- | --- |
+| [LogBridgeEntry.cs](ProphetsWay.Logger/LogBridgeEntry.cs): `LogBridgeEntry` | Common view: `CategoryName`, nullable `EventId`, full nonzero native `OriginalLevel`, separate `RawMessage` and cached `FormattedMessage`, original `Exception`, ordered `Properties`, external `Scopes`, explicit `Annotations`, original `NativeContext` and separate `BridgeMetadata`. |
+| [LogBridgeEntryOfT.cs](ProphetsWay.Logger/LogBridgeEntryOfT.cs): `LogBridgeEntry<TState>` | Sealed typed entry retaining original `State` and exact `ProducerFormatter` delegate, including absent/default inputs. `StateType` is the declared `typeof(TState)`; `OriginalState` and `OriginalProducerFormatter` expose the common views. |
+| [LogBridgeScope.cs](ProphetsWay.Logger/LogBridgeScope.cs): `LogBridgeScope` | Sealed external frame retaining opaque/scalar `State`, ordered `Properties` and explicitly mapped `Annotations`; data, not a live scope or disposal handle. |
+
+Owned read-only membership preserves supplied order, duplicate keys, null keys/values,
+default pairs, repeated frames and label occurrences despite later source-list edits.
+An absent `EventId` differs from a present default value; available identity includes its
+name. An absent annotation differs from a present-empty attachment. Bridge-owned metadata
+does not overwrite identically named application properties.
+
+`NativeContext` keeps its original native frames and origin indices. External origins belong
+to the entry attachment or a position in `Scopes`, then that attachment's occurrence position.
+The domains remain separate, without reindexing or inventing cross-system order.
+
+Read-only membership is not deep freezing or authorization. Original state, exception and
+nested objects can remain mutable or sensitive; the retained delegate is an executable
+capability. Construction/readback does not invoke it, inspect nested graphs, classify payloads,
+open ambient scopes or dispose supplied objects. You own safe retention and later handling.
+
+The inbound provider, outbound destinations and bridge registration remain unimplemented.
+These carriers perform no delivery, scope replay or private cycle control. Their
+[construction/readback specifications](ProphetsWay.Logger.Test/LogBridgeRepresentationTests.cs)
+concern this data component, not operational bridge behavior, current-package qualification
+or release readiness.
 
 ## API Reference
 
