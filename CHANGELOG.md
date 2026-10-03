@@ -289,6 +289,15 @@ and native source-origin context; their constructors remain assembly-only, and c
 read-only without deep-freezing nested caller-owned values. This is the carrier representation only:
 it does not add inbound or outbound adapters, activation, routing, loop guards, or lifecycle behavior.
 
+## Microsoft log label mapper contract
+
+The v4-direction contract now includes the public `IMicrosoftLogLabelMapper` interface for explicit
+mapping of external Microsoft logging input to optional `LogAnnotations`. Implementations may map each
+entry through `MapEntry<TState>` and each captured external scope frame through `MapScope`; the
+callbacks receive the completed original facts and may return no attachment or a present annotation.
+This is additive contract surface only. It does not claim a provider implementation, callback
+invocation or routing, activation, lifecycle, outbound behavior, or release qualification.
+
 # v3.0.1
 ### Build target for Net 6.0
 Library now targets .Net 6.0

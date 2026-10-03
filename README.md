@@ -10,8 +10,8 @@ Route log messages to console, file, event, or custom destinations with per-dest
 > with native scope boundaries. M4-B1 implements explicit-file append/reset, fixed-path output
 > and physical encoding/termination. M4-B2 now integrates ordinary and exact-`T` automatic output
 > into one shared UTF-8 session file, with initial-only recovery and remembered initialization failure.
-> M5 adds [library-created carrier data](#m5-carrier-data) only; neither Microsoft logging bridge
-> is implemented.
+> M5 adds [library-created carrier data](#m5-carrier-data) and a mapper interface only; neither
+> Microsoft logging bridge is implemented.
 > Supplied destinations use guarded entrypoints and protected `LogCore` hooks; subclasses
 > must migrate their old `Log` overrides. This describes current source, not the published
 > NuGet package, a completed final acceptance gate, or release certification.
@@ -497,6 +497,17 @@ These carriers perform no delivery, scope replay or private cycle control. Their
 [construction/readback specifications](ProphetsWay.Logger.Test/LogBridgeRepresentationTests.cs)
 concern this data component, not operational bridge behavior, current-package qualification
 or release readiness.
+
+The public [IMicrosoftLogLabelMapper](ProphetsWay.Logger/IMicrosoftLogLabelMapper.cs#L18)
+interface in `ProphetsWay.Utilities` is also available in current source. `MapEntry<TState>`
+and `MapScope` return optional `LogAnnotations` for an external entry or scope frame,
+respectively; `null` means no attachment. Both accept ordered, read-only properties as
+`ReadOnlyCollection<KeyValuePair<string, object>>`; state and nested values are not frozen.
+You supply classification explicitly; this is not automatic classification or sanitization.
+
+Only the mapper interface is available; the library currently invokes neither callback. Its XML
+describes the approved future integration contract. The inbound provider and logger, factory
+registration, and outbound integration remain unimplemented.
 
 ## API Reference
 

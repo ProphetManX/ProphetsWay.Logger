@@ -1533,6 +1533,69 @@
 			"isBackground": false,
 			"group": "test",
 			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger mapper contract setup",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261002-2202-logger-m5-m6/validate-mapper-contract.ps1",
+			"args": ["-Stage", "Setup"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger mapper contract bind review",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261002-2202-logger-m5-m6/validate-mapper-contract.ps1",
+			"args": ["-Stage", "BindReview"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger mapper contract baseline",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261002-2202-logger-m5-m6/validate-mapper-contract.ps1",
+			"args": ["-Stage", "Baseline"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger mapper contract candidate",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261002-2202-logger-m5-m6/validate-mapper-contract.ps1",
+			"args": ["-Stage", "Candidate"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger mapper contract final",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261002-2202-logger-m5-m6/validate-mapper-contract.ps1",
+			"args": ["-Stage", "Final"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger mapper contract package",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261002-2202-logger-m5-m6/validate-mapper-contract.ps1",
+			"args": ["-Stage", "Package"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger mapper contract freeze checkpoint",
+			"type": "shell",
+			"command": "C:/Projects/ProphetManX/.agent-runs/20261002-2202-logger-m5-m6/validate-mapper-contract.ps1",
+			"args": ["-Stage", "FreezeCheckpoint"],
+			"isBackground": false,
+			"group": "test",
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
 		}
 	]
 }
