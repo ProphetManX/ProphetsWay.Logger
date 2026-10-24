@@ -1596,6 +1596,186 @@
 			"isBackground": false,
 			"group": "test",
 			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" }
+		},
+		{
+			"label": "Logger inbound runtime setup",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-1827-logger-m5-runtime/validate-inbound-r1.ps1", "-Stage", "Setup"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound runtime bind review",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-1827-logger-m5-runtime/validate-inbound-r1.ps1", "-Stage", "BindReview"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound runtime baseline",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-1827-logger-m5-runtime/validate-inbound-r1.ps1", "-Stage", "Baseline"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound runtime compile surface",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-1827-logger-m5-runtime/validate-inbound-r1.ps1", "-Stage", "Compile"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound runtime candidate",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-1827-logger-m5-runtime/validate-inbound-r1.ps1", "-Stage", "Candidate"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound runtime freeze specifications",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-1827-logger-m5-runtime/validate-inbound-r1.ps1", "-Stage", "FreezeSpecs"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound runtime final",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-1827-logger-m5-runtime/validate-inbound-r1.ps1", "-Stage", "Final"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound runtime package",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-1827-logger-m5-runtime/validate-inbound-r1.ps1", "-Stage", "Package"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound runtime freeze checkpoint",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-1827-logger-m5-runtime/validate-inbound-r1.ps1", "-Stage", "FreezeCheckpoint"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound r2 setup",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-2324-logger-m5-resume/validate-inbound-r2.ps1", "-Stage", "Setup"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound r2 bind review",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-2324-logger-m5-resume/validate-inbound-r2.ps1", "-Stage", "BindReview"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound r2 baseline",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-2324-logger-m5-resume/validate-inbound-r2.ps1", "-Stage", "Baseline"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound r2 compile surface",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-2324-logger-m5-resume/validate-inbound-r2.ps1", "-Stage", "Compile"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound r2 candidate",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-2324-logger-m5-resume/validate-inbound-r2.ps1", "-Stage", "Candidate"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound r2 freeze specifications",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-2324-logger-m5-resume/validate-inbound-r2.ps1", "-Stage", "FreezeSpecs"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound r2 final",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-2324-logger-m5-resume/validate-inbound-r2.ps1", "-Stage", "Final"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound r2 package",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-2324-logger-m5-resume/validate-inbound-r2.ps1", "-Stage", "Package"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Logger inbound r2 freeze checkpoint",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile", "-File", "C:/Projects/ProphetManX/.agent-runs/20261003-2324-logger-m5-resume/validate-inbound-r2.ps1", "-Stage", "FreezeCheckpoint"],
+			"options": { "cwd": "C:/Projects/ProphetManX/ProphetsWay.Logger" },
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
 		}
 	]
 }

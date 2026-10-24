@@ -37,6 +37,8 @@ async function checkStatusTooltips(page) {
 
 async function checkPilotViews(page, projectId, mode = "dashboard-pilot-v1") {
     await page.evaluate(({ projectId, mode }) => {
+    window.AI_DASHBOARD_HEALTH = { schemaVersion: 1, projectId, status: "watching", updatedAt: new Date().toISOString(), lastAcceptedAt: null };
+    window.dispatchEvent(new Event("ai-dashboard-health-updated"));
         window.AI_DASHBOARD_PILOT = { schemaVersion: 1, mode, projectId, publishedAt: "2000-01-01T00:00:00Z", projectUpdatedAt: "2000-01-01T00:00:00Z",
             projectSource: "live/project.json", milestones: [], slices: [], invocations: [], archivedInvocations: [], communications: [] };
         window.dispatchEvent(new Event("ai-dashboard-pilot-updated"));
@@ -65,8 +67,8 @@ async function checkPilotViews(page, projectId, mode = "dashboard-pilot-v1") {
     assert.ok((await page.locator("#detail-content").textContent()).includes("R-17"));
     await page.keyboard.press("Escape");
     await page.locator('[data-view="agents"]').click();
-    await page.locator(".pilot-archive summary").click();
-    await page.locator(".pilot-archive .table-title").click();
+    await page.locator(".pilot-archive:not(.completed-invocations) summary").click();
+    await page.locator(".pilot-archive:not(.completed-invocations) .table-title").click();
     assert.ok((await page.locator("#detail-content").textContent()).includes("Archived detail is retained"));
     assert.equal(await page.locator("#detail-content a.source-link").count(), 2);
     await page.keyboard.press("Escape");
@@ -106,6 +108,7 @@ async function checkRosterViews(page, projectId) {
     await reporting.locator("h2").waitFor();
     assert.equal(await reporting.locator(".detail-report-row").count(), agents.length);
     assert.ok(!(await reporting.textContent()).includes("other agents retain their existing reports"));
+    await reporting.locator(".completed-invocations summary").click();
     for (const agent of agents) {
         await reporting.getByRole("button", { name: `${agent} synthetic report`, exact: true }).click();
         assert.ok((await page.locator("#detail-content").textContent()).includes(`Role-specific report preserved for ${agent}`));
@@ -161,7 +164,6 @@ async function checkLivePublication(browser, data, screenshots, reportingMode = 
             runs: [{ id: "browser-pilot", directory: run, authority: path.join(run, "authority.md") }],
             invocations: [{ id: "author-live", agent: author, runId: "browser-pilot", sliceId: "M5-live", targetRevision: "fixture-r1", recordPath: canonical, reportPath: report }] };
         write(ledger, project);
-        write(canonical, record);
         const publisher = path.resolve(__dirname, "..", "..", "prophets-pipelines", "conventions", "scripts", "AgentDashboard.cjs");
         child = spawn(process.execPath, [publisher, "--project", ledger, "--watch"], { stdio: ["ignore", "pipe", "pipe"] });
         child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
@@ -170,7 +172,21 @@ async function checkLivePublication(browser, data, screenshots, reportingMode = 
         const errors = [];
         page.on("pageerror", (error) => errors.push(error.message));
         await page.clock.install();
-        await page.goto(pathToFileURL(path.join(dashboard, "statusreport.html")).href + "#work");
+        await page.goto(pathToFileURL(path.join(dashboard, "statusreport.html")).href + "#overview");
+        await page.waitForFunction(() => document.querySelector("#publisher-connection").textContent === "Publisher connected");
+        await page.waitForSelector(".queued-invocations");
+        assert.equal(await page.locator(".active-invocations .detail-report-row").count(), 0);
+        assert.equal(await page.locator(".queued-invocations .detail-report-row").count(), 1);
+        const startedPublication = waitForPublisher(child, "Published");
+        write(canonical, record);
+        await startedPublication;
+        await page.clock.fastForward(15001);
+        await page.waitForSelector('.active-invocations [data-record-state="STARTED"]');
+        assert.ok((await page.locator(".active-invocations").textContent()).includes(author));
+        assert.ok((await page.locator(".active-invocations").textContent()).includes("Synthetic watched task"));
+        assert.equal(await page.locator("#project-status .badge.working").textContent(), "1 working (reported)");
+        await page.screenshot({ path: path.join(screenshots, "desktop-started-activity.png"), fullPage: true, animations: "disabled" });
+        await page.locator('[data-view="work"]').click();
         await page.waitForSelector(".milestone-slices");
         assert.ok(await page.locator(".slice-row").isVisible());
         await page.locator(".milestone-summary").click();
@@ -187,6 +203,10 @@ async function checkLivePublication(browser, data, screenshots, reportingMode = 
         assert.match(fs.readFileSync(report, "utf8"), /Outcome: COMPLETE/);
         await page.clock.fastForward(15001);
         await page.waitForFunction(() => window.AI_DASHBOARD_PILOT?.invocations[0]?.state === "FINALIZED");
+        await page.locator('[data-view="agents"]').click();
+        await page.locator('[data-view="agents"][aria-current="page"]').waitFor();
+        assert.equal(await page.locator(".active-invocations .detail-report-row").count(), 0);
+        assert.equal(await page.locator(".completed-invocations .detail-report-row").count(), 1);
         await page.locator('[data-view="handoffs"]').click();
         await page.waitForSelector("tbody .table-title");
         assert.equal(await page.locator("tbody .table-title").textContent(), "Watched review request");
@@ -198,6 +218,29 @@ async function checkLivePublication(browser, data, screenshots, reportingMode = 
         await page.screenshot({ path: path.join(screenshots, reportingMode === "dashboard-v1" ? "desktop-rollout-exchange.png" : "desktop-pilot-exchange.png"), fullPage: true, animations: "disabled" });
         assert.deepEqual(errors, []);
         assert.equal(stderr, "");
+        await page.locator("#close-dialog").click();
+        const accepted = fs.readFileSync(path.join(dashboard, "data", "pilot-data.js"));
+        const rejected = new Promise((resolve, reject) => {
+            const deadline = setTimeout(() => reject(new Error("Publisher did not stop on the finalized-record violation.")), 20000);
+            child.once("exit", (code) => { clearTimeout(deadline); code === 1 ? resolve() : reject(new Error(`Expected integrity stop, got ${code}`)); });
+        });
+        write(canonical, { ...record, summary: "Synthetic forbidden finalized-summary edit" });
+        await rejected;
+        assert.deepEqual(fs.readFileSync(path.join(dashboard, "data", "pilot-data.js")), accepted);
+        await page.clock.fastForward(15001);
+        await page.waitForFunction(() => window.AI_DASHBOARD_HEALTH?.status === "blocked");
+        assert.equal(await page.locator("#publisher-connection").textContent(), "Reporting blocked");
+        assert.ok((await page.locator("#publisher-health").textContent()).includes("last accepted snapshot is retained"));
+        assert.equal(await page.locator("#project-status .badge").textContent(), "Reporting blocked");
+        assert.match(stderr, /finalized canonical record changed/);
+        await page.screenshot({ path: path.join(screenshots, "desktop-reporting-blocked.png"), fullPage: true, animations: "disabled" });
+        await page.evaluate(() => {
+            window.AI_DASHBOARD_HEALTH = { ...window.AI_DASHBOARD_HEALTH, status: "watching", updatedAt: new Date(Date.now() - 61000).toISOString() };
+            window.dispatchEvent(new Event("ai-dashboard-health-updated"));
+        });
+        assert.equal(await page.locator("#publisher-connection").textContent(), "Publisher unconfirmed");
+        assert.equal(await page.locator("#project-status .badge.stale").textContent(), "Publisher unconfirmed");
+        assert.deepEqual(errors, []);
     } finally {
         if (page) await page.close();
         if (child && child.exitCode === null && child.signalCode === null) {
@@ -234,7 +277,7 @@ async function main() {
             await checkLivePublication(browser, data, screenshots, mode);
             assert.deepEqual(errors, []);
             assert.deepEqual(remoteRequests, []);
-            console.log(`PASS: ${mode} forecast/activity/exchanges, ${mode === "dashboard-v1" ? "all 28 leaf detail views, " : ""}real file-watcher publication, generated Markdown, automatic refresh and wrong-project rejection. Synthetic fixtures only; publisher stopped and fixtures removed.`);
+            console.log(`PASS: ${mode} forecast/activity/exchanges, ${mode === "dashboard-v1" ? "all 28 leaf detail views, " : ""}STARTED-before-completion visibility, automatic publication, visible integrity stop, stale heartbeat and wrong-project rejection. Synthetic fixtures only; publisher stopped and fixtures removed.`);
             return;
         }
         if (process.argv.includes("--status-tooltips")) {

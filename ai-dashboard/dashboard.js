@@ -42,7 +42,7 @@
         data: window.AI_DASHBOARD_DATA,
         view: "overview", search: "", status: "all", run: "latest",
         archiveLoaded: false, archivePromise: null, reports: [], pilot: null, pilotLoading: false,
-        milestoneExpansion: new Map()
+        milestoneExpansion: new Map(), completedExpanded: false, health: null, healthLoading: false
     };
     const dateFormat = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
     function date(value) {
@@ -117,6 +117,45 @@
         return result;
     }
     function latestRun() { return state.data.runs[0]; }
+    function staleUpdate(updatedAt) {
+        return !updatedAt || !Number.isFinite(Date.parse(updatedAt)) || Date.now() - Date.parse(updatedAt) > 5 * 60 * 1000;
+    }
+    function reportedActivity() {
+        if (!state.pilot) return badge(latestRun()?.status || "unknown", state.view === "overview" ? undefined : "Recorded snapshot");
+        const connection = publisherStatus();
+        if (connection === "blocked" || connection === "stale" || connection === "stopped") {
+            const result = badge(connection === "blocked" ? "blocked" : connection === "stopped" ? "paused" : "stale",
+                connection === "blocked" ? "Reporting blocked" : connection === "stopped" ? "Publisher stopped" : "Publisher unconfirmed");
+            result.title = "Publisher status, not live telemetry about product execution. The last accepted work records are retained below.";
+            return result;
+        }
+        const active = state.pilot.invocations.filter((record) => record.state === "STARTED");
+        const working = active.filter((record) => record.activity === "working");
+        const fresh = working.filter((record) => !staleUpdate(record.updatedAt));
+        const planned = [...state.pilot.milestones, ...state.pilot.slices];
+        let status = "idle";
+        let text = "No active agent reported";
+        if (fresh.length) { status = "working"; text = `${fresh.length} working (reported)`; }
+        else if (working.length) { status = "stale"; text = "Activity unconfirmed"; }
+        else if (active.some((record) => record.activity === "blocked") || planned.some((item) => item.activity === "blocked")) { status = "blocked"; text = "Blocked (reported)"; }
+        else if (active.some((record) => record.activity === "waiting-review")) { status = "review"; text = "Awaiting review (reported)"; }
+        else if (planned.some((item) => item.activity === "working")) {
+            status = staleUpdate(state.pilot.projectUpdatedAt) ? "stale" : "working";
+            text = status === "stale" ? "Activity unconfirmed" : "Work underway (reported)";
+        }
+        else if (state.pilot.invocations.some((record) => record.state === "NOT_STARTED")) { status = "pending"; text = "Awaiting agent start"; }
+        else if (planned.some((item) => item.activity === "paused")) { status = "paused"; text = "Paused (reported)"; }
+        const result = badge(status, text);
+        result.title = `Recorded activity, not live telemetry. ${result.title}`;
+        return result;
+    }
+    function invocationOutcome(record) {
+        if (["COMPLETE", "NO_CHANGE"].includes(record.outcome)) return "complete";
+        if (record.outcome === "FAILED") return "failed";
+        if (record.outcome === "BLOCKED") return "blocked";
+        if (record.reason === "REVIEW") return "changes";
+        return record.outcome === "PARTIAL" ? "partial" : "unknown";
+    }
     function matches(text, status) {
         return String(text).toLowerCase().includes(state.search.toLowerCase()) && (state.status === "all" || state.status === status);
     }
@@ -201,7 +240,7 @@
         const done = state.data.checkpoints.filter((checkpoint) => checkpoint.runId === run.id);
         const band = node("section", "session-band");
         const copy = node("div", "session-copy");
-        copy.append(node("h2", "", run.title), node("p", "", run.assignment || run.summary || "Assignment status not recorded."));
+        copy.append(node("p", "eyebrow", "LATEST IMPORTED RUN"), node("h2", "", run.title), node("p", "", run.assignment || run.summary || "Assignment status not recorded."));
         band.append(icon("pause"), copy, sourceLink(run.source));
         fragment.append(band);
         const focus = state.data.requirements.stages.filter((stage) => stage.status === "partial");
@@ -215,7 +254,7 @@
         fragment.append(metrics);
         const columns = node("div", "overview-grid");
         const left = node("div");
-        const completed = section("Completed in the latest window", "Recorded component completion, not whole-project sign-off.", { text: "All runs", view: "history" });
+        const completed = section("Completed in the latest imported window", "Recorded component completion, not whole-project sign-off.", { text: "All runs", view: "history" });
         done.forEach((checkpoint) => {
             const row = node("article", "completion");
             const mark = node("span", "completion-mark");
@@ -231,11 +270,11 @@
         handoffs.append(reportTable(recent.slice(0, 6)));
         left.append(handoffs);
         const right = node("div");
-        const progress = section("Latest window", `Source record updated ${date(run.updatedAt)}.`);
+        const progress = section("Latest imported window", `Source record updated ${date(run.updatedAt)}.`);
         progress.append(reportProgress(recent));
         const owner = node("div", "focus-row");
         const ownerText = node("div");
-        ownerText.append(node("h3", "", "Reported current owner"), node("p", "", run.currentOwner || "Not recorded"));
+        ownerText.append(node("h3", "", "Owner at that run's closeout"), node("p", "", run.currentOwner || "Not recorded"));
         owner.append(ownerText);
         progress.append(owner);
         right.append(progress);
@@ -355,7 +394,7 @@
     }
 
     function activityBadge(activity, updatedAt) {
-        const stale = activity === "working" && updatedAt && Date.now() - Date.parse(updatedAt) > 5 * 60 * 1000;
+        const stale = activity === "working" && staleUpdate(updatedAt);
         const result = badge(stale ? "stale" : activity === "waiting-review" ? "review" : activity || "idle");
         if (activity === "working" && updatedAt) {
             result.dataset.pilotActivity = activity;
@@ -415,12 +454,15 @@
     }
     function pilotRecordRow(record) {
         const row = node("div", "detail-report-row");
+        row.dataset.recordState = record.state;
         const subject = node("div");
         const button = node("button", "table-title", record.objective || `${record.agent}: registered`);
         button.type = "button";
         button.addEventListener("click", () => showPilotRecord(record));
         subject.append(button, node("span", "table-secondary mono", `${record.invocationId || record.id} / ${record.agent}`));
-        row.append(subject, activityBadge(record.activity, record.updatedAt));
+        if (record.state === "STARTED" && record.summary) subject.append(node("span", "table-secondary", record.summary.slice(0, 350)));
+        if (record.updatedAt) subject.append(node("span", "table-secondary", `Updated ${date(record.updatedAt)}`));
+        row.append(subject, record.state === "FINALIZED" ? badge(invocationOutcome(record)) : record.state === "NOT_STARTED" ? badge("pending", "Awaiting start") : activityBadge(record.activity, record.updatedAt));
         return row;
     }
     function renderPilotActivity() {
@@ -428,11 +470,34 @@
         const root = section(fullRoster ? "Current agent reporting" : "Current reporting pilot",
             fullRoster ? "Vanguard and its registered project-run agents; each invocation owns its own record."
                 : "Vanguard, Implementer and Code Reviewer; other agents retain their existing reports.", { text: "Help & reviews", view: "handoffs" });
+            root.id = "current-agent-activity";
         if (!state.pilot || (!state.pilot.invocations.length && !state.pilot.archivedInvocations.length)) {
             root.append(empty("No reporting invocation recorded", "The reporting integration is available, but no new task record has been published."));
             return root;
         }
-        state.pilot.invocations.forEach((record) => root.append(pilotRecordRow(record)));
+        const records = [...state.pilot.invocations].sort((left, right) => String(right.updatedAt || "").localeCompare(String(left.updatedAt || "")));
+        const active = records.filter((record) => record.state === "STARTED");
+        const queued = records.filter((record) => record.state === "NOT_STARTED");
+        const completed = records.filter((record) => record.state === "FINALIZED");
+        const current = node("div", "active-invocations");
+        current.append(node("h3", "", "Current work (last reported)"));
+        if (active.length) active.forEach((record) => current.append(pilotRecordRow(record)));
+        else current.append(node("p", "section-caption", "No active agent is reported in the last accepted publication."));
+        root.append(current);
+        if (queued.length) {
+            const waiting = node("div", "queued-invocations");
+            waiting.append(node("h3", "", "Registered, awaiting start"));
+            queued.forEach((record) => waiting.append(pilotRecordRow(record)));
+            root.append(waiting);
+        }
+        if (completed.length) {
+            const history = node("details", "completed-invocations pilot-archive");
+            history.open = state.completedExpanded;
+            history.addEventListener("toggle", () => { state.completedExpanded = history.open; });
+            history.append(node("summary", "", `${completed.length} finished invocations`));
+            completed.forEach((record) => history.append(pilotRecordRow(record)));
+            root.append(history);
+        }
         if (state.pilot.archivedInvocations.length) {
             const archive = node("details", "pilot-archive");
             archive.append(node("summary", "", `${state.pilot.archivedInvocations.length} older finalized records`));
@@ -511,6 +576,46 @@
         byId("pilot-time").textContent = `${candidate.mode === "dashboard-v1" ? "Reporting" : "Pilot"} published ${date(candidate.publishedAt)}`;
         byId("pilot-time").title = "Last file publication, not an agent heartbeat. Working records older than five minutes are marked stale.";
         if (changed) render();
+    }
+    function publisherStatus() {
+        if (!state.health) return "unknown";
+        if (state.health.status === "watching" && Date.now() - Date.parse(state.health.updatedAt) > 60000) return "stale";
+        return state.health.status;
+    }
+    function updateHealthView() {
+        const status = publisherStatus();
+        const connection = byId("publisher-connection");
+        const banner = byId("publisher-health");
+        connection.textContent = { watching: "Publisher connected", stopped: "Publisher stopped", blocked: "Reporting blocked", stale: "Publisher unconfirmed", unknown: "Publisher status unknown" }[status];
+        connection.title = state.health ? `Publisher health updated ${date(state.health.updatedAt)}. This is not an agent heartbeat.` : "Publisher health is unavailable; work status is a recorded snapshot.";
+        banner.hidden = !state.pilot || status === "watching";
+        if (!banner.hidden) {
+            banner.className = `notice ${status === "blocked" || status === "stale" ? "warning" : "info"}`;
+            const message = {
+                stopped: "Live publication is stopped. Work records below are the last accepted snapshot, not current execution.",
+                blocked: "The publisher stopped after an error. The last accepted snapshot is retained; newer records may be pending publication.",
+                stale: "No recent publisher heartbeat is available. Current activity is unconfirmed; the last accepted snapshot is retained.",
+                unknown: "Publisher health is unavailable. Treat the displayed activity as recorded state, not a live connection."
+            }[status];
+            banner.replaceChildren(icon(status === "blocked" ? "circle-alert" : "info"), node("span", "", `${message} Last accepted publication: ${date(state.pilot.publishedAt)}.`));
+        }
+        byId("project-status").replaceChildren(reportedActivity());
+        paintIcons();
+    }
+    function acceptHealth() {
+        const candidate = window.AI_DASHBOARD_HEALTH;
+        state.health = candidate?.schemaVersion === 1 && candidate.projectId === state.data?.project &&
+            ["watching", "stopped", "blocked"].includes(candidate.status) && Number.isFinite(Date.parse(candidate.updatedAt)) ? candidate : null;
+        updateHealthView();
+    }
+    function refreshHealth() {
+        if (document.hidden || state.healthLoading) return;
+        state.healthLoading = true;
+        const script = document.createElement("script");
+        script.src = `data/publisher-health.js?refresh=${Date.now()}`;
+        script.onload = () => { state.healthLoading = false; script.remove(); acceptHealth(); };
+        script.onerror = () => { state.healthLoading = false; script.remove(); state.health = null; updateHealthView(); };
+        document.head.append(script);
     }
     function refreshPilot() {
         if (document.hidden || state.pilotLoading) return;
@@ -673,7 +778,7 @@
         byId("page-title").textContent = titles[state.view];
         byId("eyebrow").textContent = state.view === "overview" ? "PROJECT OVERVIEW" : state.data.project.toUpperCase();
         byId("page-subtitle").textContent = subtitles[state.view];
-        byId("project-status").replaceChildren(badge(latestRun()?.status || "unknown", state.view === "overview" ? undefined : "Recorded snapshot"));
+        byId("project-status").replaceChildren(reportedActivity());
         const renderers = { overview: renderOverview, work: renderWork, requirements: renderRequirements, agents: renderAgents, handoffs: renderHandoffs, history: renderHistory };
         byId("content").replaceChildren(renderers[state.view]());
         document.querySelectorAll(".navigation [data-view]").forEach((link) => {
@@ -681,6 +786,7 @@
             else link.removeAttribute("aria-current");
         });
         byId("clear-search").hidden = !state.search;
+        updateHealthView();
         paintIcons();
     }
     function navigate() {
@@ -727,10 +833,14 @@
     });
     window.addEventListener("hashchange", navigate);
     window.addEventListener("ai-dashboard-pilot-updated", acceptPilot);
+    window.addEventListener("ai-dashboard-health-updated", acceptHealth);
     navigate();
     acceptPilot();
+    acceptHealth();
     setInterval(() => {
         refreshPilot();
+        refreshHealth();
+        updateHealthView();
         document.querySelectorAll('[data-pilot-activity="working"]:not(.stale)').forEach((element) => {
             if (Date.now() - Date.parse(element.dataset.pilotUpdated) > 5 * 60 * 1000) {
                 element.replaceWith(activityBadge("working", element.dataset.pilotUpdated));

@@ -288,8 +288,9 @@ function Get-RequirementsData {
 }
 
 function Initialize-PilotSnapshot {
-    param([string] $Directory)
-    $path = Join-Path $Directory 'pilot-data.js'
+    param([string] $Directory, [ValidateSet('pilot-data.js', 'publisher-health.js')][string] $FileName = 'pilot-data.js')
+    $path = Join-Path $Directory $FileName
+    $globalName = if ($FileName -eq 'publisher-health.js') { 'AI_DASHBOARD_HEALTH' } else { 'AI_DASHBOARD_PILOT' }
     if (Test-Path -LiteralPath $path) {
         if ((Get-Item -LiteralPath $path).Attributes -band [IO.FileAttributes]::ReparsePoint) {
             throw 'Pilot snapshot must not be a link or junction.'
@@ -298,7 +299,7 @@ function Initialize-PilotSnapshot {
     }
     $temporary = Join-Path $Directory ('.pilot-bootstrap-' + [guid]::NewGuid().ToString('N') + '.tmp')
     try {
-        [IO.File]::WriteAllText($temporary, "window.AI_DASHBOARD_PILOT = null;`n", [Text.UTF8Encoding]::new($false))
+        [IO.File]::WriteAllText($temporary, "window.$globalName = null;`n", [Text.UTF8Encoding]::new($false))
         try { [IO.File]::Move($temporary, $path, $false) }
         catch [IO.IOException] { if (-not [IO.File]::Exists($path)) { throw } }
     }
@@ -359,6 +360,13 @@ Outcome: COMPLETE
         [IO.File]::WriteAllText($fixturePath, $existingPublication)
         Initialize-PilotSnapshot $fixtureDirectory
         $checks['Historical refresh preserves pilot publication'] = [IO.File]::ReadAllText($fixturePath) -eq $existingPublication
+        Initialize-PilotSnapshot $fixtureDirectory -FileName 'publisher-health.js'
+        $healthPath = Join-Path $fixtureDirectory 'publisher-health.js'
+        $checks['Fresh dashboard gets unknown publisher health'] = [IO.File]::ReadAllText($healthPath).Contains('AI_DASHBOARD_HEALTH = null')
+        $existingHealth = 'window.AI_DASHBOARD_HEALTH = {"status":"blocked"};'
+        [IO.File]::WriteAllText($healthPath, $existingHealth)
+        Initialize-PilotSnapshot $fixtureDirectory -FileName 'publisher-health.js'
+        $checks['Historical refresh preserves publisher health'] = [IO.File]::ReadAllText($healthPath) -eq $existingHealth
     }
     finally { [IO.Directory]::Delete($fixtureDirectory, $true) }
     $failed = @($checks.Keys | Where-Object { -not $checks[$_] })
@@ -547,6 +555,7 @@ $lockPath = Join-Path $outputRoot '.update.lock'
 $lock = [IO.File]::Open($lockPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
 try {
     Initialize-PilotSnapshot $outputRoot
+    Initialize-PilotSnapshot $outputRoot -FileName 'publisher-health.js'
     foreach ($export in @(
         @{ Name = 'archive-data.js'; Global = 'AI_DASHBOARD_ARCHIVE'; Value = $archive },
         @{ Name = 'dashboard-data.js'; Global = 'AI_DASHBOARD_DATA'; Value = $data }

@@ -36,7 +36,8 @@ pwsh -File ./ai-dashboard/Update-Dashboard.ps1 -RecentDays 3 -RunRoot C:/path/to
   until requirement-level evidence is explicitly reconciled; no agent result completes an
   entire requirement by inference.
 - **Agents:** latest and previous recorded tasks per role, with separate invocation identities,
-  scope/findings, next-action excerpts, and source links. Inferred roles are labeled.
+  scope/findings, next-action excerpts, and source links. Structured STARTED work appears first,
+  queued registrations are separate, and finished invocations are expandable. Inferred roles are labeled.
 - **Run history:** preserved run outcomes and older invocation details. Earlier failures or
   partial outcomes remain historical, even when a later run resolved their cause.
 - **Help & reviews:** explicit agent requests and linked responses, including scope, changed
@@ -46,6 +47,10 @@ Colors always have accompanying icons and text. Progress bars count recorded inv
 outcomes, not overall project completion. Additional future slices remain TBD rather than
 being silently excluded from a project-wide percentage. A STARTED-only report is an incomplete
 record, not evidence that an agent is still running.
+
+The headline uses the current structured activity and publisher health when available, rather
+than the imported historical run status. A STARTED/working record identifies the worker and task
+before completion. It remains a reported state, not a worker-process heartbeat.
 
 ## Data And Ownership
 
@@ -74,6 +79,7 @@ Generated files live in the ignored `data/` directory:
 - `pilot-data.js`: publisher-owned current forecast, canonical report summaries and exchanges.
 - `pilot-publication-state.json`: publisher-owned integrity bindings, not a disposable cache
   that can be removed to accept changed finalized records.
+- `publisher-health.js`: separate publisher heartbeat/stopped/blocked status, never a product gate.
 
 The `pilot-` filenames and browser data key are retained for compatibility with the first pilot;
 both `dashboard-pilot-v1` and the full-roster `dashboard-v1` mode use them.
@@ -158,6 +164,17 @@ remain separate from publication time; a working status older than five minutes 
 stale, not failed. Expansion state is preserved. Old finalized details are compacted to
 clickable archive references after three days; canonical records and their derived reports
 are not deleted. The publisher is stopped at pause/sign-off, leaving the last view readable.
+
+The owned watcher updates its health file every 15 seconds. The page shows connected, stopped,
+blocked, or unconfirmed publishing; a watching heartbeat older than 60 seconds is unconfirmed.
+A one-shot publication reports stopped when it finishes. An integrity error still stops the
+watcher and retains accepted work data, but the separate health banner makes that stop visible.
+Abrupt termination or unwritable health storage can leave stale health, never proof of activity.
+
+Authors save STARTED before substantive work and finish all summary/body edits before their
+single FINALIZED transition. Finalized records are not polished in place. Exact original-byte
+recovery requires explicit owner authority, preservation of the observed edit and a match to the
+published hash; it is not a cache reset or retroactive acceptance of changed content.
 
 Malformed records, identity/path changes, changed finalized reports, or invalid replies stop
 publication for reconciliation. The last accepted snapshot remains. Never clear integrity
