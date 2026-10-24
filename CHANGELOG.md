@@ -15,7 +15,25 @@ properties, remote Source Link/debugger retrieval, and binary reproducibility ar
 
 ## Logging abstractions dependency
 
-The Logger library now directly references `Microsoft.Extensions.Logging.Abstractions` `10.0.12`. Consumers should account for the corresponding transitive restore closure, including `Microsoft.Extensions.DependencyInjection.Abstractions` and the supporting `System.*` packages selected for the target framework. This records dependency adoption only; it does not add a Microsoft logging bridge or claim that the current build, tests, or package qualification have completed.
+The Logger library now directly references `Microsoft.Extensions.Logging.Abstractions` `10.0.12`. Consumers should account for the corresponding transitive restore closure, including `Microsoft.Extensions.DependencyInjection.Abstractions` and the supporting `System.*` packages selected for the target framework. This entry records dependency adoption only; it does not claim that the current build, tests, or package qualification have completed.
+
+## Inbound Microsoft logging bridge
+
+Current unreleased source adds `MicrosoftLoggerFactoryExtensions.AddProphetsWay(ILoggerFactory,
+IMicrosoftLogLabelMapper = null)`. An explicit call creates one `MicrosoftLoggerProvider`, registers
+that provider with the supplied factory, and returns the same provider. Its provider-created loggers
+retain their supplied categories and share the provider's lifetime and scope source. Inbound dispatch
+uses the exact `LogBridgeEntry` route while retaining concrete `LogBridgeEntry<TState>` payloads.
+
+Callers may explicitly supply an `IMicrosoftLogLabelMapper`; the mapper and factory are borrowed.
+The host must arrange provider cleanup by explicitly disposing the returned provider or ensuring
+the factory/provider's normal lifetime handling retires it; provider disposal is idempotent. The
+provider begins with its own logical-flow scope source; a caller-supplied external scope source and
+its scope handles remain borrowed and are cleaned up by their opener. The provider does not dispose
+the factory, mapper, supplied scope source, or native destinations.
+
+This describes current source, not the published package or release qualification. No outbound
+Logger-to-Microsoft adapter is implemented, and this entry does not claim M5/M6 completion.
 
 ## Support and tooling
 
@@ -58,8 +76,8 @@ well as errors, including when the raw message is null; no synthetic message or 
 This is breaking for consumers that compile against the removed `Security` members or depend on the
 old enum numbers, permissive helper arguments, or inputs now rejected by strict validation. The current
 tree is an unreleased v4-direction change; this entry does not claim that the full v4 integration,
-automatic Trace/file behavior, Microsoft bridge, or output-failure policy is complete. Native text
-framing is covered by the M4-A entry below; the remaining integration and qualification work is not.
+automatic Trace/file behavior, outbound Microsoft bridge, or output-failure policy is complete. Native
+text framing is covered by the M4-A entry below; the remaining integration and qualification work is not.
 
 ## Sensitivity labels
 
@@ -153,9 +171,9 @@ behavior remains separately qualified, and it does not claim automatic fallback,
 or full exception-graph sanitization.
 
 The configured-route failure behavior corrects the prior single-failure propagation boundary without
-claiming that the full v4 integration, automatic Trace/file behavior, Microsoft bridge, or
+claiming that the full v4 integration, automatic Trace/file behavior, outbound Microsoft bridge, or
 output-failure policy is complete. Native text framing is now implemented for the M4-A slice below;
-file lifecycle and termination, the Microsoft bridge, and the remaining v4 qualification work are
+file lifecycle and termination, the outbound bridge, and the remaining v4 qualification work are
 still separate.
 
 ## Native scopes and contextual destinations
@@ -196,7 +214,7 @@ delivery, settings, and failure-report members are additive individually, but th
 overall compatibility decision a minor or patch change. The accepted local validation is green on the
 focused `net48` and `net10.0` matrix, with the library/example builds and compile-only README checks
 also passing; it is not unfiltered real-file fixture certification. The permanent report-membership
-regression and parent final gate are complete within that accepted local boundary; they are not pending release work. M4-A native text rendering and framing is now implemented as a separate unreleased slice; M4-B, the Microsoft bridge, file lifecycle/termination, and broader release qualification remain open.
+regression and parent final gate are complete within that accepted local boundary; they are not pending release work. M4-A native text rendering and framing is now implemented as a separate unreleased slice; M4-B, the outbound Microsoft bridge, file lifecycle/termination, and broader release qualification remain open.
 
 ## Native text rendering and framing
 
@@ -220,9 +238,10 @@ null as a null token; an override may extend scalar formatting, but a thrown for
 or print operation remains an output failure. Consumers overriding `FormatValue` should return unescaped
 text and leave framing/escaping to the destination.
 
-M4-A does not claim automatic Trace/file behavior, physical file termination or lifecycle, the Microsoft
-bridge, fallback completion, or publication/release qualification. This is an unreleased v4-direction
-slice; no version number is changed here.
+This M4-A slice does not claim automatic Trace/file behavior, physical file termination or lifecycle,
+either Microsoft bridge direction, fallback completion, or publication/release qualification. Current
+inbound source behavior is described above; the outbound adapter remains unimplemented. This is an
+unreleased v4-direction slice; no version number is changed here.
 
 ## Explicit file destinations
 
@@ -286,8 +305,10 @@ The Logger now exposes the assembly-created `LogBridgeEntry`, `LogBridgeEntry<TS
 `LogBridgeScope` carrier types. They preserve original typed or opaque state, declared state type,
 producer delegate, exception, cached text, ordered structured property and scope frames, annotations,
 and native source-origin context; their constructors remain assembly-only, and captured membership is
-read-only without deep-freezing nested caller-owned values. This is the carrier representation only:
-it does not add inbound or outbound adapters, activation, routing, loop guards, or lifecycle behavior.
+read-only without deep-freezing nested caller-owned values. As recorded with the carrier-only source
+on 2026-10-03, that change did not add inbound or outbound adapters, activation, routing, loop guards,
+or lifecycle behavior. The later inbound source behavior is described above; the outbound adapter
+remains unimplemented.
 
 ## Microsoft log label mapper contract
 
@@ -295,8 +316,10 @@ The v4-direction contract now includes the public `IMicrosoftLogLabelMapper` int
 mapping of external Microsoft logging input to optional `LogAnnotations`. Implementations may map each
 entry through `MapEntry<TState>` and each captured external scope frame through `MapScope`; the
 callbacks receive the completed original facts and may return no attachment or a present annotation.
-This is additive contract surface only. It does not claim a provider implementation, callback
-invocation or routing, activation, lifecycle, outbound behavior, or release qualification.
+At the time this mapper contract was recorded on 2026-10-03, it was contract surface only and did not
+include a provider implementation, callback invocation, routing, activation, or lifecycle behavior.
+Current inbound callback use is described above; no outbound behavior or release qualification is
+claimed here.
 
 # v3.0.1
 ### Build target for Net 6.0

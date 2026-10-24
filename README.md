@@ -10,8 +10,8 @@ Route log messages to console, file, event, or custom destinations with per-dest
 > with native scope boundaries. M4-B1 implements explicit-file append/reset, fixed-path output
 > and physical encoding/termination. M4-B2 now integrates ordinary and exact-`T` automatic output
 > into one shared UTF-8 session file, with initial-only recovery and remembered initialization failure.
-> M5 adds [library-created carrier data](#m5-carrier-data) and a mapper interface only; neither
-> Microsoft logging bridge is implemented.
+> M5 carrier data and the explicit Microsoft-to-Logger inbound bridge are implemented in
+> current source; the Logger-to-Microsoft outbound bridge is not implemented.
 > Supplied destinations use guarded entrypoints and protected `LogCore` hooks; subclasses
 > must migrate their old `Log` overrides. This describes current source, not the published
 > NuGet package, a completed final acceptance gate, or release certification.
@@ -50,7 +50,8 @@ Install-Package ProphetsWay.Logger
 ```
 
 These commands do not install the unreleased API merely because it is documented here.
-To use the native severity, scope/context, label-policy and text/formatter examples now, reference the current
+To use the native severity, scope/context, label-policy, text/formatter examples, or Microsoft inbound bridge
+APIs now, reference the current
 [library project](ProphetsWay.Logger/ProphetsWay.Logger.csproj) from your application.
 [app-variables.yml](app-variables.yml) still selects `3.0.1`; no v4 package or release is claimed.
 
@@ -69,8 +70,9 @@ new target set. Verification is currently Windows-focused, not equivalent Mac/Li
 
 The library's sole direct package reference is `Microsoft.Extensions.Logging.Abstractions`
 `10.0.12`, unconditional for both targets. It flows to consumers together with its normal
-transitive dependencies through NuGet resolution. Adding this reference does not implement
-either Microsoft logging bridge; both remain design-only.
+transitive dependencies through NuGet resolution. The current source also implements the
+inbound bridge described below; the outbound bridge remains unavailable. This source update
+does not mean the currently published package contains the bridge.
 
 ### Package Contents And Source Metadata
 
@@ -99,10 +101,11 @@ skips or test identity changes. Baseline results alone do not establish independ
 final verification, current-candidate package qualification or bridge completion. The earlier package
 observations above remain historical.
 
-This is historical, partial M6 evidence, not full qualification or release approval. M5 bridges are not
-delivered; remaining assertion migration, the owner-handled test-project rename, broader
-consumer/security qualification and deferred non-Windows proof remain separate. The version
-file still selects `3.0.1`; this update changes neither that selection nor publication status.
+This is historical, partial M6 evidence, not full qualification or release approval. The inbound
+bridge is now present in current source, but the outbound bridge remains unimplemented. Remaining
+assertion migration, the owner-handled test-project rename, broader consumer/security qualification
+and deferred non-Windows proof remain separate. The version file still selects `3.0.1`; this update
+changes neither that selection nor publication status.
 
 ## Quick Start
 
@@ -468,8 +471,8 @@ the current call. No global transaction across separate destination objects is p
 ### M5 Carrier Data
 
 The current source implements three public data types in `ProphetsWay.Utilities`, with
-internal, library-only constructors. There is no public construction or consumer factory,
-and no bridge provider creates entries for you.
+internal, library-only constructors. There is no public constructor or entry-construction
+factory; the inbound provider described below creates entries from Microsoft logging calls.
 
 | Type | Captured data |
 | --- | --- |
@@ -492,11 +495,9 @@ nested objects can remain mutable or sensitive; the retained delegate is an exec
 capability. Construction/readback does not invoke it, inspect nested graphs, classify payloads,
 open ambient scopes or dispose supplied objects. You own safe retention and later handling.
 
-The inbound provider, outbound destinations and bridge registration remain unimplemented.
-These carriers perform no delivery, scope replay or private cycle control. Their
+The carriers themselves perform no delivery, scope replay or private cycle control. Their
 [construction/readback specifications](ProphetsWay.Logger.Test/LogBridgeRepresentationTests.cs)
-concern this data component, not operational bridge behavior, current-package qualification
-or release readiness.
+concern this data component, not current-package qualification or release readiness.
 
 The public [IMicrosoftLogLabelMapper](ProphetsWay.Logger/IMicrosoftLogLabelMapper.cs#L18)
 interface in `ProphetsWay.Utilities` is also available in current source. `MapEntry<TState>`
@@ -505,9 +506,28 @@ respectively; `null` means no attachment. Both accept ordered, read-only propert
 `ReadOnlyCollection<KeyValuePair<string, object>>`; state and nested values are not frozen.
 You supply classification explicitly; this is not automatic classification or sanitization.
 
-Only the mapper interface is available; the library currently invokes neither callback. Its XML
-describes the approved future integration contract. The inbound provider and logger, factory
-registration, and outbound integration remain unimplemented.
+### Microsoft Logging Inbound Bridge
+
+The current source exposes `MicrosoftLoggerFactoryExtensions.AddProphetsWay(ILoggerFactory,
+IMicrosoftLogLabelMapper = null)`. An explicit call creates one `MicrosoftLoggerProvider`, registers
+that provider with the supplied factory, and returns the same provider. It is a factory extension,
+not dependency-injection or host configuration. `MicrosoftLoggerProvider.CreateLogger` creates
+category-bound `MicrosoftLogger` instances that share the provider's lifetime and scope source.
+
+Inbound entries are dispatched through the exact `LogBridgeEntry` metadata route; the payload retains
+its concrete `LogBridgeEntry<TState>` type. The optional mapper is borrowed and is invoked only when
+explicitly supplied to map external entries and scope frames to optional annotations. The factory is
+also borrowed. The host must arrange provider cleanup, either by explicitly disposing the returned
+provider or through the factory/provider's normal lifetime handling; provider disposal is idempotent.
+The provider does not dispose the factory, mapper, a caller-supplied external scope source, or native
+destinations. The provider starts with its own logical-flow scope source; a source supplied
+through factory scope integration is borrowed. The caller/factory remains responsible for
+disposing scope handles through that source's normal cleanup.
+
+This is current unreleased source behavior, not a claim that the published `3.0.1` package includes
+the bridge. No Logger-to-Microsoft outbound destination or adapter exists yet; enabling the inbound
+direction does not install one. This documentation does not claim M5/M6 completion,
+current-package qualification, or release readiness.
 
 ## API Reference
 
@@ -1414,7 +1434,8 @@ and physical record encoding/termination. M4-B2 now integrates the shared automa
 primary configuration, typed metadata retention, initial-only recovery, fixed-path reuse and
 remembered initialization failure. Its final documentation-compilation and independent code/security
 gates remain separate; this is not a claim that the whole B2 acceptance target is complete.
-Both Microsoft logging bridges remain outside this native slice (M5). Explicit membership safety
+The inbound Microsoft-to-Logger bridge is implemented in current source; the outbound
+Logger-to-Microsoft bridge remains outside this native slice (M5). Explicit membership safety
 is not a guarantee of all concurrency safety. Microsoft severity conversion/None handling is not
 supplied by this native enum. The implemented failure behavior above is not delivery of every policy in
 [docs/requirements.md](docs/requirements.md). Requirements readiness is not delivery.
@@ -1511,7 +1532,8 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
 
 The accepted direction is recorded in [docs/decision-log.md](docs/decision-log.md).
 M4-A implements native rendering/framing and M4-B1 implements the explicit-file sink behavior above;
-M4-B2 integrates the automatic session. Final integration gates and the M5 bridges remain separate.
+M4-B2 integrates the automatic session. The inbound M5 bridge is present in current source; the
+outbound bridge and final integration/qualification gates remain separate.
 
 ## Building And Testing Locally
 
