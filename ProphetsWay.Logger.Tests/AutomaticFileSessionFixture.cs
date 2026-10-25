@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading;
 using Microsoft.Win32.SafeHandles;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	internal sealed class AutomaticFileSessionFixture : IDisposable
 	{

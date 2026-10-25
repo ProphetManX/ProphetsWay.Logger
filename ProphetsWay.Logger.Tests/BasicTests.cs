@@ -6,7 +6,7 @@ using ProphetsWay.Utilities.LoggerDestinations;
 using Shouldly;
 using Xunit;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
     [Collection("Logger is a Singleton")]
     public class BasicTests

@@ -3,7 +3,7 @@ using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.LoggerDestinations;
 using Xunit;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	[Collection("Logger is a Singleton")]
 	public class DestinationManagementTests

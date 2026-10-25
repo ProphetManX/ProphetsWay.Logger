@@ -197,6 +197,9 @@ On 2026-09-12 the owner said "we can put these specific destinations on a backlo
 - Modernize test framework/runner/SDK, retain justified mocking, migrate assertions to Shouldly and add coverage through the appropriate owners. Reassess actual dependencies; historical scans are neither fresh findings nor clearance.
 - Correct package homepage/tags/repository kind; assess XML documentation, source/symbol and reproducibility settings and inspect actual outputs. Retain the intentional namespace and packaged README/changelog/icon.
 - Test-project naming correction remains W2 work. Enumerate rename, solution and reference edits and obtain explicit approval before including them; do not silently omit or bundle them.
+
+  **2026-10-24 annotation:** D025 records the later explicit approval for this rename and
+  accompanying edits. The original approval boundary above remains historical.
 - Exact dependency versions, project/tooling changes and file grants require review and authorization before edits. Directional acceptance is not permission to select arbitrary versions or expand file scope.
 
 | Gate | Required completion evidence, not supplied by this decision record |
@@ -274,6 +277,9 @@ Git operation, publication, new public surface or implementation follows from wr
 - Retain the reviewed tooling/file/operation limits in ON-02 as amended by A1. Exact package and execution records stay in those technical records, not in product intent as a mutable inventory. Approval alone proves neither runtime compatibility nor security clearance.
 - Focus current execution on Windows. Mac/Linux execution and full cross-platform proof are deferred, not certified, permanently waived, or a new platform/release promise. D014's other support, quality and review conditions remain.
 - The test-project rename remains separate deferred W2 work, not silently included or removed. Product-version and release authority are unchanged.
+
+  **2026-10-24 annotation:** D025 supersedes this rename deferral only. The original
+  tooling decision and product-version/release limits remain unchanged.
 
 ## D018 - Failure Propagation And Safe Developer Guidance
 
@@ -486,3 +492,31 @@ exceptions and public details remain D010's bounded contract-author work with in
 this entry chooses none. It grants no implementation, specification changes, Git action, version or
 publication authority. "Roll this out" is not a release approval. No completed contract, full M3/Set B,
 test result, implementation or release readiness is established by this policy capture.
+
+## D025 - Owner-Approved Test-Project Rename
+
+**Accepted and recorded:** 2026-10-24. **Owner:** G. Gordon Nasseri.
+**Provenance:** explicit owner approval at **2026-10-24 22:26:04 EDT**, captured in
+LOGGER-TEST-RENAME-R1 for run `20261024-2226-logger-test-rename`.
+
+- Rename the non-shipped test project from `ProphetsWay.Logger.Test` to
+  `ProphetsWay.Logger.Tests`: directory, project file, inferred assembly/root namespace
+  and all 27 source namespaces. Update current solution references, documentation links,
+  commands, filters and accompanying supporting infrastructure consistently.
+- Preserve every test body/assertion, dependency, target framework, production library
+  file, project GUID and public library/package identity. No library namespace change,
+  version bump, publication or release authority follows.
+- Preserve dated decisions and immutable prior-run evidence, manifests, identities and
+  hash references. Historical VS Code task records must not be repointed at this candidate;
+  current runnable validation uses the plural name and fresh evidence destinations, with
+  no automatic historical task execution.
+- Parent verification compares discovery and selected outcomes on `net48` and `net10.0`,
+  normalizing only the test namespace prefix, and checks assembly identity, current tasks
+  and absence of assertion/dependency/production drift. No artificial behavioral red is
+  required for this mechanical rename; independent exact-diff/evidence review is required.
+
+This supersedes only the rename deferral/awaiting-approval statements in D014, D017 and
+AC-22.3 and related historical guidance. It does not rewrite those dated records or
+complete assertion migration, full M6, D017 non-Windows proof or release qualification.
+This entry records approval, not executed verification or a passing slice; fresh results
+and independent review belong in the run evidence.

@@ -109,7 +109,7 @@ Preserve the static/typed experience and established namespace; support modern .
 The support/dependency direction and review conditions are recorded in D014/D017, not a current inventory.
 Proceed directly to xUnit v3 within the exact approved ON-02/A1 technical records. Focus execution on Windows
 for now; Mac/Linux execution and full cross-platform proof remain deferred, not passed or permanently waived.
-The test-project rename remains separate W2 work. No product-version change is authorized.
+The test-project rename remains separate W2 work. **2026-10-24 annotation:** [D025](decision-log.md#d025---owner-approved-test-project-rename) records explicit owner approval for `ProphetsWay.Logger.Tests` and accompanying solution/reference/infrastructure/documentation edits, superseding the earlier rename deferral only; approval is not verification. No product-version change is authorized.
 Breaking changes are accepted, but release timing, channel, deployment and publication require separate owner decisions.
 No global trade-off ranking was selected: the concrete accepted trade-offs govern; agents must not invent a ranking.
 
@@ -120,6 +120,6 @@ No global trade-off ranking was selected: the concrete accepted trade-offs gover
 | Purpose, scope, behavior and acceptance | OWNER | Preserve D001-D021 and their precise supersession; no unspoken feature, narrowed completion boundary or changed policy. |
 | Exact public details within P08/P09 | INFER: owner-delegated contract author, subject to independent review | Choose names/signatures and bridge metadata keys only within accepted behavior; no flattening, lost origins, new policy or implicit file grant. |
 | Other public surface, architecture, security, data/privacy/auth and money | OWNER | Nothing beyond explicit decisions; proposals require owner confirmation. |
-| Dependency versions, tooling scope and test-project rename | OWNER with required review | Preserve D014/D017 and exact ON-02/A1 limits; no unlisted version, path or operation. Rename/solution/reference changes remain separately subject to explicit approval. |
+| Dependency versions, tooling scope and test-project rename | OWNER with required review | Preserve D014/D017 and exact ON-02/A1 limits; no unlisted version, path or operation. Rename/solution/reference changes required separate explicit approval; [D025](decision-log.md#d025---owner-approved-test-project-rename) records that approval on 2026-10-24, not completed verification or broader tooling/release authority. |
 | Release and operations | OWNER | No inferred version, channel, schedule, Git/publication or live-operation authority. |
 | Editorial organization | INFER within the authorized documents | Summarize faithfully and cross-reference local decisions; invent no owner choice. |

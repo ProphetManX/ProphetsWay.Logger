@@ -3,7 +3,7 @@ using Moq;
 using ProphetsWay.Utilities;
 using ProphetsWay.Utilities.Generics;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	[Collection("Logger is a Singleton")]
 	public class ILoggingDestinationTests

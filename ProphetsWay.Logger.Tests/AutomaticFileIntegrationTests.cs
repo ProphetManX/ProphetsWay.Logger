@@ -13,7 +13,7 @@ using System.Threading;
 using Shouldly;
 using Xunit;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	[Collection("Logger is a Singleton")]
 	public class AutomaticFileIntegrationTests

@@ -61,7 +61,7 @@ logging bridge direction now, reference the current
 | Project | Targets | Meaning |
 | --- | --- | --- |
 | [Library](ProphetsWay.Logger/ProphetsWay.Logger.csproj) | `netstandard2.0;net10.0` | .NET Standard 2.0 compatibility floor plus a dedicated .NET 10 asset. |
-| [Tests](ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj) | `net48;net10.0` | Windows Framework verification uses the Standard 2.0 library; .NET 10 tests use its dedicated asset. |
+| [Tests](ProphetsWay.Logger.Tests/ProphetsWay.Logger.Tests.csproj) | `net48;net10.0` | Windows Framework verification uses the Standard 2.0 library; .NET 10 tests use its dedicated asset. |
 | [Example](ProphetsWay.Logger.Example/ProphetsWay.Logger.Example.csproj) | `net10.0` | Console example, built but not run in the focused validation below. |
 
 There is no separate `net48` library asset. Older modern runtimes compatible with
@@ -109,6 +109,11 @@ assertion migration, the owner-handled test-project rename, broader consumer/sec
 and deferred non-Windows proof remain separate. The version file still selects `3.0.1`; this update
 changes neither that selection nor publication status.
 
+**2026-10-24 annotation:** [D025](docs/decision-log.md#d025---owner-approved-test-project-rename)
+records explicit owner approval of the test-project rename and accompanying infrastructure/docs.
+The deferral above describes the historical M6 checkpoint, not a pending approval request.
+Approval and updated guidance do not establish completed rename verification.
+
 ## Quick Start
 
 Each C# block below is independent, with its own imports, enclosing types and static entry
@@ -120,7 +125,7 @@ describes the source contract, not a recorded execution of these programs.
 
 Register before logging to avoid implicit file creation. Retain the destination reference
 so you can remove it. This follows the calls in
-[ConsoleDestinationTests.cs](ProphetsWay.Logger.Test/ConsoleDestinationTests.cs).
+[ConsoleDestinationTests.cs](ProphetsWay.Logger.Tests/ConsoleDestinationTests.cs).
 
 > **Illustrative** — not currently present in the repo.
 
@@ -160,7 +165,7 @@ For no-setup output and optional startup configuration, see [Automatic File Outp
 
 This example does not call Logger or write a log file. The identifiers are synthetic,
 not predefined classifications. The rules and copied-membership behavior are exercised in
-[DestinationLabelPolicyTests.cs](ProphetsWay.Logger.Test/DestinationLabelPolicyTests.cs).
+[DestinationLabelPolicyTests.cs](ProphetsWay.Logger.Tests/DestinationLabelPolicyTests.cs).
 
 > **Illustrative** — not currently present in the repo.
 
@@ -223,7 +228,7 @@ Use scopes for labels and properties shared by an operation, and `LogAnnotated` 
 specific to one entry. This event recipient accepts only entries whose complete effective
 label set is nonempty and contained in its configured membership. All data here is synthetic;
 the example creates no file. The scope and context assertions live in
-[LoggerTests.cs](ProphetsWay.Logger.Test/LoggerTests.cs).
+[LoggerTests.cs](ProphetsWay.Logger.Tests/LoggerTests.cs).
 
 > **Illustrative** — not currently present in the repo.
 
@@ -355,7 +360,7 @@ There is no other syntax restriction, trimming, case folding, Unicode normalizat
 Use `Equals` or collection value comparisons: separate labels with the same ordinal identifier
 are equal; `PII` and `pii` are distinct. No value-equality `==` operator is supplied. Equal labels
 have equal hashes, but hashes are neither unique nor a persistent or cryptographic identity.
-See [SensitivityLabelTests.cs](ProphetsWay.Logger.Test/SensitivityLabelTests.cs).
+See [SensitivityLabelTests.cs](ProphetsWay.Logger.Tests/SensitivityLabelTests.cs).
 
 ### Annotation Occurrences
 
@@ -371,7 +376,7 @@ Labels retain `SensitivityLabel`'s ordinal value equality; `LogAnnotations` does
 annotation-value equality. Reusing a value does not combine attachments or merge their origins.
 Construction alone attaches nothing. Pass it to `Logger.BeginScope` or `Logger.LogAnnotated`;
 ordinary and typed convenience helpers inherit scopes without adding an entry annotation.
-See [LogAnnotationsTests.cs](ProphetsWay.Logger.Test/LogAnnotationsTests.cs).
+See [LogAnnotationsTests.cs](ProphetsWay.Logger.Tests/LogAnnotationsTests.cs).
 
 ### Scopes And Captured Context
 
@@ -498,7 +503,7 @@ capability. Construction/readback does not invoke it, inspect nested graphs, cla
 open ambient scopes or dispose supplied objects. You own safe retention and later handling.
 
 The carriers themselves perform no delivery, scope replay or private cycle control. Their
-[construction/readback specifications](ProphetsWay.Logger.Test/LogBridgeRepresentationTests.cs)
+[construction/readback specifications](ProphetsWay.Logger.Tests/LogBridgeRepresentationTests.cs)
 concern this data component, not current-package qualification or release readiness.
 
 The public [IMicrosoftLogLabelMapper](ProphetsWay.Logger/IMicrosoftLogLabelMapper.cs#L18)
@@ -757,7 +762,7 @@ Appending leaves all existing bytes untouched, including any existing BOM. It do
 or transcode old content, detect binary or incompatible encoding, or insert a corrective separator
 after an unterminated prefix. You choose compatible existing content and encoding.
 See [Explicit File Output](#explicit-file-output) for path and failure boundaries. The behavior
-is exercised in [FileDestinationTests.cs](ProphetsWay.Logger.Test/FileDestinationTests.cs),
+is exercised in [FileDestinationTests.cs](ProphetsWay.Logger.Tests/FileDestinationTests.cs),
 which remains deliberately separate from the default local check below.
 
 ### Receive Messages In A Callback
@@ -798,7 +803,7 @@ The first callback prints `InformationOnly: Ready.` The direct call also passes:
 mask 9 is present in the destination's mask 9. It would be rejected by `InformationOnly = 8`.
 The callback receives that complete composite mask, not a single-bit reduction.
 The registration/event pattern is also in
-[EventDestinationTests.cs](ProphetsWay.Logger.Test/EventDestinationTests.cs).
+[EventDestinationTests.cs](ProphetsWay.Logger.Tests/EventDestinationTests.cs).
 
 Both event argument types expose non-null `Context` on actual library delivery, even with no
 scopes or labels. Their existing public constructors leave `Context` null and perform no ambient
@@ -858,8 +863,8 @@ public static class Program
 Expected output is `42: Routing detail.`, `42: Starting.`, `42: Finished.`, `42: Stopped.`,
 then `42: Cannot continue.` Metadata remains available as an object; this callback chooses
 what to print. See the real call patterns in
-[GenericLoggerTests.cs](ProphetsWay.Logger.Test/GenericLoggerTests.cs) and
-[MetadataLoggerTests.cs](ProphetsWay.Logger.Test/MetadataLoggerTests.cs).
+[GenericLoggerTests.cs](ProphetsWay.Logger.Tests/GenericLoggerTests.cs) and
+[MetadataLoggerTests.cs](ProphetsWay.Logger.Tests/MetadataLoggerTests.cs).
 
 Ordinary explicit registrations and every exact declared-`T` route are independent, including
 interface types such as `T = ILoggingDestination`. Typed routing does not search base types,
@@ -1084,7 +1089,7 @@ The metadata token is `"Order 42: Queued\n\"Review\""`; the scope values are `"2
 `"[no formatter: OrderMetadata]"`, not an automatic property dump. These are expected tokens,
 not captured program output. The sink has the same single-producer/registration assumptions
 as the previous example. No `ILoggerMetadata` marker or formatter registration is needed.
-See [TextRenderingTests.cs](ProphetsWay.Logger.Test/TextRenderingTests.cs) for the real
+See [TextRenderingTests.cs](ProphetsWay.Logger.Tests/TextRenderingTests.cs) for the real
 in-memory text, explicit formatter, rejection and escaping specifications.
 
 ## Behavior And Limitations
@@ -1459,7 +1464,7 @@ The rules are implemented by the
 [ordinary text base](ProphetsWay.Logger/LoggerDestinations/TextBasedDestination.cs),
 [typed text base](ProphetsWay.Logger/LoggerDestinations/GenericTextBasedDestination.cs) and
 [formatting hook](ProphetsWay.Logger/LoggingDestinationCore.cs), and specified in
-[TextRenderingTests.cs](ProphetsWay.Logger.Test/TextRenderingTests.cs).
+[TextRenderingTests.cs](ProphetsWay.Logger.Tests/TextRenderingTests.cs).
 
 #### Earlier Text Layout
 
@@ -1611,7 +1616,7 @@ tests, and example. The build restores dependencies if needed. Stop if it fails 
 dotnet build .\Logger.sln -c Debug
 ```
 
-The [test project](ProphetsWay.Logger.Test/ProphetsWay.Logger.Test.csproj) uses
+The [test project](ProphetsWay.Logger.Tests/ProphetsWay.Logger.Tests.csproj) uses
 `xunit.v3.mtp-off` 4.0.1 through VSTest (`xunit.runner.visualstudio` 4.0.0 and
 `Microsoft.NET.Test.Sdk` 18.10.1); both Microsoft Testing Platform runner switches are disabled.
 New policy tests use Shouldly 4.3.0. Existing xUnit assertions and FluentAssertions 5.10.3 remain;
@@ -1622,24 +1627,24 @@ Use this **focused selection**, sequentially on both targets, with coverage:
 
 ```powershell
 $filter = @(
-    'FullyQualifiedName~ProphetsWay.Logger.Test.SensitivityLabelTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.DestinationLabelPolicyTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.BasicTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.GenericBasicTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.AdvancedTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.GenericAdvancedTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.LoggerTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.GenericLoggerTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.MetadataLoggerTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.ILoggingDestinationTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.LogAnnotationsTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.EventDestinationTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.DestinationRegistrationSettingsTests.'
-    'FullyQualifiedName~ProphetsWay.Logger.Test.TextRenderingTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.SensitivityLabelTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationLabelPolicyTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.BasicTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.GenericBasicTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.AdvancedTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.GenericAdvancedTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.LoggerTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.GenericLoggerTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.MetadataLoggerTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.ILoggingDestinationTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.LogAnnotationsTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.EventDestinationTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationRegistrationSettingsTests.'
+    'FullyQualifiedName~ProphetsWay.Logger.Tests.TextRenderingTests.'
 ) -join '|'
 
-dotnet test .\ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj -c Debug -f net48 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
-dotnet test .\ProphetsWay.Logger.Test\ProphetsWay.Logger.Test.csproj -c Debug -f net10.0 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
+dotnet test .\ProphetsWay.Logger.Tests\ProphetsWay.Logger.Tests.csproj -c Debug -f net48 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
+dotnet test .\ProphetsWay.Logger.Tests\ProphetsWay.Logger.Tests.csproj -c Debug -f net10.0 --no-build --no-restore --filter $filter --collect "XPlat Code Coverage"
 ```
 
 This selection includes native scope/context/settings, guarded-destination and text-rendering
@@ -1647,6 +1652,18 @@ specifications, not just the earlier severity and standalone-policy tests. Its d
 may change as regressions are added. Every C# example above requires independent compile-only
 checking against both library assets; do not execute the programs as part of that check.
 This README update does not claim that check, the parent final gate, or release approval passed.
+
+Historical VS Code validation tasks are archived unchanged in
+[historical-tasks.pre-test-rename.json](.vscode/historical-tasks.pre-test-rename.json), not
+loaded as active tasks. The current [.vscode/tasks.json](.vscode/tasks.json) provides
+`Logger build current solution`, `Logger safe tests net48` and `Logger safe tests net10.0`.
+Build first, then run the two test tasks sequentially. They add the four bridge classes
+(`LogBridgeRepresentationTests`, `MicrosoftLoggerProviderTests`,
+`MicrosoftLoggerFactoryExtensionsTests`, `MicrosoftLoggerDestinationTests`) to the 14-class
+selection above, use the plural project/filter names and write generated TRX/coverage outputs
+under `TestResults/developer/<target>`, not historical run destinations. No task runs
+automatically. The archive preserves old commands and evidence references as history,
+not instructions to reactivate them.
 
 The following figures are **historical selections**, not totals for the current source or rendering checks.
 
@@ -1671,10 +1688,10 @@ the [historical account](docs/security/security-review.md#recorded-execution-and
 is retained separately, not presented as the native check above.
 
 Do **not** substitute an unfiltered `dotnet test` as the default developer check.
-[FileDestinationTests.cs](ProphetsWay.Logger.Test/FileDestinationTests.cs) now uses isolated synthetic
+[FileDestinationTests.cs](ProphetsWay.Logger.Tests/FileDestinationTests.cs) now uses isolated synthetic
 files, but its path/failure checks temporarily change process state; run that class in a separate
 reviewed test host, not in the default selection above. Some tests in
-[DestinationManagmentTests.cs](ProphetsWay.Logger.Test/DestinationManagmentTests.cs) still trigger
+[DestinationManagmentTests.cs](ProphetsWay.Logger.Tests/DestinationManagmentTests.cs) still trigger
 automatic file output and need separately reviewed isolation. The example program
 constructs a relative file destination too: build it, do not run it by default.
 The existing pipeline is not evidence that this exact focused selection ran in CI.
@@ -1683,8 +1700,10 @@ The existing pipeline is not evidence that this exact focused selection ran in C
 
 Keep changes focused and add xUnit/Shouldly coverage for new behavior. Preserve the intentional
 utility namespace and consult [AGENTS.md](AGENTS.md) before changing public contracts or build files.
-Use synthetic data; file fixtures must not alter pre-existing files. The test project's singular
-name is still the actual path, not an instruction to rename it during unrelated work.
+Use synthetic data; file fixtures must not alter pre-existing files. The current test project,
+assembly and namespace use `ProphetsWay.Logger.Tests`; the library remains `ProphetsWay.Logger`
+with its intentional `ProphetsWay.Utilities` namespace. D025 authorizes this test-only rename,
+not unrelated contract, dependency or version changes.
 
 ### Versioning And Authors
 

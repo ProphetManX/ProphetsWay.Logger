@@ -5,7 +5,7 @@ using ProphetsWay.Utilities;
 using Shouldly;
 using Xunit;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	public class DestinationRegistrationSettingsTests
 	{

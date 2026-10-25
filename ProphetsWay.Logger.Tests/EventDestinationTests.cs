@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Shouldly;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	[Collection("Logger is a Singleton")]
 	public class EventDestinationTests

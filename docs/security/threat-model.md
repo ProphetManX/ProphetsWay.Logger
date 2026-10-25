@@ -16,7 +16,7 @@ M3-carrier/M4-A rendering model. Earlier sections remain historical assessments.
 
 Opened sources are [SensitivityLabel.cs](../../ProphetsWay.Logger/SensitivityLabel.cs),
 [LabelFilterMode.cs](../../ProphetsWay.Logger/LabelFilterMode.cs), and the complete
-[DestinationLabelPolicyTests.cs](../../ProphetsWay.Logger.Test/DestinationLabelPolicyTests.cs).
+[DestinationLabelPolicyTests.cs](../../ProphetsWay.Logger.Tests/DestinationLabelPolicyTests.cs).
 The policy basis is the fixed *Immutable Destination Label-Filter Contract*, including
 its complete XML, matrix and B01-B24, and its independent contract review. ON-03 binds
 that contract; the external author report records its exact operational provenance.

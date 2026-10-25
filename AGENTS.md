@@ -301,7 +301,9 @@ The assembly is `ProphetsWay.Logger` but the code declares `namespace ProphetsWa
 (plus `.Generics` and `.LoggerDestinations`). **This is correct** under the Utility-family rule.
 Do not "fix" it. Changing it is binary-breaking for every existing consumer.
 
-The test project correctly uses its own namespace.
+The test project uses its own namespace, `ProphetsWay.Logger.Tests`. The owner explicitly
+approved the plural test-project rename on 2026-10-24; see [D025](docs/decision-log.md#d025---owner-approved-test-project-rename).
+This non-shipped test assembly rename does not change the public library namespace or version.
 
 ### Key Types
 
@@ -324,20 +326,20 @@ error/warning/security; `Warning` captures warning/error; `Error` captures error
 | Project | Role |
 |---|---|
 | `ProphetsWay.Logger/` | The library |
-| `ProphetsWay.Logger.Test/` | xUnit tests — **note the singular name** |
+| `ProphetsWay.Logger.Tests/` | xUnit tests — plural project and test namespace |
 | `ProphetsWay.Logger.Example/` | Runnable console demo, namespace `ProphetsWay.Example` |
 
 ### Known Deviations
 
 | # | Deviation | Notes |
 |---|---|---|
-| 1 | Test project is `ProphetsWay.Logger.Test` (singular) | Convention is `.Tests`. Safe to rename — test assemblies are not published. Its namespace `ProphetsWay.Logger.Test` would move to `ProphetsWay.Logger.Tests`. |
+| 1 | Naming deviation resolved in the approved rename slice: `ProphetsWay.Logger.Tests` | D025 records explicit owner approval. Test assemblies are not published; parent verification remains required before claiming the slice passed. |
 | 2 | **TFM list spans `net40` → `net60` — 16 targets** | The widest and oldest spread in the workspace. `net40`, `net45`–`net452`, `netstandard1.3`/`1.6`, `netcoreapp2.1`/`3.1`, `net5.0`, `net6.0` are all end-of-life. Targeting `net40` caps the whole library's available language features. No `net8.0`/`net9.0` target exists. |
 | 3 | Undotted TFM monikers (`net50`) | Parses, but non-canonical. |
 | 4 | Only repo using **Moq** | Reasonable here — destinations are an interface seam worth mocking. Not a defect. |
 | 5 | Example project namespace is `ProphetsWay.Example` | Collides conceptually with the standalone `ProphetsWay.Example` repo. Cosmetic; nothing consumes it. |
 | 6 | Two files put the brace on the namespace line | `ILoggingDestination.cs` and `ConsoleDestination.cs` use `namespace X{`. Cosmetic. |
-| 7 | `ProphetsWay.Logger.Test` references **FluentAssertions 5.10.3** | Low. The shared block names Shouldly as the house assertion style and forbids adding FluentAssertions. **5.10.3 predates the 8.x paid commercial license, so there is no licensing exposure** — this is undocumented drift, not a legal problem. |
+| 7 | `ProphetsWay.Logger.Tests` references **FluentAssertions 5.10.3** | Low. The shared block names Shouldly as the house assertion style and forbids adding FluentAssertions. **5.10.3 predates the 8.x paid commercial license, so there is no licensing exposure** — this is undocumented drift, not a legal problem. |
 | 8 | The test project carries its own **11-TFM list**, `net45;net451;net452;net46;net461;net471;net48;netcoreapp2.1;netcoreapp3.1;net50;net60` | Medium. No modern target at all, and no `net48` + modern-LTS pair — so nothing verifies .NET Framework behavior against a current runtime. |
 
 Packaging metadata is **mostly complete**. `PackageId`, `Product`, `Authors`, `Company`, `Description`,

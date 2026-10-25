@@ -15,7 +15,7 @@ using Shouldly;
 using Xunit;
 using NativeLogger = ProphetsWay.Utilities.Logger;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	[Collection(MicrosoftInboundTestCollection.Name)]
 	public sealed class MicrosoftLoggerDestinationTests

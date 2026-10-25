@@ -16,7 +16,7 @@ M3 structures and approved M4-A rendering boundary without re-auditing those his
 
 Read completely: [SensitivityLabel.cs](../../ProphetsWay.Logger/SensitivityLabel.cs),
 [LabelFilterMode.cs](../../ProphetsWay.Logger/LabelFilterMode.cs), and
-[DestinationLabelPolicyTests.cs](../../ProphetsWay.Logger.Test/DestinationLabelPolicyTests.cs).
+[DestinationLabelPolicyTests.cs](../../ProphetsWay.Logger.Tests/DestinationLabelPolicyTests.cs).
 The fixed *Immutable Destination Label-Filter Contract* and its independent review define
 the policy surface; its B01-B24 are used below. Exact operational provenance is retained
 in the external ON-03 author report, not required to interpret these tables.
@@ -897,3 +897,8 @@ no build/test/restore/Git/live operation and issued no code-security verdict.
 D017's Mac/Linux and full cross-platform evidence remain deferred, not established
 by this document or by future Windows-only execution. No M6 package/release or
 owner-deferred test-project rename completion is implied.
+
+**2026-10-24 naming annotation:** D025 now records explicit owner approval for the rename
+to `ProphetsWay.Logger.Tests`; the deferral wording above retains this assessment's historical
+checkpoint. Source links follow the current tree. Prior evidence identities and hashes remain
+unchanged; this annotation supplies no new execution or security-review result.

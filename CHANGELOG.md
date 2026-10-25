@@ -1,5 +1,14 @@
 # Unreleased
 
+## Test tooling naming
+
+The owner-approved test project name is now `ProphetsWay.Logger.Tests`, including its
+directory, project file and test namespaces. Solution references and current developer
+guidance follow the plural name. This mechanical rename preserves test bodies, assertions,
+dependencies, target frameworks and the project GUID; the test assembly is not shipped.
+Logger runtime behavior, public library namespaces, package identity and version are unchanged.
+Historical evidence retains its original identities; fresh validation is required for the rename.
+
 ## Packaging and debugging metadata
 
 The Logger package project now declares its GitHub project URL and `logging;logger;diagnostics`

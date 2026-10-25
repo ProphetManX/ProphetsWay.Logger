@@ -8,7 +8,7 @@ using System.Text;
 using Shouldly;
 using Xunit;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	public class AutomaticFilePathsTests
 	{

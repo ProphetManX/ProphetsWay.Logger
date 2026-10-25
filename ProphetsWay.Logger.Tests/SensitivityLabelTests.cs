@@ -9,7 +9,7 @@ using System.Text;
 using ProphetsWay.Utilities;
 using Xunit;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	public class SensitivityLabelTests
 	{

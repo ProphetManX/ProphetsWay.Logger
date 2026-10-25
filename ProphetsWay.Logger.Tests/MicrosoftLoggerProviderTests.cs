@@ -14,7 +14,7 @@ using Shouldly;
 using Xunit;
 using NativeLogger = ProphetsWay.Utilities.Logger;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	[CollectionDefinition(Name, DisableParallelization = true)]
 	public sealed class MicrosoftInboundTestCollection : ICollectionFixture<InboundTestEnvironment>

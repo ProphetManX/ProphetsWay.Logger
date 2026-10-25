@@ -7,7 +7,7 @@ using ProphetsWay.Utilities;
 using Shouldly;
 using Xunit;
 
-namespace ProphetsWay.Logger.Test
+namespace ProphetsWay.Logger.Tests
 {
 	[Collection(MicrosoftInboundTestCollection.Name)]
 	public class MicrosoftLoggerFactoryExtensionsTests
