@@ -57,7 +57,7 @@ namespace ProphetsWay.Utilities
 		{
 			var transfer = _currentMicrosoftTransfer;
 			if (transfer != null && ReferenceEquals(transfer.Dispatch, _currentMicrosoftDispatch)
-				&& transfer.TryConsume(level, eventId, state, exception, formatter))
+				&& transfer.Matches(level, eventId, state, exception, formatter))
 			{
 				var dispatch = transfer.Dispatch;
 				var route = typeof(LogBridgeEntry);
@@ -71,7 +71,7 @@ namespace ProphetsWay.Utilities
 				try
 				{
 					dispatch.ContinuationDepth++;
-					DispatchMicrosoftInboundCore(categoryName, level, eventId, state, exception,
+					DispatchMicrosoftInboundCore(categoryName, transfer.Payload.Entry.OriginalLevel, eventId, state, exception,
 						formatter, scopeProvider, labelMapper, transfer);
 				}
 				finally
@@ -498,7 +498,6 @@ namespace ProphetsWay.Utilities
 			private readonly Exception _exception;
 			private readonly object _formatter;
 			private readonly List<object> _scopeStates = new List<object>();
-			private bool _consumed;
 
 			internal readonly MicrosoftDispatchContext Dispatch;
 			internal readonly MicrosoftBridgePayload Payload;
@@ -515,15 +514,14 @@ namespace ProphetsWay.Utilities
 				_formatter = formatter;
 			}
 
-			internal bool TryConsume<TState>(LogLevels level, EventId eventId, TState state,
+			internal bool Matches<TState>(LogLevels level, EventId eventId, TState state,
 				Exception exception, Func<TState, Exception, string> formatter)
 			{
-				if (_consumed || MapMicrosoftLogLevel(_level) != level || !_eventId.Equals(eventId)
+				if (MapMicrosoftLogLevel(_level) != level || !_eventId.Equals(eventId)
 					|| !ReferenceEquals(_state, (object)state)
 					|| !ReferenceEquals(_exception, exception) || !ReferenceEquals(_formatter, formatter))
 					return false;
 
-				_consumed = true;
 				return true;
 			}
 

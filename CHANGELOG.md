@@ -80,6 +80,13 @@ factory or fixed logger. Output and cleanup failures follow Logger's safe report
 contract. This describes current unreleased source only, not the published package, package/consumer
 qualification, M6 completion, release readiness, or non-Windows verification.
 
+## Controlled Microsoft bridge returns
+
+- Fixed unchanged controlled outbound calls fanned out through multiple `AddProphetsWay`
+  providers to preserve original entry labels and visited-route suppression on matching receipts.
+- Fixed controlled-return registration selection, intrinsic/custom severity checks and native
+  handoff to use the retained full native severity mask rather than the projected Microsoft level.
+
 ## Support and tooling
 
 The library target set is now `netstandard2.0;net10.0`. This removes dedicated assets for the
