@@ -32,8 +32,30 @@ provider begins with its own logical-flow scope source; a caller-supplied extern
 its scope handles remain borrowed and are cleaned up by their opener. The provider does not dispose
 the factory, mapper, supplied scope source, or native destinations.
 
-This describes current source, not the published package or release qualification. No outbound
-Logger-to-Microsoft adapter is implemented, and this entry does not claim M5/M6 completion.
+This describes current source, not the published package or release qualification. The outbound
+Logger-to-Microsoft destinations are described separately below; enabling this inbound provider does
+not register them. This entry does not claim M5/M6 completion.
+
+## Outbound Microsoft logging destinations
+
+Current unreleased source adds two opt-in outbound destinations: `MicrosoftLoggerDestination` for
+ordinary native entries and `GenericMicrosoftLoggerDestination<T>` for an exact declared-`T` route.
+Each accepts either a borrowed `ILoggerFactory` (with an optional category fallback) or a borrowed
+fixed `ILogger`. Register them explicitly with `Logger.AddDestination(destination)` or
+`Logger.AddDestination<T>(destination)`; outbound registration does not install the inbound provider.
+
+Native severity and label selection happen before Microsoft callbacks. The adapter maps one lowest
+set native severity bit to one Microsoft level, retains the original mask and available entry state,
+exception, event/category, structured properties, and separate native-context/external-scope facts.
+The transport keeps entry, native contexts and external scopes in distinct ordered groups; scope
+replay preserves individual frames and cleans returned handles in reverse order. The factory's
+category fallback applies only when the source category is null; a fixed logger retains its category.
+`IsEnabled == false` is normal rejection. The destination does not classify or sanitize consumer data.
+
+Registration does not transfer ownership: clearing or removing a destination does not dispose its
+factory or fixed logger. Output and cleanup failures follow Logger's safe reporting and propagation
+contract. This describes current unreleased source only, not the published package, package/consumer
+qualification, M6 completion, release readiness, or non-Windows verification.
 
 ## Support and tooling
 
@@ -75,9 +97,10 @@ well as errors, including when the raw message is null; no synthetic message or 
 
 This is breaking for consumers that compile against the removed `Security` members or depend on the
 old enum numbers, permissive helper arguments, or inputs now rejected by strict validation. The current
-tree is an unreleased v4-direction change; this entry does not claim that the full v4 integration,
-automatic Trace/file behavior, outbound Microsoft bridge, or output-failure policy is complete. Native
-text framing is covered by the M4-A entry below; the remaining integration and qualification work is not.
+tree is unreleased v4-direction source; this entry describes the native severity change, not full v4
+integration or the output-failure policy. The outbound Microsoft bridge is recorded in its separate
+current-source entry below. Native text framing is covered by the M4-A entry; remaining qualification
+work is not claimed here.
 
 ## Sensitivity labels
 
@@ -170,11 +193,10 @@ need the bounded notification. This contract applies to configured routes; uncon
 behavior remains separately qualified, and it does not claim automatic fallback, retries, rollback,
 or full exception-graph sanitization.
 
-The configured-route failure behavior corrects the prior single-failure propagation boundary without
-claiming that the full v4 integration, automatic Trace/file behavior, outbound Microsoft bridge, or
-output-failure policy is complete. Native text framing is now implemented for the M4-A slice below;
-file lifecycle and termination, the outbound bridge, and the remaining v4 qualification work are
-still separate.
+The configured-route failure behavior corrects the prior single-failure propagation boundary. This
+entry records that configured-route slice, not the full v4 integration or automatic Trace/file behavior.
+Native text framing is recorded in the M4-A entry below; file lifecycle/termination and broader
+qualification are separate. Current outbound source behavior is described in the M5 entry above.
 
 ## Native scopes and contextual destinations
 
@@ -214,7 +236,7 @@ delivery, settings, and failure-report members are additive individually, but th
 overall compatibility decision a minor or patch change. The accepted local validation is green on the
 focused `net48` and `net10.0` matrix, with the library/example builds and compile-only README checks
 also passing; it is not unfiltered real-file fixture certification. The permanent report-membership
-regression and parent final gate are complete within that accepted local boundary; they are not pending release work. M4-A native text rendering and framing is now implemented as a separate unreleased slice; M4-B, the outbound Microsoft bridge, file lifecycle/termination, and broader release qualification remain open.
+regression and parent final gate are complete within that accepted local boundary; they are not pending release work. M4-A native text rendering and framing is now implemented as a separate unreleased slice. M4-B, the outbound Microsoft bridge, file lifecycle/termination and broader release qualification were separate from this M3 scope; later Unreleased entries describe subsequent work.
 
 ## Native text rendering and framing
 
@@ -240,8 +262,9 @@ text and leave framing/escaping to the destination.
 
 This M4-A slice does not claim automatic Trace/file behavior, physical file termination or lifecycle,
 either Microsoft bridge direction, fallback completion, or publication/release qualification. Current
-inbound source behavior is described above; the outbound adapter remains unimplemented. This is an
-unreleased v4-direction slice; no version number is changed here.
+inbound and outbound Microsoft source behavior is described in separate entries above; neither was
+part of this native text-framing slice. This is an unreleased v4-direction slice; no version number is
+changed here.
 
 ## Explicit file destinations
 
@@ -307,8 +330,7 @@ producer delegate, exception, cached text, ordered structured property and scope
 and native source-origin context; their constructors remain assembly-only, and captured membership is
 read-only without deep-freezing nested caller-owned values. As recorded with the carrier-only source
 on 2026-10-03, that change did not add inbound or outbound adapters, activation, routing, loop guards,
-or lifecycle behavior. The later inbound source behavior is described above; the outbound adapter
-remains unimplemented.
+or lifecycle behavior. Later M5 entries above describe the subsequent inbound and outbound source behavior.
 
 ## Microsoft log label mapper contract
 
@@ -318,8 +340,8 @@ entry through `MapEntry<TState>` and each captured external scope frame through 
 callbacks receive the completed original facts and may return no attachment or a present annotation.
 At the time this mapper contract was recorded on 2026-10-03, it was contract surface only and did not
 include a provider implementation, callback invocation, routing, activation, or lifecycle behavior.
-Current inbound callback use is described above; no outbound behavior or release qualification is
-claimed here.
+Current inbound callback use and outbound behavior are described in separate entries above; outbound
+is not part of this mapper contract, and no release qualification is claimed here.
 
 # v3.0.1
 ### Build target for Net 6.0

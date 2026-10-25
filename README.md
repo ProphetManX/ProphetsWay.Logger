@@ -10,8 +10,9 @@ Route log messages to console, file, event, or custom destinations with per-dest
 > with native scope boundaries. M4-B1 implements explicit-file append/reset, fixed-path output
 > and physical encoding/termination. M4-B2 now integrates ordinary and exact-`T` automatic output
 > into one shared UTF-8 session file, with initial-only recovery and remembered initialization failure.
-> M5 carrier data and the explicit Microsoft-to-Logger inbound bridge are implemented in
-> current source; the Logger-to-Microsoft outbound bridge is not implemented.
+> M5 carrier data and both explicit Microsoft bridge directions are implemented in
+> current source: Microsoft-to-Logger inbound and opt-in Logger-to-Microsoft outbound.
+> Configuring one direction does not enable the reverse.
 > Supplied destinations use guarded entrypoints and protected `LogCore` hooks; subclasses
 > must migrate their old `Log` overrides. This describes current source, not the published
 > NuGet package, a completed final acceptance gate, or release certification.
@@ -50,8 +51,8 @@ Install-Package ProphetsWay.Logger
 ```
 
 These commands do not install the unreleased API merely because it is documented here.
-To use the native severity, scope/context, label-policy, text/formatter examples, or Microsoft inbound bridge
-APIs now, reference the current
+To use the native severity, scope/context, label-policy, text/formatter examples, or either Microsoft
+logging bridge direction now, reference the current
 [library project](ProphetsWay.Logger/ProphetsWay.Logger.csproj) from your application.
 [app-variables.yml](app-variables.yml) still selects `3.0.1`; no v4 package or release is claimed.
 
@@ -70,9 +71,9 @@ new target set. Verification is currently Windows-focused, not equivalent Mac/Li
 
 The library's sole direct package reference is `Microsoft.Extensions.Logging.Abstractions`
 `10.0.12`, unconditional for both targets. It flows to consumers together with its normal
-transitive dependencies through NuGet resolution. The current source also implements the
-inbound bridge described below; the outbound bridge remains unavailable. This source update
-does not mean the currently published package contains the bridge.
+transitive dependencies through NuGet resolution. Both Microsoft bridge directions described
+below are implemented in current source. This does not mean the currently published package
+contains either bridge.
 
 ### Package Contents And Source Metadata
 
@@ -101,8 +102,9 @@ skips or test identity changes. Baseline results alone do not establish independ
 final verification, current-candidate package qualification or bridge completion. The earlier package
 observations above remain historical.
 
-This is historical, partial M6 evidence, not full qualification or release approval. The inbound
-bridge is now present in current source, but the outbound bridge remains unimplemented. Remaining
+This is historical, partial M6 evidence, not full qualification or release approval. At the time of
+this 2026-10-01 record, inbound was present and outbound had not yet been implemented; later M5 source
+adds outbound destinations, described below. Remaining
 assertion migration, the owner-handled test-project rename, broader consumer/security qualification
 and deferred non-Windows proof remain separate. The version file still selects `3.0.1`; this update
 changes neither that selection nor publication status.
@@ -525,9 +527,70 @@ through factory scope integration is borrowed. The caller/factory remains respon
 disposing scope handles through that source's normal cleanup.
 
 This is current unreleased source behavior, not a claim that the published `3.0.1` package includes
-the bridge. No Logger-to-Microsoft outbound destination or adapter exists yet; enabling the inbound
-direction does not install one. This documentation does not claim M5/M6 completion,
-current-package qualification, or release readiness.
+the bridge. Enabling inbound does not install outbound; the outbound direction is a separate,
+explicitly registered destination path described next. This documentation does not claim M5/M6
+completion, current-package qualification, or release readiness.
+
+### Microsoft Logging Outbound Destinations
+
+To send native Logger entries to Microsoft logging abstractions, construct and explicitly register
+a destination. Construction alone does not register it, create an inbound provider, or configure a
+host. The ordinary and exact-declared-`T` destinations have these public constructors:
+
+| Destination | Public constructors |
+| --- | --- |
+| `MicrosoftLoggerDestination` | `MicrosoftLoggerDestination(LogLevels reportingLevel, ILoggerFactory factory, string defaultCategoryName = "ProphetsWay.Logger")`; `MicrosoftLoggerDestination(LogLevels reportingLevel, ILogger logger)` |
+| `GenericMicrosoftLoggerDestination<T>` | `GenericMicrosoftLoggerDestination<T>(LogLevels reportingLevel, ILoggerFactory factory, string defaultCategoryName = "ProphetsWay.Logger")`; `GenericMicrosoftLoggerDestination<T>(LogLevels reportingLevel, ILogger logger)` |
+
+Register the ordinary destination with `Logger.AddDestination(destination)` and an exact route
+with `Logger.AddDestination<T>(destination)`, where `T` is the declared native metadata type used
+by that route. Runtime subtype compatibility does not select the exact-`T` route. The factory and
+fixed logger overloads are alternatives; the factory overload creates a logger for each admitted
+attempt, using the source category when available and `defaultCategoryName` only when that category
+is null. Empty or whitespace categories are retained as supplied. A fixed logger keeps its own
+category. The default factory category is `ProphetsWay.Logger`.
+
+The `reportingLevel` constructor argument must be a known native mask from 0 through 63; zero is
+a valid active reject-all mask. Native registration severity and label policies are evaluated before
+Microsoft callbacks. The adapter maps the lowest set bit of the permitted native mask to one
+Microsoft level (`Critical`, `Error`, `Warning`, `Information`, `Debug`, or `Trace`) and retains the
+complete original mask in the bridge entry. It calls `ILogger.IsEnabled` once for that mapped level; `false` is an ordinary
+rejection, not a failure or a reason to activate fallback. A composite mask is not expanded into
+multiple Microsoft records.
+
+For a fresh ordinary native call, the entry's typed state is the original message string; for an
+exact-`T` call, it is the original declared-`T` metadata, including null or `default(T)`. The
+completed `LogBridgeEntry` retains available category/event identity, original mask, exception,
+state, formatted text, and ordered structured properties when metadata supplies
+`IEnumerable<KeyValuePair<string, object>>`, as well as annotation/context facts. Other metadata
+remains opaque; application property membership and duplicate keys are preserved rather than
+flattened. A controlled
+return from the inbound bridge preserves its original typed entry and producer-formatter association
+rather than wrapping the entry as new metadata or re-running its producer formatter; a fresh call
+with carrier-shaped metadata is still a new event. Private transfer bookkeeping suppresses only a
+route already visited by that same controlled entry; the guard is not enumerable state, and fresh or
+unrelated recursive calls remain eligible. The Microsoft call receives an internal ordered transport
+envelope with three separate items: `ProphetsWay.Entry`, `ProphetsWay.NativeContexts`, and
+`ProphetsWay.ExternalScopes`. The native-context group retains the source capture first, then distinct
+controlled/current captures in encounter order; only a capture already present by reference is
+omitted, not a distinct capture with overlapping frames or labels. Event properties remain inside
+the entry; native contexts and external scope frames are not flattened
+into application properties. Scope replay supplies a separate one-frame envelope per native or
+external frame, preserving each frame's state/properties/annotations and occurrence; native frames
+follow context order and each capture's outer-to-inner order, then external frames follow their
+retained order. Existing Microsoft host scopes remain in place; successfully returned scope handles are cleaned up in
+reverse opening order. A null `BeginScope` result means there is no handle to clean up, not a failed
+scope capture.
+
+Native labels and explicitly mapped external annotations remain distinct from application
+properties and are evaluated as whole-entry policy before the destination's Microsoft callbacks.
+The bridge does not infer labels from property names, classify or sanitize payloads, or promise
+that consumer-owned state is safe to retain. The destination borrows its supplied factory or fixed
+logger; Logger registration, removal, clearing, or replacement does not dispose them. The adapter
+owns only per-attempt transport/bookkeeping and returned scope-handle cleanup. Calls are synchronous;
+there is no category cache, queue, retry, remote-delivery receipt, or durability guarantee. An
+`IsEnabled` rejection is normal; factory, logger, scope, or cleanup failures follow Logger's safe
+output-failure reporting and propagation contract after independent eligible attempts.
 
 ## API Reference
 
@@ -537,6 +600,8 @@ The tables summarize the current declarations, not proposed APIs.
 | --- | --- |
 | `SensitivityLabel(string identifier)` | Create an immutable identity; read `Identifier`, compare with `Equals`, use `GetHashCode` for collections. |
 | `LogAnnotations(IEnumerable<SensitivityLabel> labels)` | Copy one attachment's ordered label occurrences, including repeats; empty input is valid. |
+| [`MicrosoftLoggerDestination(...)`](ProphetsWay.Logger/LoggerDestinations/MicrosoftLoggerDestination.cs) | Opt-in ordinary outbound route to a borrowed Microsoft logger or factory. |
+| [`GenericMicrosoftLoggerDestination<T>(...)`](ProphetsWay.Logger/LoggerDestinations/GenericMicrosoftLoggerDestination.cs) | Opt-in outbound route for exactly declared native metadata type `T`. |
 | `LogAnnotations.LabelOccurrences` | Getter-only `ReadOnlyCollection<SensitivityLabel>`; captured occurrence count and order stay fixed. |
 | `DestinationLabelPolicy(LabelFilterMode mode, IEnumerable<SensitivityLabel> labels)` | Required mode and configured membership; no default constructor. |
 | `DestinationLabelPolicy.Mode` / `Labels` | Read the selected mode and copied, unique, read-only membership. |
@@ -1434,10 +1499,11 @@ and physical record encoding/termination. M4-B2 now integrates the shared automa
 primary configuration, typed metadata retention, initial-only recovery, fixed-path reuse and
 remembered initialization failure. Its final documentation-compilation and independent code/security
 gates remain separate; this is not a claim that the whole B2 acceptance target is complete.
-The inbound Microsoft-to-Logger bridge is implemented in current source; the outbound
-Logger-to-Microsoft bridge remains outside this native slice (M5). Explicit membership safety
-is not a guarantee of all concurrency safety. Microsoft severity conversion/None handling is not
-supplied by this native enum. The implemented failure behavior above is not delivery of every policy in
+The inbound and outbound Microsoft bridge directions are implemented in current source and
+documented above; neither is part of this native M3/M4 slice. Explicit membership safety is not a
+guarantee of all concurrency safety. The native enum itself does not define Microsoft severity or
+`None` conversion; that mapping belongs to the bridge. The implemented failure behavior above is
+not delivery of every policy in
 [docs/requirements.md](docs/requirements.md). Requirements readiness is not delivery.
 
 A false policy result is an ordinary mismatch, not an output failure or instruction to activate
@@ -1532,8 +1598,8 @@ their old numeric meanings. This is unreleased major-version work, not a patch-s
 
 The accepted direction is recorded in [docs/decision-log.md](docs/decision-log.md).
 M4-A implements native rendering/framing and M4-B1 implements the explicit-file sink behavior above;
-M4-B2 integrates the automatic session. The inbound M5 bridge is present in current source; the
-outbound bridge and final integration/qualification gates remain separate.
+M4-B2 integrates the automatic session. Both M5 Microsoft bridge directions are present in current
+source. This does not claim the published package, M6, or remaining package/release qualification.
 
 ## Building And Testing Locally
 

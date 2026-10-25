@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ProphetsWay.Utilities.Generics;
 using System.Collections.Generic;
 
@@ -154,6 +154,20 @@ namespace ProphetsWay.Utilities
 
 		private static void DispatchTyped<T>(LogAnnotations annotations, LogLevels level, T metadata, string message, Exception ex)
 		{
+			var previous = _currentMicrosoftDispatch;
+			_currentMicrosoftDispatch = new MicrosoftDispatchContext();
+			try
+			{
+				DispatchTypedCore(annotations, level, metadata, message, ex);
+			}
+			finally
+			{
+				_currentMicrosoftDispatch = previous;
+			}
+		}
+
+		private static void DispatchTypedCore<T>(LogAnnotations annotations, LogLevels level, T metadata, string message, Exception ex)
+		{
 			TypedRegistration[] destinations;
 			LogContext context;
 			DestinationLabelPolicy[] intrinsicPolicies;
@@ -180,7 +194,12 @@ namespace ProphetsWay.Utilities
 				return;
 			}
 
-			if (!Array.Exists(destinations, registration => registration.Settings.Enabled))
+			var hasEnabledRegistration = Array.Exists(destinations,
+				registration => registration.Settings.Enabled);
+			ReserveCurrentRouteBlock(typeof(T),
+				destinations.Length + (hasEnabledRegistration ? 0 : 1), true);
+
+			if (!hasEnabledRegistration)
 			{
 				DispatchAutomatic(destinations.Length + 1,
 					print => new AutomaticTypedDestination<T>(print).LogCaptured(context, level, metadata, message, ex));

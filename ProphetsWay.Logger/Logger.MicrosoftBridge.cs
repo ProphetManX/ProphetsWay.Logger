@@ -55,6 +55,54 @@ namespace ProphetsWay.Utilities
 			Func<TState, Exception, string> formatter,
 			IExternalScopeProvider scopeProvider, IMicrosoftLogLabelMapper labelMapper)
 		{
+			var transfer = _currentMicrosoftTransfer;
+			if (transfer != null && ReferenceEquals(transfer.Dispatch, _currentMicrosoftDispatch)
+				&& transfer.TryConsume(level, eventId, state, exception, formatter))
+			{
+				var dispatch = transfer.Dispatch;
+				var route = typeof(LogBridgeEntry);
+				if (dispatch.HasVisitedRoute(route))
+					return;
+
+				var oldPrefix = dispatch.ActivePrefix;
+				var oldPayload = dispatch.CurrentPayload;
+				var oldCaptureFailed = dispatch.BridgeCaptureFailed;
+				var oldDepth = dispatch.ContinuationDepth;
+				try
+				{
+					dispatch.ContinuationDepth++;
+					DispatchMicrosoftInboundCore(categoryName, level, eventId, state, exception,
+						formatter, scopeProvider, labelMapper, transfer);
+				}
+				finally
+				{
+					dispatch.ActivePrefix = oldPrefix;
+					dispatch.CurrentPayload = oldPayload;
+					dispatch.BridgeCaptureFailed = oldCaptureFailed;
+					dispatch.ContinuationDepth = oldDepth;
+				}
+				return;
+			}
+
+			var previous = _currentMicrosoftDispatch;
+			_currentMicrosoftDispatch = new MicrosoftDispatchContext();
+			try
+			{
+				DispatchMicrosoftInboundCore(categoryName, level, eventId, state, exception,
+					formatter, scopeProvider, labelMapper, null);
+			}
+			finally
+			{
+				_currentMicrosoftDispatch = previous;
+			}
+		}
+
+		private static void DispatchMicrosoftInboundCore<TState>(string categoryName, LogLevels level,
+			EventId eventId, TState state, Exception exception,
+			Func<TState, Exception, string> formatter,
+			IExternalScopeProvider scopeProvider, IMicrosoftLogLabelMapper labelMapper,
+			MicrosoftOutboundTransfer transfer)
+		{
 			TypedRegistration[] destinations;
 			DestinationLabelPolicy[] intrinsicPolicies;
 			LogContext nativeContext;
@@ -66,6 +114,7 @@ namespace ProphetsWay.Utilities
 			var overflowCount = 0;
 			var coreCaptureFailures = 0;
 			var mustThrow = false;
+			var hasEnabledRegistration = false;
 
 			try
 			{
@@ -84,29 +133,61 @@ namespace ProphetsWay.Utilities
 						intrinsicPolicies[index] = supplied.LabelPolicy;
 				}
 
+				hasEnabledRegistration = Array.Exists(destinations,
+					registration => registration.Settings.Enabled);
+				ReserveCurrentRouteBlock(typeof(LogBridgeEntry),
+					destinations.Length + (hasEnabledRegistration ? 0 : 1), true);
+
 				nativeContext = LogScopeHandle.Capture(null, DateTimeOffset.UtcNow);
-				properties = CaptureMicrosoftProperties(state);
-				scopes = new List<LogBridgeScope>();
-				scopeProvider.ForEachScope((scopeState, capturedScopes) =>
+				if (transfer == null)
 				{
-					var scopeProperties = CaptureMicrosoftProperties(scopeState);
-					var annotations = labelMapper == null
+					properties = CaptureMicrosoftProperties(state);
+					scopes = new List<LogBridgeScope>();
+					scopeProvider.ForEachScope((scopeState, capturedScopes) =>
+					{
+						var scopeProperties = CaptureMicrosoftProperties(scopeState);
+						var annotations = labelMapper == null
+							? null
+							: labelMapper.MapScope(scopeState, scopeProperties);
+						capturedScopes.Add(new LogBridgeScope(scopeState, scopeProperties, annotations));
+					}, scopes);
+
+					entryAnnotations = labelMapper == null
 						? null
-						: labelMapper.MapScope(scopeState, scopeProperties);
-					capturedScopes.Add(new LogBridgeScope(scopeState, scopeProperties, annotations));
-				}, scopes);
+						: labelMapper.MapEntry(categoryName, GetMicrosoftLevel(level), eventId,
+							state, exception, properties);
 
-				entryAnnotations = labelMapper == null
-					? null
-					: labelMapper.MapEntry(categoryName, GetMicrosoftLevel(level), eventId,
-						state, exception, properties);
+					effectiveLabels = new List<SensitivityLabel>();
+					var seenLabels = new HashSet<SensitivityLabel>();
+					AddLabels(nativeContext.Labels.EffectiveLabels, seenLabels, effectiveLabels);
+					AddLabels(entryAnnotations, seenLabels, effectiveLabels);
+					foreach (var scope in scopes)
+						AddLabels(scope.Annotations, seenLabels, effectiveLabels);
+				}
+				else
+				{
+					properties = transfer.Payload.Entry.Properties;
+					var addedExternalScopes = new List<LogBridgeScope>();
+					scopeProvider.ForEachScope((scopeState, capturedScopes) =>
+					{
+						if (transfer.IsExportedScope(scopeState))
+							return;
 
-				effectiveLabels = new List<SensitivityLabel>();
-				var seenLabels = new HashSet<SensitivityLabel>();
-				AddLabels(nativeContext.Labels.EffectiveLabels, seenLabels, effectiveLabels);
-				AddLabels(entryAnnotations, seenLabels, effectiveLabels);
-				foreach (var scope in scopes)
-					AddLabels(scope.Annotations, seenLabels, effectiveLabels);
+						var scopeProperties = CaptureMicrosoftProperties(scopeState);
+						var annotations = labelMapper == null
+							? null
+							: labelMapper.MapScope(scopeState, scopeProperties);
+						capturedScopes.Add(new LogBridgeScope(scopeState, scopeProperties, annotations));
+					}, addedExternalScopes);
+
+					scopes = new List<LogBridgeScope>(transfer.Payload.ExternalScopes);
+				scopes.AddRange(addedExternalScopes);
+					entryAnnotations = transfer.Payload.Entry.Annotations;
+					effectiveLabels = ComposeEffectiveLabels(transfer.Payload, nativeContext, addedExternalScopes);
+					_currentMicrosoftDispatch.CurrentPayload = ComposeControlledPayload(
+						transfer.Payload, nativeContext, addedExternalScopes, effectiveLabels);
+					_currentMicrosoftDispatch.BridgeCaptureFailed = false;
+				}
 			}
 			catch (Exception)
 			{
@@ -115,12 +196,20 @@ namespace ProphetsWay.Utilities
 				return;
 			}
 
-			var hasEnabledRegistration = Array.Exists(destinations,
-				registration => registration.Settings.Enabled);
 			if (!hasEnabledRegistration)
 			{
-				DeliverMicrosoftAutomatic(categoryName, level, destinations.Length + 1, eventId, state, exception,
-					formatter, properties, scopes, entryAnnotations, nativeContext);
+				if (transfer == null)
+				{
+					DeliverMicrosoftAutomatic(categoryName, level, destinations.Length + 1, eventId, state, exception,
+						formatter, properties, scopes, entryAnnotations, nativeContext);
+				}
+				else
+				{
+					DispatchAutomatic(destinations.Length + 1,
+						print => new AutomaticTypedDestination<LogBridgeEntry>(print)
+							.LogCaptured(nativeContext, level, transfer.Payload.Entry,
+								transfer.Payload.Entry.FormattedMessage, transfer.Payload.Entry.Exception));
+				}
 				return;
 			}
 
@@ -173,29 +262,41 @@ namespace ProphetsWay.Utilities
 				return;
 			}
 
+			LogBridgeEntry entry;
 			string formattedMessage;
-			try
+			if (transfer != null)
 			{
-				formattedMessage = formatter(state, exception);
+				entry = transfer.Payload.Entry;
+				formattedMessage = entry.FormattedMessage;
 			}
-			catch (Exception)
+			else
 			{
-				coreCaptureFailures = 1;
-				CompleteDispatchFailure(failures, overflowCount, coreCaptureFailures, mustThrow);
-				return;
-			}
+				try
+				{
+					formattedMessage = formatter(state, exception);
+				}
+				catch (Exception)
+				{
+					coreCaptureFailures = 1;
+					CompleteDispatchFailure(failures, overflowCount, coreCaptureFailures, mustThrow);
+					return;
+				}
 
-			LogBridgeEntry<TState> entry;
-			try
-			{
-				entry = new LogBridgeEntry<TState>(state, formatter, categoryName, eventId, level,
-					null, formattedMessage, exception, properties, scopes, entryAnnotations, nativeContext);
-			}
-			catch (Exception)
-			{
-				coreCaptureFailures = 1;
-				CompleteDispatchFailure(failures, overflowCount, coreCaptureFailures, mustThrow);
-				return;
+				try
+				{
+					entry = new LogBridgeEntry<TState>(state, formatter, categoryName, eventId, level,
+						null, formattedMessage, exception, properties, scopes, entryAnnotations, nativeContext);
+				}
+				catch (Exception)
+				{
+					coreCaptureFailures = 1;
+					CompleteDispatchFailure(failures, overflowCount, coreCaptureFailures, mustThrow);
+					return;
+				}
+
+				_currentMicrosoftDispatch.CurrentPayload = CreateBridgePayload(entry,
+					new[] { nativeContext }, scopes, effectiveLabels);
+				_currentMicrosoftDispatch.BridgeCaptureFailed = false;
 			}
 
 			for (var index = 0; index < candidates.Count; index++)
@@ -301,5 +402,346 @@ namespace ProphetsWay.Utilities
 				default: throw new ArgumentOutOfRangeException(nameof(level));
 			}
 		}
+
+		[ThreadStatic]
+		private static MicrosoftDispatchContext _currentMicrosoftDispatch;
+		[ThreadStatic]
+		private static MicrosoftOutboundTransfer _currentMicrosoftTransfer;
+		private static readonly object OrdinaryMicrosoftRoute = new object();
+
+		private sealed class MicrosoftDispatchContext
+		{
+			private readonly List<LogFailureDescriptor> _failures = new List<LogFailureDescriptor>(RetainedFailureLimit);
+			private readonly List<object> _visitedRoutes = new List<object>();
+			private int _overflowCount;
+			private int _coreCaptureFailureCount;
+			private int _totalSlots;
+			private bool _mustThrow;
+			private bool _initialFailure;
+
+			internal int ActivePrefix;
+			internal int ContinuationDepth;
+			internal MicrosoftBridgePayload CurrentPayload;
+			internal bool BridgeCaptureFailed;
+			internal List<LogFailureDescriptor> Failures { get { return _failures; } }
+			internal int OverflowCount { get { return _overflowCount; } }
+			internal int CoreCaptureFailureCount { get { return _coreCaptureFailureCount; } }
+			internal bool MustThrow { get { return _mustThrow; } }
+			internal bool InitialFailure { get { return _initialFailure; } }
+
+			internal bool HasVisitedRoute(object route)
+			{
+				for (var index = 0; index < _visitedRoutes.Count; index++)
+					if (ReferenceEquals(_visitedRoutes[index], route))
+						return true;
+				return false;
+			}
+
+			internal void MarkVisitedRoute(object route)
+			{
+				if (!HasVisitedRoute(route))
+					_visitedRoutes.Add(route);
+			}
+
+			internal int ReserveBlock(int count)
+			{
+				var prefix = _totalSlots;
+				_totalSlots = checked(_totalSlots + count);
+				ActivePrefix = prefix;
+				return prefix;
+			}
+
+			internal void RecordFailure(int localRegistrationId, LogFailureStage stage)
+			{
+				if (_failures.Count < RetainedFailureLimit)
+					_failures.Add(new LogFailureDescriptor(checked(ActivePrefix + localRegistrationId), stage));
+				else
+					_overflowCount++;
+			}
+
+			internal void Merge(List<LogFailureDescriptor> failures, int overflowCount,
+				int coreCaptureFailureCount, bool mustThrow, bool initialFailure)
+			{
+				if (failures != null)
+					foreach (var failure in failures)
+						RecordFailure(failure.RegistrationId, failure.Stage);
+				_overflowCount += overflowCount;
+				if (coreCaptureFailureCount > 0)
+					_coreCaptureFailureCount = 1;
+				_mustThrow |= mustThrow;
+				_initialFailure |= initialFailure;
+			}
+		}
+
+		private sealed class MicrosoftBridgePayload
+		{
+			internal readonly LogBridgeEntry Entry;
+			internal readonly ReadOnlyCollection<LogContext> NativeContexts;
+			internal readonly ReadOnlyCollection<LogBridgeScope> ExternalScopes;
+			internal readonly List<SensitivityLabel> EffectiveLabels;
+
+			internal MicrosoftBridgePayload(LogBridgeEntry entry, IEnumerable<LogContext> nativeContexts,
+				IEnumerable<LogBridgeScope> externalScopes, IEnumerable<SensitivityLabel> effectiveLabels)
+			{
+				Entry = entry;
+				NativeContexts = LogContext.CopyMembership(nativeContexts);
+				ExternalScopes = LogContext.CopyMembership(externalScopes);
+				EffectiveLabels = new List<SensitivityLabel>(effectiveLabels);
+			}
+		}
+
+		private sealed class MicrosoftOutboundTransfer
+		{
+			private readonly object _state;
+			private readonly LogLevel _level;
+			private readonly EventId _eventId;
+			private readonly Exception _exception;
+			private readonly object _formatter;
+			private readonly List<object> _scopeStates = new List<object>();
+			private bool _consumed;
+
+			internal readonly MicrosoftDispatchContext Dispatch;
+			internal readonly MicrosoftBridgePayload Payload;
+
+			internal MicrosoftOutboundTransfer(MicrosoftDispatchContext dispatch, MicrosoftBridgePayload payload,
+				object state, LogLevel level, EventId eventId, Exception exception, object formatter)
+			{
+				Dispatch = dispatch;
+				Payload = payload;
+				_state = state;
+				_level = level;
+				_eventId = eventId;
+				_exception = exception;
+				_formatter = formatter;
+			}
+
+			internal bool TryConsume<TState>(LogLevels level, EventId eventId, TState state,
+				Exception exception, Func<TState, Exception, string> formatter)
+			{
+				if (_consumed || MapMicrosoftLogLevel(_level) != level || !_eventId.Equals(eventId)
+					|| !ReferenceEquals(_state, (object)state)
+					|| !ReferenceEquals(_exception, exception) || !ReferenceEquals(_formatter, formatter))
+					return false;
+
+				_consumed = true;
+				return true;
+			}
+
+			internal void AddScopeState(object state)
+			{
+				_scopeStates.Add(state);
+			}
+
+			internal bool IsExportedScope(object state)
+			{
+				for (var index = 0; index < _scopeStates.Count; index++)
+					if (ReferenceEquals(_scopeStates[index], state))
+						return true;
+				return false;
+			}
+		}
+
+		private static int ReserveCurrentRouteBlock(object route, int slotCount, bool markVisited)
+		{
+			var dispatch = _currentMicrosoftDispatch;
+			if (dispatch == null)
+				return 0;
+			if (markVisited)
+				dispatch.MarkVisitedRoute(route);
+			return dispatch.ReserveBlock(slotCount);
+		}
+
+		internal static void ExportMicrosoft<TState>(ILoggerFactory factory, ILogger fixedLogger,
+			string defaultCategoryName, LogContext context, LogLevels level, TState state,
+			string rawMessage, string formattedMessage, Exception exception)
+		{
+			var dispatch = _currentMicrosoftDispatch;
+			if (dispatch == null)
+				throw new InvalidOperationException("Microsoft output requires a guarded Logger dispatch.");
+			if (dispatch.BridgeCaptureFailed)
+				return;
+
+			var payload = dispatch.CurrentPayload;
+			if (payload == null)
+			{
+				try
+				{
+					payload = CreateRawBridgePayload(context, level, state, rawMessage, formattedMessage, exception);
+					dispatch.CurrentPayload = payload;
+				}
+				catch (Exception)
+				{
+					dispatch.BridgeCaptureFailed = true;
+					dispatch.Merge(null, 0, 1, false, false);
+					return;
+				}
+			}
+
+			var entry = payload.Entry;
+			var microsoftLevel = GetMicrosoftLevel(HighestPriorityBit(entry.OriginalLevel));
+			var selectedLogger = fixedLogger;
+			if (selectedLogger == null)
+			{
+				var category = entry.CategoryName ?? defaultCategoryName;
+				selectedLogger = factory.CreateLogger(category);
+				if (selectedLogger == null)
+					throw new InvalidOperationException("The Microsoft logger factory returned null.");
+			}
+
+			if (!selectedLogger.IsEnabled(microsoftLevel))
+				return;
+
+			var eventState = new MicrosoftLogTransport(new[]
+			{
+				new KeyValuePair<string, object>("ProphetsWay.Entry", entry),
+				new KeyValuePair<string, object>("ProphetsWay.NativeContexts", payload.NativeContexts),
+				new KeyValuePair<string, object>("ProphetsWay.ExternalScopes", payload.ExternalScopes)
+			});
+			var eventId = entry.EventId ?? default(EventId);
+			Func<MicrosoftLogTransport, Exception, string> transportFormatter =
+				(transport, ignoredException) => entry.FormattedMessage;
+			var transfer = new MicrosoftOutboundTransfer(dispatch, payload, eventState,
+				microsoftLevel, eventId, entry.Exception, transportFormatter);
+			var handles = new List<IDisposable>();
+			Exception failure = null;
+
+			try
+			{
+				var replayedNativeFrames = new List<LogScopeFrame>();
+				foreach (var nativeContext in payload.NativeContexts)
+				{
+					foreach (var frame in nativeContext.Scopes)
+					{
+						if (ContainsReference(replayedNativeFrames, frame))
+							continue;
+						replayedNativeFrames.Add(frame);
+						var scopeState = new MicrosoftLogTransport(new[]
+						{
+							new KeyValuePair<string, object>("ProphetsWay.NativeScope", frame)
+						});
+						transfer.AddScopeState(scopeState);
+						var handle = selectedLogger.BeginScope(scopeState);
+						if (handle != null)
+							handles.Add(handle);
+					}
+				}
+
+				foreach (var externalScope in payload.ExternalScopes)
+				{
+					var scopeState = new MicrosoftLogTransport(new[]
+					{
+						new KeyValuePair<string, object>("ProphetsWay.ExternalScope", externalScope)
+					});
+					transfer.AddScopeState(scopeState);
+					var handle = selectedLogger.BeginScope(scopeState);
+					if (handle != null)
+						handles.Add(handle);
+				}
+
+				var previousTransfer = _currentMicrosoftTransfer;
+				_currentMicrosoftTransfer = transfer;
+				try
+				{
+					selectedLogger.Log(microsoftLevel, eventId, eventState, entry.Exception, transportFormatter);
+				}
+				finally
+				{
+					_currentMicrosoftTransfer = previousTransfer;
+				}
+			}
+			catch (Exception ex)
+			{
+				failure = ex;
+			}
+			finally
+			{
+				for (var index = handles.Count - 1; index >= 0; index--)
+				{
+					try
+					{
+						handles[index].Dispose();
+					}
+					catch (Exception ex)
+					{
+						if (failure == null)
+							failure = ex;
+					}
+				}
+			}
+
+			if (failure != null)
+				throw failure;
+		}
+
+		private static MicrosoftBridgePayload CreateRawBridgePayload<TState>(LogContext context,
+			LogLevels level, TState state, string rawMessage, string formattedMessage, Exception exception)
+		{
+			var properties = (object)state as IEnumerable<KeyValuePair<string, object>>;
+			ReadOnlyCollection<KeyValuePair<string, object>> capturedProperties = properties == null
+				? LogContext.CopyMembership(new KeyValuePair<string, object>[0])
+				: LogContext.CopyMembership(properties);
+			var entry = new LogBridgeEntry<TState>(state, null, null, null, level,
+				rawMessage, formattedMessage, exception, capturedProperties,
+				new LogBridgeScope[0], null, context);
+			return CreateBridgePayload(entry, new[] { context }, new LogBridgeScope[0],
+				context.Labels.EffectiveLabels);
+		}
+
+		private static MicrosoftBridgePayload CreateBridgePayload(LogBridgeEntry entry,
+			IEnumerable<LogContext> nativeContexts, IEnumerable<LogBridgeScope> externalScopes,
+			IEnumerable<SensitivityLabel> effectiveLabels)
+		{
+			return new MicrosoftBridgePayload(entry, nativeContexts, externalScopes, effectiveLabels);
+		}
+
+		private static MicrosoftBridgePayload ComposeControlledPayload(MicrosoftBridgePayload source,
+			LogContext currentContext, IList<LogBridgeScope> addedExternalScopes,
+			IEnumerable<SensitivityLabel> effectiveLabels)
+		{
+			var contexts = new List<LogContext>(source.NativeContexts);
+			var currentAlreadyCarried = false;
+			for (var index = 0; index < contexts.Count; index++)
+				if (ReferenceEquals(contexts[index], currentContext))
+					currentAlreadyCarried = true;
+
+			if (!currentAlreadyCarried)
+				contexts.Add(currentContext);
+
+			var externalScopes = new List<LogBridgeScope>(source.ExternalScopes);
+			externalScopes.AddRange(addedExternalScopes);
+			return CreateBridgePayload(source.Entry, contexts, externalScopes, effectiveLabels);
+		}
+
+		private static List<SensitivityLabel> ComposeEffectiveLabels(MicrosoftBridgePayload source,
+			LogContext currentContext, IEnumerable<LogBridgeScope> addedExternalScopes)
+		{
+			var result = new List<SensitivityLabel>();
+			var seen = new HashSet<SensitivityLabel>();
+			AddLabels(source.EffectiveLabels, seen, result);
+			AddLabels(currentContext.Labels.EffectiveLabels, seen, result);
+			foreach (var scope in addedExternalScopes)
+				AddLabels(scope.Annotations, seen, result);
+			return result;
+		}
+
+		private static bool ContainsReference<T>(IList<T> values, T value) where T : class
+		{
+			for (var index = 0; index < values.Count; index++)
+				if (ReferenceEquals(values[index], value))
+					return true;
+			return false;
+		}
+
+		private static LogLevels HighestPriorityBit(LogLevels level)
+		{
+			if ((level & LogLevels.Critical) != 0) return LogLevels.Critical;
+			if ((level & LogLevels.ErrorOnly) != 0) return LogLevels.ErrorOnly;
+			if ((level & LogLevels.WarningOnly) != 0) return LogLevels.WarningOnly;
+			if ((level & LogLevels.InformationOnly) != 0) return LogLevels.InformationOnly;
+			if ((level & LogLevels.DebugOnly) != 0) return LogLevels.DebugOnly;
+			if ((level & LogLevels.TraceOnly) != 0) return LogLevels.TraceOnly;
+			throw new ArgumentOutOfRangeException(nameof(level));
+		}
+
 	}
 }

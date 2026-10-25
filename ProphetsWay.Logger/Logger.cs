@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using ProphetsWay.Utilities.LoggerDestinations;
@@ -365,6 +365,20 @@ namespace ProphetsWay.Utilities
 
 		private static void DispatchOrdinary(LogAnnotations annotations, LogLevels level, string message, Exception ex)
 		{
+			var previous = _currentMicrosoftDispatch;
+			_currentMicrosoftDispatch = new MicrosoftDispatchContext();
+			try
+			{
+				DispatchOrdinaryCore(annotations, level, message, ex);
+			}
+			finally
+			{
+				_currentMicrosoftDispatch = previous;
+			}
+		}
+
+		private static void DispatchOrdinaryCore(LogAnnotations annotations, LogLevels level, string message, Exception ex)
+		{
 			OrdinaryRegistration[] destinations;
 			LogContext context;
 			try
@@ -398,7 +412,12 @@ namespace ProphetsWay.Utilities
 				return;
 			}
 
-			if (!Array.Exists(destinations, registration => registration.Settings.Enabled))
+			var hasEnabledRegistration = Array.Exists(destinations,
+				registration => registration.Settings.Enabled);
+			ReserveCurrentRouteBlock(OrdinaryMicrosoftRoute,
+				destinations.Length + (hasEnabledRegistration ? 0 : 1), true);
+
+			if (!hasEnabledRegistration)
 			{
 				DispatchAutomatic(destinations.Length + 1,
 					print => new AutomaticOrdinaryDestination(print).LogCaptured(context, level, message, ex));
@@ -504,6 +523,20 @@ namespace ProphetsWay.Utilities
 
 		internal static void DispatchDirect(LoggingDestinationCore destination, LogContext context, LogLevels level, Action<LogContext> deliver)
 		{
+			var previous = _currentMicrosoftDispatch;
+			_currentMicrosoftDispatch = new MicrosoftDispatchContext();
+			try
+			{
+				DispatchDirectCore(destination, context, level, deliver);
+			}
+			finally
+			{
+				_currentMicrosoftDispatch = previous;
+			}
+		}
+
+		private static void DispatchDirectCore(LoggingDestinationCore destination, LogContext context, LogLevels level, Action<LogContext> deliver)
+		{
 			if (level == 0 || (level & ~LogLevels.Trace) != 0)
 				throw new ArgumentOutOfRangeException(nameof(level));
 
@@ -563,6 +596,7 @@ namespace ProphetsWay.Utilities
 				return;
 			}
 
+			ReserveCurrentRouteBlock(null, 1, false);
 			try
 			{
 				deliver(context);
@@ -589,6 +623,12 @@ namespace ProphetsWay.Utilities
 
 		private static void RecordFailure(ref List<LogFailureDescriptor> failures, ref int overflowCount, int registrationId, LogFailureStage stage)
 		{
+			if (_currentMicrosoftDispatch != null)
+			{
+				_currentMicrosoftDispatch.RecordFailure(registrationId, stage);
+				return;
+			}
+
 			if (failures == null)
 				failures = new List<LogFailureDescriptor>(RetainedFailureLimit);
 
@@ -605,6 +645,20 @@ namespace ProphetsWay.Utilities
 
 		private static void CompleteDispatchFailure(List<LogFailureDescriptor> failures, int overflowCount, int coreCaptureFailureCount, bool mustThrow, bool initialFailure = false)
 		{
+			var dispatch = _currentMicrosoftDispatch;
+			if (dispatch != null)
+			{
+				dispatch.Merge(failures, overflowCount, coreCaptureFailureCount, mustThrow, initialFailure);
+				if (dispatch.ContinuationDepth > 0)
+					return;
+
+				failures = dispatch.Failures.Count == 0 ? null : dispatch.Failures;
+				overflowCount = dispatch.OverflowCount;
+				coreCaptureFailureCount = dispatch.CoreCaptureFailureCount;
+				mustThrow = dispatch.MustThrow;
+				initialFailure = dispatch.InitialFailure;
+			}
+
 			if (failures == null && coreCaptureFailureCount == 0)
 				return;
 
