@@ -1619,8 +1619,10 @@ dotnet build .\Logger.sln -c Debug
 The [test project](ProphetsWay.Logger.Tests/ProphetsWay.Logger.Tests.csproj) uses
 `xunit.v3.mtp-off` 4.0.1 through VSTest (`xunit.runner.visualstudio` 4.0.0 and
 `Microsoft.NET.Test.Sdk` 18.10.1); both Microsoft Testing Platform runner switches are disabled.
-New policy tests use Shouldly 4.3.0. Existing xUnit assertions and FluentAssertions 5.10.3 remain;
-this is not a completed assertion migration. Moq 4.20.72 supports destination mocks, and
+Tests use Shouldly 4.3.0. The three remaining legacy boolean assertions in
+`DestinationManagementTests` now use Shouldly, and the unused FluentAssertions 5.10.3
+reference has been removed. Assertion expressions, expected values, all four test identities
+and product operations are unchanged. Moq 4.20.72 supports destination mocks, and
 `coverlet.collector` 6.0.4 supplies coverage.
 
 Use this **focused selection**, sequentially on both targets, with coverage:

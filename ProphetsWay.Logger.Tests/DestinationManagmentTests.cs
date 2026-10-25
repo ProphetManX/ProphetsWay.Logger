@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 
 namespace ProphetsWay.Logger.Tests
@@ -21,7 +21,7 @@ namespace ProphetsWay.Logger.Tests
 				fixture.Debug("Hello World!");
 
 				//assert
-				triggered.Should().BeTrue();
+				triggered.ShouldBeTrue();
 
 				//cleanup
 				fixture.RemoveDestination(dest);
@@ -44,7 +44,7 @@ namespace ProphetsWay.Logger.Tests
 				fixture.Debug("Hello World!");
 
 				//assert
-				triggered.Should().BeFalse();
+				triggered.ShouldBeFalse();
 			}
 		}
 
@@ -71,7 +71,7 @@ namespace ProphetsWay.Logger.Tests
 				fixture.Debug("Hello World!");
 
 				//assert
-				triggered.Should().BeFalse();
+				triggered.ShouldBeFalse();
 			}
 		}
 

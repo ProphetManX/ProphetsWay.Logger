@@ -1,5 +1,13 @@
 # Unreleased
 
+## Assertion migration
+
+The three remaining legacy boolean assertions in `DestinationManagementTests` now use
+Shouldly instead of FluentAssertions, and the unused FluentAssertions 5.10.3 test-project
+reference has been removed. Assertion expressions, expected values, all four test identities
+and product operations are unchanged. This completes the assertion/dependency migration
+only; it does not claim full M6, release qualification or non-Windows verification.
+
 ## Test tooling naming
 
 The owner-approved test project name is now `ProphetsWay.Logger.Tests`, including its
