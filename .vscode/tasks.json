@@ -49,6 +49,62 @@
 			"options": { "cwd": "${workspaceFolder}" },
 			"problemMatcher": ["$msCompile"],
 			"group": "test"
+		},
+		{
+			"label": "Logger isolated destination management tests net48",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"${workspaceFolder}/ProphetsWay.Logger.Tests/ProphetsWay.Logger.Tests.csproj",
+				"--configuration",
+				"Debug",
+				"--framework",
+				"net48",
+				"--no-build",
+				"--no-restore",
+				"--filter",
+				"FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationManagementTests.",
+				"--logger",
+				"trx",
+				"--results-directory",
+				"${workspaceFolder}/TestResults/developer/destination-management/net48"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Logger isolated destination management tests net10.0",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"${workspaceFolder}/ProphetsWay.Logger.Tests/ProphetsWay.Logger.Tests.csproj",
+				"--configuration",
+				"Debug",
+				"--framework",
+				"net10.0",
+				"--no-build",
+				"--no-restore",
+				"--filter",
+				"FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationManagementTests.",
+				"--logger",
+				"trx",
+				"--results-directory",
+				"${workspaceFolder}/TestResults/developer/destination-management/net10.0"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
 		}
 	]
 }

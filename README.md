@@ -1690,10 +1690,43 @@ is retained separately, not presented as the native check above.
 Do **not** substitute an unfiltered `dotnet test` as the default developer check.
 [FileDestinationTests.cs](ProphetsWay.Logger.Tests/FileDestinationTests.cs) now uses isolated synthetic
 files, but its path/failure checks temporarily change process state; run that class in a separate
-reviewed test host, not in the default selection above. Some tests in
-[DestinationManagmentTests.cs](ProphetsWay.Logger.Tests/DestinationManagmentTests.cs) still trigger
-automatic file output and need separately reviewed isolation. The example program
-constructs a relative file destination too: build it, do not run it by default.
+reviewed test host, not in the default selection above.
+
+The four existing cases in
+[DestinationManagmentTests.cs](ProphetsWay.Logger.Tests/DestinationManagmentTests.cs) now use
+[DestinationManagementFixture.cs](ProphetsWay.Logger.Tests/DestinationManagementFixture.cs)
+to exercise real public add/remove/clear/absent-remove operations against fresh loaded Logger state.
+Automatic output after removal or clearing is confined to owned synthetic paths, not a real
+application's directories. Following independent readiness review, Windows execution on **2026-10-24** passed
+all four cases on each of `net48` and `net10.0`, with zero failures or skips, in separate fresh
+VSTest hosts against the exact readiness-reviewed inputs. Final evidence and code/docs review
+remain separate gates; this is not an unfiltered run, same-host full-suite proof, full M6,
+non-Windows verification or release approval. Counts from earlier selections are historical,
+not a fixed total for the evolving test tree.
+
+For this isolated class, use the existing [D021](docs/decision-log.md#d021---isolated-test-parent)
+parent `c:/temp/logger tests/`. It must already exist as a real directory; fixtures reject unsafe
+ancestry/reparse points and create fresh uniquely owned children containing synthetic data.
+Clean only verified owned children after users and handles finish; never delete the parent,
+change pre-existing files or follow links/junctions outside the owned tree. Location permission
+is not permission to run old unisolated tests.
+
+After a build of the reviewed candidate, run each command separately and sequentially from the
+repository root, without other test runs or concurrent builds. Each invocation starts a separate
+VSTest host and selects only `DestinationManagementTests`; do not merge it into the default
+18-class selection or combine it with file/process-state classes:
+
+```powershell
+dotnet test .\ProphetsWay.Logger.Tests\ProphetsWay.Logger.Tests.csproj --configuration Debug --framework net48 --no-build --no-restore --filter "FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationManagementTests." --logger trx --results-directory .\TestResults\developer\destination-management\net48
+dotnet test .\ProphetsWay.Logger.Tests\ProphetsWay.Logger.Tests.csproj --configuration Debug --framework net10.0 --no-build --no-restore --filter "FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationManagementTests." --logger trx --results-directory .\TestResults\developer\destination-management\net10.0
+```
+
+The equivalent optional manual tasks are `Logger isolated destination management tests net48`
+and `Logger isolated destination management tests net10.0`. They neither build nor start other
+tasks, and write generated TRXs to the target-specific directories above. The three existing
+build/safe-test tasks and their filters remain unchanged; none runs automatically.
+
+The example program constructs a relative file destination too: build it, do not run it by default.
 The existing pipeline is not evidence that this exact focused selection ran in CI.
 
 ## Contributing

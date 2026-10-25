@@ -9,6 +9,20 @@ dependencies, target frameworks and the project GUID; the test assembly is not s
 Logger runtime behavior, public library namespaces, package identity and version are unchanged.
 Historical evidence retains its original identities; fresh validation is required for the rename.
 
+## Destination management test isolation
+
+The four existing `DestinationManagementTests` cases now exercise real public destination
+management through fresh loaded Logger state with owned synthetic automatic-file output beneath
+the D021 parent `c:/temp/logger tests/`. Method identities and existing assertions are preserved;
+Logger runtime behavior, public API, dependencies and version are unchanged. Separate fresh Windows
+VSTest hosts passed 4/4 cases on each of `net48` and `net10.0`, with zero failures or skips,
+against the readiness-reviewed inputs on 2026-10-24. Final evidence and code/docs review remain
+separate gates; this is not same-host full-suite, unfiltered, full M6, non-Windows or release proof.
+
+README guidance and two optional manual class-only tasks keep this execution separate from the
+unchanged default 18-class filters. The three existing tasks and historical task archive remain
+unchanged. These documentation changes do not requalify the updated package README or package.
+
 ## Packaging and debugging metadata
 
 The Logger package project now declares its GitHub project URL and `logging;logger;diagnostics`
