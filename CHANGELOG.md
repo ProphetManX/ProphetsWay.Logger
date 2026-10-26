@@ -1,5 +1,21 @@
 # Unreleased
 
+## Hosted test-harness portability (native POSIX verification pending)
+
+Owner-approved LOGGER-CI-FIX-R1/R2 implements safe preparation of missing Windows fixture-parent
+ancestry, architecture-correct Darwin inode64 bindings, fresh POSIX directory enumeration and
+platform-native inert mock paths. Reserved product-created entries must be observed explicitly
+at quiescent boundaries; reset must verify selected-file absence before retiring only that old
+identity, without lazy adoption or weakened no-follow checks. Windows Release validation on
+2026-10-26 passed the solution build and 863/863 tests on each of `net48` and `net10.0`,
+with zero failures or skips, using the CI filter `Requires!=LocalDb`.
+
+Initial hosted Windows, Linux and macOS attempts failed, with leading defects in fixture setup,
+native ABI/enumeration, ownership identity capture and Windows-only mock inputs; no shipped
+Logger bug is established. No passing native Linux/macOS verification is recorded; hosted
+reruns remain required, and Windows success or ABI declaration proxies cannot certify them.
+This test-harness repair changes no public API, library asset, version or Logger runtime behavior.
+
 ## Assertion migration
 
 The three remaining legacy boolean assertions in `DestinationManagementTests` now use

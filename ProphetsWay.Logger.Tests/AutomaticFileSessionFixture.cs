@@ -45,6 +45,25 @@ namespace ProphetsWay.Logger.Tests
 			}
 		}
 
+		internal void ObserveCreatedEntries()
+		{
+			lock (_gate)
+			{
+				ThrowIfDisposed();
+				_fixture.ObserveCreatedEntries();
+			}
+		}
+
+		internal void ObserveOpenedFile(string fullPath, SafeFileHandle handle)
+		{
+			lock (_gate)
+			{
+				ThrowIfDisposed();
+				// Reservation was made by the wrapper before invoking the real delegate.
+				_fixture.ObserveOpenedFile(fullPath.Substring(_rootPrefix.Length), handle);
+			}
+		}
+
 		public void CreateDirectory(string fullPath)
 		{
 			lock (_gate)
@@ -63,13 +82,19 @@ namespace ProphetsWay.Logger.Tests
 				stream = new FileStream(fullPath, mode, access, share);
 				var observed = new ObservedStream(stream);
 				lock (_gate)
+				{
 					_streams.Add(observed);
+					_fixture.ObserveOpenedFile(fullPath.Substring(_rootPrefix.Length), stream.SafeFileHandle);
+				}
 				return observed;
 			}
-			catch
+			catch (Exception failure)
 			{
 				if (stream != null)
-					stream.Dispose();
+				{
+					try { stream.Dispose(); }
+					catch (Exception closeFailure) { failure.Data["FixtureStreamCloseFailure"] = closeFailure; }
+				}
 				throw;
 			}
 			finally

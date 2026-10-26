@@ -3,8 +3,9 @@
 Route log messages to console, file, event, or custom destinations with per-destination severity and label selection.
 
 > **Current tree: unreleased v4 work.** The app variables select `4.0.0`; v4 remains unreleased.
-> Logger's optional Linux/macOS jobs are configured and enabled for CI. No Linux/macOS job has
-> yet run, and no cross-platform runtime result is claimed.
+> Logger's optional Linux/macOS jobs are configured and enabled for CI. Initial hosted
+> Linux/macOS attempts failed; no passing native Linux/macOS verification is recorded.
+> Hosted reruns remain required; Windows success and ABI declaration proxies do not certify them.
 > Explicit-registration route isolation and ordered membership snapshots (M2-B) are implemented.
 > Native M3 scopes, entry annotations, full captured context, registration settings and
 > whole-entry label selection are now implemented alongside the six native severities.
@@ -1709,12 +1710,17 @@ remain separate gates; this is not an unfiltered run, same-host full-suite proof
 non-Windows verification or release approval. Counts from earlier selections are historical,
 not a fixed total for the evolving test tree.
 
-For this isolated class, use the existing [D021](docs/decision-log.md#d021---isolated-test-parent)
-parent `c:/temp/logger tests/`. It must already exist as a real directory; fixtures reject unsafe
-ancestry/reparse points and create fresh uniquely owned children containing synthetic data.
-Clean only verified owned children after users and handles finish; never delete the parent,
-change pre-existing files or follow links/junctions outside the owned tree. Location permission
-is not permission to run old unisolated tests.
+For this isolated class on Windows, use the [D021](docs/decision-log.md#d021---isolated-test-parent)
+parent `c:/temp/logger tests/`. The delivered LOGGER-CI-FIX-R1/R2 fixture repair safely prepares
+missing ordinary-directory ancestry, preserves the existing parent and entries, and rejects
+symlinks/reparse points and non-directories. On POSIX, the fixture uses the canonical OS temporary
+directory. On **2026-10-26**, Windows Release validation passed the solution build and
+**863/863 tests on each of `net48` and `net10.0`**, with zero failures or skips, using the CI
+filter `Requires!=LocalDb`. Native Linux/macOS hosted reruns remain required.
+Use fresh uniquely owned children containing synthetic data. Clean only verified owned children
+after users and handles finish; never delete the parent, change pre-existing files or follow
+links/junctions outside the owned tree. Location permission is not permission to run old
+unisolated tests.
 
 After a build of the reviewed candidate, run each command separately and sequentially from the
 repository root, without other test runs or concurrent builds. Each invocation starts a separate

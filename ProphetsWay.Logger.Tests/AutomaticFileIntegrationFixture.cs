@@ -182,7 +182,13 @@ namespace ProphetsWay.Logger.Tests
 			try
 			{
 				ReserveFullPath(fullPath);
-				createDirectory(fullPath);
+				try { createDirectory(fullPath); }
+				catch (Exception failure)
+				{
+					ObserveAfterDelegateFailure(failure);
+					throw;
+				}
+				Files.ObserveCreatedEntries();
 			}
 			finally { EndOperation(); }
 		}
@@ -196,25 +202,53 @@ namespace ProphetsWay.Logger.Tests
 			try
 			{
 				ReserveFullPath(fullPath);
-				var stream = openFile(fullPath, mode, access, share);
+				Stream stream;
+				try { stream = openFile(fullPath, mode, access, share); }
+				catch (Exception failure)
+				{
+					ObserveAfterDelegateFailure(failure);
+					throw;
+				}
 				try
 				{
 					var file = stream as FileStream;
 					if (file == null)
+					{
+						lock (_gate) _untrackedStream = true;
 						throw new InvalidOperationException("The default open delegate must return its actual FileStream.");
+					}
 					var handle = file.SafeFileHandle;
 					lock (_gate)
 						_handles.Add(handle);
+					Files.ObserveOpenedFile(fullPath, handle);
 					return file;
 				}
-				catch
+				catch (Exception failure)
 				{
-					lock (_gate)
-						_untrackedStream = true;
+					if (stream != null)
+					{
+						try { stream.Dispose(); }
+						catch (Exception closeFailure)
+						{
+							failure.Data["FixtureStreamCloseFailure"] = closeFailure;
+							lock (_gate) _untrackedStream = true;
+						}
+					}
 					throw;
 				}
 			}
 			finally { EndOperation(); }
+		}
+
+		private void ObserveAfterDelegateFailure(Exception failure)
+		{
+			try { Files.ObserveCreatedEntries(); }
+			catch (Exception observationFailure)
+			{
+				// Preserve the actual delegate exception; never turn failed observation
+				// into success or replace the product's original failure.
+				failure.Data["FixtureObservationFailure"] = observationFailure;
+			}
 		}
 
 		public void Dispose()

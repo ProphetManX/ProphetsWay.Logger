@@ -24,10 +24,12 @@ namespace ProphetsWay.Logger.Tests
 			{
 				var fi = new FileInfo(fixture.GetPath("entry.log"));
 				var dest = new FileDestination(fi.FullName, LogLevels.Debug, resetFile: true);
+				fixture.ObserveCreatedEntries();
 				try
 				{
 					Utilities.Logger.AddDestination(dest);
 					Utilities.Logger.Debug("Hello World!");
+					fixture.ObserveCreatedEntries();
 					fi.Refresh();
 					fi.Exists.ShouldBeTrue();
 				}
@@ -47,10 +49,12 @@ namespace ProphetsWay.Logger.Tests
 			{
 				var fi = new FileInfo(fixture.GetPath("entry.log"));
 				var dest = new FileDestination(fi.FullName, LogLevels.Debug, resetFile: true);
+				fixture.ObserveCreatedEntries();
 				try
 				{
 					Utilities.Logger.AddDestination(dest);
 					Utilities.Logger.Debug(msg);
+					fixture.ObserveCreatedEntries();
 					using (var tr = fi.OpenText())
 						contents = tr.ReadToEnd();
 					contents.ShouldContain(msg, Case.Sensitive);
@@ -73,10 +77,13 @@ namespace ProphetsWay.Logger.Tests
 				fixture.WriteAllBytes("entry.log", Encoding.UTF8.GetBytes(initialMsg));
 				var fi = new FileInfo(fixture.GetPath("entry.log"));
 				var dest = new FileDestination(fi.FullName, LogLevels.Debug, resetFile: true);
+				fixture.ObserveDeletedFile("entry.log");
+				fixture.ObserveCreatedEntries();
 				try
 				{
 					Utilities.Logger.AddDestination(dest);
 					Utilities.Logger.Debug(msg);
+					fixture.ObserveCreatedEntries();
 					using (var tr = fi.OpenText())
 						contents = tr.ReadToEnd();
 					var actualContents = contents;
@@ -101,10 +108,12 @@ namespace ProphetsWay.Logger.Tests
 				fixture.WriteAllBytes("entry.log", Encoding.UTF8.GetBytes(initialMsg));
 				var fi = new FileInfo(fixture.GetPath("entry.log"));
 				var dest = new FileDestination(fi.FullName, LogLevels.Debug, resetFile: false);
+				fixture.ObserveCreatedEntries();
 				try
 				{
 					Utilities.Logger.AddDestination(dest);
 					Utilities.Logger.Debug(msg);
+					fixture.ObserveCreatedEntries();
 					using (var tr = fi.OpenText())
 						contents = tr.ReadToEnd();
 					var actualContents = contents;
@@ -177,6 +186,7 @@ namespace ProphetsWay.Logger.Tests
 					case "string": destination = new FileDestination(path, strReportingLevel: "Debug"); break;
 					default: destination = new FileDestination(path, intReportingLevel: (int)LogLevels.Debug); break;
 				}
+				fixture.ObserveCreatedEntries();
 				File.ReadAllBytes(fixture.GetPath("entry.log")).ShouldBe(prefix);
 				var observer = new CompletedRecordObserver();
 				try
@@ -185,6 +195,7 @@ namespace ProphetsWay.Logger.Tests
 					Utilities.Logger.AddDestination(observer);
 					Utilities.Logger.Debug("default append");
 					observer.Records.Count.ShouldBe(1);
+					fixture.ObserveCreatedEntries();
 					File.ReadAllBytes(fixture.GetPath("entry.log")).ShouldBe(prefix.Concat(Encoding.UTF8.GetBytes(observer.Records.Single() + Environment.NewLine)).ToArray());
 				}
 				finally
@@ -214,6 +225,8 @@ namespace ProphetsWay.Logger.Tests
 					case "string": destination = new FileDestination(path, strReportingLevel: "Debug", resetFile: true); break;
 					default: destination = new FileDestination(path, intReportingLevel: (int)LogLevels.Debug, resetFile: true); break;
 				}
+				fixture.ObserveDeletedFile("entry.log");
+				fixture.ObserveCreatedEntries();
 				File.Exists(fixture.GetPath("entry.log")).ShouldBeFalse();
 				File.ReadAllBytes(fixture.GetPath("sibling.log")).ShouldBe(prefix);
 				var observer = new CompletedRecordObserver();
@@ -224,6 +237,7 @@ namespace ProphetsWay.Logger.Tests
 					Utilities.Logger.Info("first");
 					Utilities.Logger.Info("second");
 					observer.Records.Count.ShouldBe(2);
+					fixture.ObserveCreatedEntries();
 					File.ReadAllBytes(fixture.GetPath("entry.log")).ShouldBe(Encoding.UTF8.GetBytes(string.Concat(observer.Records.Select(record => record + Environment.NewLine))));
 					File.ReadAllBytes(fixture.GetPath("sibling.log")).ShouldBe(prefix);
 				}
@@ -353,13 +367,16 @@ namespace ProphetsWay.Logger.Tests
 				new[] { new KeyValuePair<string, object>("key\nprivate", "value\r\n\u2028\u00e9") }))
 			{
 				var destination = new ObservedFileDestination(fixture.GetPath("entry.log"), encoder: option);
+				fixture.ObserveCreatedEntries();
 				File.Exists(fixture.GetPath("entry.log")).ShouldBeFalse();
 				var exception = new InvalidOperationException("outer\nprivate", new Exception("inner\rprivate"));
 				destination.Log(LogLevels.InformationOnly, "message\r\n\t\"\\n\u0085\u2028\u2029\u00e9\ud800", exception);
 				destination.Records.Count.ShouldBe(1);
+				fixture.ObserveCreatedEntries();
 				File.ReadAllBytes(fixture.GetPath("entry.log")).ShouldBe(CompletedBytes(destination, encodings[option]));
 				destination.Log(LogLevels.InformationOnly, "message\r\n\t\"\\n\u0085\u2028\u2029\u00e9\ud800", exception);
 				destination.Records.Count.ShouldBe(2);
+				fixture.ObserveCreatedEntries();
 				File.ReadAllBytes(fixture.GetPath("entry.log")).ShouldBe(CompletedBytes(destination, encodings[option]));
 				using (var handle = fixture.OpenExclusive("entry.log"))
 					handle.Length.ShouldBe((long)CompletedBytes(destination, encodings[option]).Length);
@@ -374,8 +391,10 @@ namespace ProphetsWay.Logger.Tests
 				var prefix = new byte[] { 239, 187, 191, 0, 255, 65, 128 };
 				fixture.WriteAllBytes("entry.log", prefix);
 				var destination = new ObservedFileDestination(fixture.GetPath("entry.log"), encoder: FileDestination.EncodingOptions.BigEndianUnicode);
+				fixture.ObserveCreatedEntries();
 				destination.Log(LogLevels.InformationOnly, "appended\u00e9");
 				destination.Records.Count.ShouldBe(1);
+				fixture.ObserveCreatedEntries();
 				File.ReadAllBytes(fixture.GetPath("entry.log")).ShouldBe(prefix.Concat(CompletedBytes(destination, Encoding.BigEndianUnicode)).ToArray());
 			}
 		}
@@ -396,16 +415,19 @@ namespace ProphetsWay.Logger.Tests
 				{
 					Environment.CurrentDirectory = firstDirectory;
 					var destination = new ObservedFileDestination(Path.Combine("logs", "entry.log"));
+					fixture.ObserveCreatedEntries();
 					Directory.Exists(fixture.GetPath("A/logs")).ShouldBeTrue();
 					File.Exists(fixture.GetPath("A/logs/entry.log")).ShouldBeFalse();
 					Environment.CurrentDirectory = secondDirectory;
 					destination.Log(LogLevels.InformationOnly, "before removal");
 					destination.Records.Count.ShouldBe(1);
+					fixture.ObserveCreatedEntries();
 					File.ReadAllBytes(fixture.GetPath("A/logs/entry.log")).ShouldBe(CompletedBytes(destination, Encoding.UTF8));
 					File.Exists(fixture.GetPath("B/logs/entry.log")).ShouldBeFalse();
 					fixture.DeleteFile("A/logs/entry.log");
 					destination.Log(LogLevels.InformationOnly, "after removal");
 					destination.Records.Count.ShouldBe(2);
+					fixture.ObserveCreatedEntries();
 					File.ReadAllBytes(fixture.GetPath("A/logs/entry.log")).ShouldBe(Encoding.UTF8.GetBytes(destination.Records.Last() + Environment.NewLine));
 					File.Exists(fixture.GetPath("B/logs/entry.log")).ShouldBeFalse();
 				}
@@ -442,6 +464,7 @@ namespace ProphetsWay.Logger.Tests
 				{
 					LabelPolicy = gate == "label" ? deny : allow
 				};
+				fixture.ObserveCreatedEntries();
 				var reports = new List<LogFailureReport>();
 				Action<LogFailureReport> observer = reports.Add;
 				Utilities.Logger.DispatchFailed += observer;
@@ -459,6 +482,7 @@ namespace ProphetsWay.Logger.Tests
 					destination.MassageCalls.ShouldBe(0);
 					destination.Records.ShouldBeEmpty();
 					reports.ShouldBeEmpty();
+					fixture.ObserveCreatedEntries();
 					if (existingFile)
 						File.ReadAllBytes(fixture.GetPath("entry.log")).ShouldBe(prefix);
 					else
@@ -486,12 +510,14 @@ namespace ProphetsWay.Logger.Tests
 							throw new TimeoutException("Concurrent native rendering did not reach the test gate.");
 					}
 				};
+				fixture.ObserveCreatedEntries();
 				var workers = Enumerable.Range(0, 4).Select(index => Task.Run(() =>
 					destination.Log(LogLevels.InformationOnly, "worker-" + index + ":" + new string((char)('A' + index), 8192)),
 					TestContext.Current.CancellationToken)).ToArray();
 				await Task.WhenAll(workers);
 				destination.MassageCalls.ShouldBe(4);
 				destination.Records.Count.ShouldBe(4);
+				fixture.ObserveCreatedEntries();
 				var content = Encoding.UTF8.GetString(File.ReadAllBytes(fixture.GetPath("entry.log")));
 				var lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 				lines.Length.ShouldBe(5);
@@ -586,6 +612,7 @@ namespace ProphetsWay.Logger.Tests
 				string path = fixture.GetPath("path-private.log");
 				var failed = new ObservedFileDestination(path);
 				var good = new ObservedFileDestination(fixture.GetPath("good.log"));
+				fixture.ObserveCreatedEntries();
 				fixture.CreateDirectory("path-private.log");
 				var reports = new List<LogFailureReport>();
 				var goodAttemptsAtNotification = -1;
@@ -622,6 +649,7 @@ namespace ProphetsWay.Logger.Tests
 					AssertSafeOutputFailure(failure, report, error.ToString(), path);
 					report.Failures.Single().RegistrationId.ShouldBe(route == "last" ? 2 : 1);
 					output.Attempts.ShouldBe(0);
+					fixture.ObserveCreatedEntries();
 					if (route != "direct")
 						File.ReadAllBytes(fixture.GetPath("good.log")).ShouldBe(CompletedBytes(good, Encoding.UTF8));
 					fixture.DeleteDirectory("path-private.log");
@@ -631,6 +659,7 @@ namespace ProphetsWay.Logger.Tests
 						Utilities.Logger.Info("new independent call");
 					failed.Records.Count.ShouldBe(2);
 					reports.Count.ShouldBe(1);
+					fixture.ObserveCreatedEntries();
 					File.ReadAllBytes(fixture.GetPath("path-private.log")).ShouldBe(Encoding.UTF8.GetBytes(failed.Records.Last() + Environment.NewLine));
 					if (route != "direct")
 					{

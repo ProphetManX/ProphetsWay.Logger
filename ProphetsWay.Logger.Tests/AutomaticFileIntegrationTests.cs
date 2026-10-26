@@ -786,10 +786,11 @@ namespace ProphetsWay.Logger.Tests
 
 		private static object[] InertDependencies(int[] calls)
 		{
+			var syntheticRoot = Path.Combine(Path.GetFullPath(Path.GetTempPath()), "logger-inert-" + Guid.NewGuid().ToString("N"));
 			return new object[]
 			{
-				new Func<string>(() => { calls[0]++; return @"C:\temp\logger tests\inert-host"; }),
-				new Func<string>(() => { calls[1]++; return @"C:\temp\logger tests\inert-local"; }),
+				new Func<string>(() => { calls[0]++; return Path.Combine(syntheticRoot, "inert-host"); }),
+				new Func<string>(() => { calls[1]++; return Path.Combine(syntheticRoot, "inert-local"); }),
 				new Func<DateTime>(() => { calls[2]++; return AllocationTime; }),
 				new Func<Guid>(() => { calls[3]++; return AllocationToken; }),
 				new Action<string>(path => { calls[4]++; }),

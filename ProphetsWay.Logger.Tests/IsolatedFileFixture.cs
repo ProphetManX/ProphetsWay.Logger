@@ -20,9 +20,11 @@ namespace ProphetsWay.Logger.Tests
 		private readonly string _rootPrefix;
 		private readonly string _rootName;
 		private readonly HashSet<string> _reservations = new HashSet<string>(PathComparer);
-		private readonly Dictionary<string, PosixIdentity> _posixOwnedEntries = new Dictionary<string, PosixIdentity>(PathComparer);
+		private readonly Dictionary<string, EntryIdentity> _ownedEntries = new Dictionary<string, EntryIdentity>(PathComparer);
 		private readonly List<FileStream> _exclusiveHandles = new List<FileStream>();
 		private readonly SafeFileHandle _parentOwnership;
+		private readonly List<SafeFileHandle> _windowsAncestry;
+		private readonly List<SafeFileHandle> _posixAncestry;
 		private readonly SafeFileHandle _ownership;
 		private bool _disposed;
 
@@ -32,7 +34,7 @@ namespace ProphetsWay.Logger.Tests
 				throw new PlatformNotSupportedException("The fixture supports Windows, Linux, and macOS.");
 
 			var parentPath = GetParentPath();
-			ValidateDirectoryAncestry(parentPath);
+			PrepareParentDirectory(parentPath);
 			_rootName = "m4b1-" + Guid.NewGuid().ToString("N");
 			_rootPath = Path.Combine(parentPath, _rootName);
 			_rootPrefix = _rootPath + Path.DirectorySeparatorChar;
@@ -40,22 +42,34 @@ namespace ProphetsWay.Logger.Tests
 			if (IsWindows)
 			{
 				_parentOwnership = null;
-				CreateFreshDirectory(_rootPath);
-				_ownership = OpenDirectory(_rootPath);
+				_windowsAncestry = PinWindowsAncestry(parentPath, false);
+				try
+				{
+					CreateFreshDirectory(_rootPath);
+					_ownership = OpenWindowsEntry(_rootPath, true);
+				}
+				catch
+				{
+					CloseHandles(_windowsAncestry);
+					throw;
+				}
 			}
 			else
 			{
-				_parentOwnership = OpenDirectory(parentPath);
+				_posixAncestry = PinPosixAncestry(parentPath, false);
+				_parentOwnership = DuplicateDirectory(_posixAncestry[_posixAncestry.Count - 1]);
 				if (_parentOwnership.IsInvalid)
 				{
 					var error = new Win32Exception(Marshal.GetLastWin32Error());
 					_parentOwnership.Dispose();
+					CloseHandles(_posixAncestry);
 					throw new IOException("Could not hold the approved fixture parent.", error);
 				}
 				if (CreateDirectoryAtPosix(GetFileDescriptor(_parentOwnership), _rootName, PosixDirectoryMode) != 0)
 				{
 					var error = new Win32Exception(Marshal.GetLastWin32Error());
 					_parentOwnership.Dispose();
+					CloseHandles(_posixAncestry);
 					throw new IOException("Could not exclusively create the reserved fixture directory.", error);
 				}
 				_ownership = OpenDirectoryAtPosix(GetFileDescriptor(_parentOwnership), _rootName, PosixDirectoryOpenFlags());
@@ -66,12 +80,12 @@ namespace ProphetsWay.Logger.Tests
 				_ownership.Dispose();
 				if (_parentOwnership != null)
 					_parentOwnership.Dispose();
+				CloseHandles(_posixAncestry);
 				throw new IOException("Could not hold the newly owned fixture child; retained at " + _rootPath, error);
 			}
-			if (!IsWindows)
-				_posixOwnedEntries.Add(_rootPath, GetPosixIdentity(GetFileDescriptor(_ownership)));
 			try
 			{
+				_ownedEntries.Add(_rootPath, IsWindows ? GetWindowsIdentity(_ownership) : GetEntryIdentity(GetFileDescriptor(_ownership)));
 				ValidateRoot();
 			}
 			catch
@@ -79,6 +93,8 @@ namespace ProphetsWay.Logger.Tests
 				_ownership.Dispose();
 				if (_parentOwnership != null)
 					_parentOwnership.Dispose();
+				CloseHandles(_posixAncestry);
+				CloseHandles(_windowsAncestry);
 				throw;
 			}
 		}
@@ -93,7 +109,7 @@ namespace ProphetsWay.Logger.Tests
 			ValidateRoot();
 		}
 
-		public string GetPath(string relativePath)
+		private string ResolveFixturePath(string relativePath)
 		{
 			if (string.IsNullOrWhiteSpace(relativePath) || Path.IsPathRooted(relativePath))
 				throw new ArgumentException("A relative fixture path is required.", nameof(relativePath));
@@ -107,6 +123,12 @@ namespace ProphetsWay.Logger.Tests
 			}
 
 			var path = Path.GetFullPath(Path.Combine(_rootPath, relativePath));
+			return path;
+		}
+
+		public string GetPath(string relativePath)
+		{
+			var path = ResolveFixturePath(relativePath);
 			if (IsWindows)
 				ValidatePath(path, true);
 			else
@@ -114,11 +136,143 @@ namespace ProphetsWay.Logger.Tests
 			return path;
 		}
 
+		// Explicit, quiescent product-effect boundaries. Never used by GetPath or cleanup.
+		public void ObserveCreatedEntries()
+		{
+			ValidateRoot();
+			var observed = new Dictionary<string, EntryIdentity>(_ownedEntries, PathComparer);
+			var paths = new List<string>(_reservations);
+			paths.Sort((left, right) => left.Length.CompareTo(right.Length));
+			foreach (var path in paths)
+			{
+				if (PathComparer.Equals(path, _rootPath))
+					continue;
+				EntryIdentity? actual;
+				if (IsWindows)
+				{
+					var parents = PinWindowsOwnedParent(path, observed, true);
+					try { actual = parents == null ? (EntryIdentity?)null : ReadWindowsEntryIdentity(path); }
+					finally { CloseHandles(parents); }
+				}
+				else
+				{
+					using (var parent = OpenObservationPosixParent(path, observed))
+						actual = parent == null ? (EntryIdentity?)null : ReadPosixEntryIdentity(GetFileDescriptor(parent), Path.GetFileName(path));
+				}
+				if (observed.TryGetValue(path, out var expected))
+				{
+					if (!actual.HasValue || !actual.Value.Equals(expected))
+						throw new IOException("An owned fixture entry disappeared or changed identity or kind.");
+				}
+				else if (actual.HasValue)
+				{
+					if (actual.Value.FileType != PosixDirectoryType() && actual.Value.FileType != PosixRegularFileType())
+						throw new IOException("Only ordinary reserved fixture entries can be observed.");
+					observed.Add(path, actual.Value);
+				}
+			}
+			// Failed observations leave all prior identity state intact.
+			foreach (var entry in observed)
+				if (!_ownedEntries.ContainsKey(entry.Key))
+					_ownedEntries.Add(entry.Key, entry.Value);
+		}
+
+		public void ObserveDeletedFile(string relativePath)
+		{
+			var path = ResolveFixturePath(relativePath);
+			ValidateRoot();
+			if (!_reservations.Contains(path) || GetOwnedEntryIdentity(path).FileType != PosixRegularFileType())
+				throw new IOException("Only a previously owned ordinary file can be observed as deleted.");
+			EntryIdentity? actual;
+			if (IsWindows)
+			{
+				var parents = PinWindowsOwnedParent(path);
+				try { actual = ReadWindowsEntryIdentity(path); }
+				finally { CloseHandles(parents); }
+			}
+			else
+			{
+				using (var parent = OpenPosixParent(path))
+					actual = ReadPosixEntryIdentity(GetFileDescriptor(parent), Path.GetFileName(path));
+			}
+			if (actual.HasValue)
+				throw new IOException("The selected owned file is still present; no identity was retired.");
+			_ownedEntries.Remove(path);
+		}
+
+		internal void ObserveOpenedFile(string relativePath, SafeFileHandle handle)
+		{
+			var path = ResolveFixturePath(relativePath);
+			ValidateRoot();
+			if (!_reservations.Contains(path))
+				throw new IOException("An opened file must have been reserved before creation.");
+			var identity = IsWindows ? GetWindowsIdentity(handle) : GetEntryIdentity(GetFileDescriptor(handle));
+			if (identity.FileType != PosixRegularFileType() ||
+				(_ownedEntries.TryGetValue(path, out var expected) && !identity.Equals(expected)))
+				throw new IOException("The opened file changed identity or kind.");
+			if (IsWindows)
+			{
+				var parents = PinWindowsOwnedParent(path);
+				try
+				{
+					var finalPath = new StringBuilder(32768);
+					var length = GetFinalPathNameWindows(handle, finalPath, (uint)finalPath.Capacity, 0);
+					if (length == 0 || length >= finalPath.Capacity ||
+						!string.Equals(finalPath.ToString(), @"\\?\" + path, PathComparison))
+						throw new IOException("The opened handle does not refer to the reserved fixture file.");
+				}
+				finally { CloseHandles(parents); }
+			}
+			else
+			{
+				using (var parent = OpenPosixParent(path))
+					RequireSamePosixEntry(GetFileDescriptor(parent), Path.GetFileName(path), identity);
+			}
+			_ownedEntries[path] = identity;
+		}
+
+		private SafeFileHandle OpenObservationPosixParent(string path, Dictionary<string, EntryIdentity> observed)
+		{
+			var current = DuplicateDirectory(_ownership);
+			try
+			{
+				var currentPath = _rootPath;
+				var components = GetPosixComponents(path);
+				for (var index = 0; index < components.Length - 1; index++)
+				{
+					currentPath = Path.Combine(currentPath, components[index]);
+					if (!observed.TryGetValue(currentPath, out var expected))
+					{
+						current.Dispose();
+						return null;
+					}
+					var next = OpenDirectoryAtPosix(GetFileDescriptor(current), components[index], PosixDirectoryOpenFlags());
+					if (next.IsInvalid)
+					{
+						var error = Marshal.GetLastWin32Error();
+						next.Dispose();
+						throw new IOException("An observed fixture parent is missing or changed.", new Win32Exception(error));
+					}
+					if (!GetEntryIdentity(GetFileDescriptor(next)).Equals(expected))
+					{
+						next.Dispose();
+						throw new IOException("An observed fixture parent changed identity.");
+					}
+					current.Dispose();
+					current = next;
+				}
+				return current;
+			}
+			catch { current.Dispose(); throw; }
+		}
+
 		public void WriteAllBytes(string relativePath, byte[] contents)
 		{
 			if (contents == null)
 				throw new ArgumentNullException(nameof(contents));
 			var path = GetPath(relativePath);
+			if (_ownedEntries.ContainsKey(path))
+				throw new IOException("Synthetic setup requires a fresh, never-owned file.");
 			if (!IsWindows)
 			{
 				WriteAllBytesPosix(path, contents);
@@ -126,8 +280,16 @@ namespace ProphetsWay.Logger.Tests
 			}
 			if (ValidatePath(path, false).HasValue)
 				throw new IOException("Synthetic setup requires a fresh file.");
-			using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-				stream.Write(contents, 0, contents.Length);
+			var parents = PinWindowsOwnedParent(path);
+			try
+			{
+				using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+				{
+					ObserveOpenedFile(relativePath, stream.SafeFileHandle);
+					stream.Write(contents, 0, contents.Length);
+				}
+			}
+			finally { CloseHandles(parents); }
 		}
 
 		public void CreateDirectory(string relativePath)
@@ -142,7 +304,23 @@ namespace ProphetsWay.Logger.Tests
 			{
 				var attributes = ValidatePath(descendant, false);
 				if (!attributes.HasValue)
-					CreateFreshDirectory(descendant);
+				{
+					if (_ownedEntries.ContainsKey(descendant))
+						throw new IOException("An owned fixture directory disappeared without verified deletion.");
+					var parents = PinWindowsOwnedParent(descendant);
+					try
+					{
+						CreateFreshDirectory(descendant);
+						using (var created = OpenWindowsEntry(descendant, false))
+						{
+							var identity = GetWindowsIdentity(created);
+							if (identity.FileType != PosixDirectoryType())
+								throw new IOException("The newly created fixture directory changed kind.");
+							_ownedEntries.Add(descendant, identity);
+						}
+					}
+					finally { CloseHandles(parents); }
+				}
 				else if ((attributes.Value & FileAttributes.Directory) == 0)
 					throw new IOException("An owned file obstructs directory preparation.");
 			}
@@ -157,10 +335,31 @@ namespace ProphetsWay.Logger.Tests
 				_exclusiveHandles.Add(posixStream);
 				return posixStream;
 			}
-			RequireKind(path, false);
-			var stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-			_exclusiveHandles.Add(stream);
-			return stream;
+			var parents = PinWindowsOwnedParent(path);
+			try
+			{
+				RequireKind(path, false);
+				var descriptor = OpenDirectoryWindows(path, 0xC0000000, FileShare.None,
+					IntPtr.Zero, FileMode.Open, 0x00200000, IntPtr.Zero);
+				if (descriptor.IsInvalid)
+				{
+					var error = Marshal.GetLastWin32Error();
+					descriptor.Dispose();
+					throw new IOException("Could not exclusively open the owned fixture file without following links.", new Win32Exception(error));
+				}
+				FileStream stream;
+				try { stream = new FileStream(descriptor, FileAccess.ReadWrite); }
+				catch { descriptor.Dispose(); throw; }
+				try
+				{
+					if (!GetWindowsIdentity(stream.SafeFileHandle).Equals(GetOwnedEntryIdentity(path)))
+						throw new IOException("The owned fixture file changed identity.");
+					_exclusiveHandles.Add(stream);
+					return stream;
+				}
+				catch { stream.Dispose(); throw; }
+			}
+			finally { CloseHandles(parents); }
 		}
 
 		public void DeleteFile(string relativePath)
@@ -172,8 +371,7 @@ namespace ProphetsWay.Logger.Tests
 				DeletePosixEntry(path, false);
 				return;
 			}
-			RequireKind(path, false);
-			File.Delete(path);
+			DeleteWindowsEntry(path, false);
 		}
 
 		public void DeleteDirectory(string relativePath)
@@ -185,8 +383,7 @@ namespace ProphetsWay.Logger.Tests
 				DeletePosixEntry(path, true);
 				return;
 			}
-			RequireKind(path, true);
-			Directory.Delete(path, false);
+			DeleteWindowsEntry(path, true);
 		}
 
 		public void Dispose()
@@ -207,23 +404,19 @@ namespace ProphetsWay.Logger.Tests
 				CollectOwnedEntries(_rootPath, entries);
 				foreach (var entry in entries)
 				{
-					RequireKind(entry.Key, entry.Value);
-					if (entry.Value)
-						Directory.Delete(entry.Key, false);
-					else
-						File.Delete(entry.Key);
+					DeleteWindowsEntry(entry.Key, entry.Value);
 				}
 				ValidateRoot();
 				if (Directory.GetFileSystemEntries(_rootPath).Length != 0)
 					throw new IOException("The fixture child changed during cleanup.");
+				DeleteHeldWindowsEntry(_ownership);
 			}
 			finally
 			{
 				_ownership.Dispose();
+				CloseHandles(_windowsAncestry);
 				_disposed = true;
 			}
-			ValidateDirectoryAncestry(_rootPath);
-			Directory.Delete(_rootPath, false);
 		}
 
 		private void WriteAllBytesPosix(string path, byte[] contents)
@@ -237,8 +430,8 @@ namespace ProphetsWay.Logger.Tests
 					throw new IOException("Synthetic setup requires a fresh file.", new Win32Exception(Marshal.GetLastWin32Error()));
 				using (descriptor)
 				{
-					var identity = GetPosixIdentity(GetFileDescriptor(descriptor));
-					_posixOwnedEntries[path] = identity;
+					var identity = GetEntryIdentity(GetFileDescriptor(descriptor));
+					_ownedEntries[path] = identity;
 					using (var stream = new FileStream(descriptor, FileAccess.Write))
 						stream.Write(contents, 0, contents.Length);
 				}
@@ -256,7 +449,7 @@ namespace ProphetsWay.Logger.Tests
 				{
 					var name = components[index];
 					currentPath = Path.Combine(currentPath, name);
-					var wasOwned = _posixOwnedEntries.TryGetValue(currentPath, out var expected);
+					var wasOwned = _ownedEntries.TryGetValue(currentPath, out var expected);
 					if (!wasOwned && CreateDirectoryAtPosix(GetFileDescriptor(current), name, PosixDirectoryMode) != 0)
 						throw new IOException("An expected fresh fixture directory already exists or could not be created.", new Win32Exception(Marshal.GetLastWin32Error()));
 
@@ -267,13 +460,13 @@ namespace ProphetsWay.Logger.Tests
 						child.Dispose();
 						throw new IOException("Could not open the newly created fixture directory without following links.", error);
 					}
-					var identity = GetPosixIdentity(GetFileDescriptor(child));
+					var identity = GetEntryIdentity(GetFileDescriptor(child));
 					if (wasOwned && !identity.Equals(expected))
 					{
 						child.Dispose();
 						throw new IOException("An owned fixture directory changed identity.");
 					}
-					_posixOwnedEntries[currentPath] = identity;
+					_ownedEntries[currentPath] = identity;
 					// Replace the traversal handle only after opening the next component.
 					if (index < components.Length - 1)
 					{
@@ -293,14 +486,14 @@ namespace ProphetsWay.Logger.Tests
 
 		private FileStream OpenExclusivePosix(string path)
 		{
-			var expected = GetOwnedPosixIdentity(path);
+			var expected = GetOwnedEntryIdentity(path);
 			using (var parent = OpenPosixParent(path))
 			{
 				var components = GetPosixComponents(path);
 				var descriptor = OpenAtPosix(GetFileDescriptor(parent), components[components.Length - 1], PosixReadWriteNoFollowFlags(), 0);
 				if (descriptor.IsInvalid)
 					throw new IOException("The owned fixture file is missing or changed kind.", new Win32Exception(Marshal.GetLastWin32Error()));
-				var identity = GetPosixIdentity(GetFileDescriptor(descriptor));
+				var identity = GetEntryIdentity(GetFileDescriptor(descriptor));
 				if (!identity.Equals(expected) || identity.FileType != PosixRegularFileType())
 				{
 					descriptor.Dispose();
@@ -320,7 +513,7 @@ namespace ProphetsWay.Logger.Tests
 
 		private void DeletePosixEntry(string path, bool directory)
 		{
-			var expected = GetOwnedPosixIdentity(path);
+			var expected = GetOwnedEntryIdentity(path);
 			using (var parent = OpenPosixParent(path))
 			{
 				var components = GetPosixComponents(path);
@@ -334,7 +527,7 @@ namespace ProphetsWay.Logger.Tests
 					throw new IOException("The owned fixture entry is missing, linked, or changed kind.", new Win32Exception(Marshal.GetLastWin32Error()));
 				using (entry)
 				{
-					var identity = GetPosixIdentity(GetFileDescriptor(entry));
+					var identity = GetEntryIdentity(GetFileDescriptor(entry));
 					if (!identity.Equals(expected) || identity.FileType != (directory ? PosixDirectoryType() : PosixRegularFileType()))
 						throw new IOException("The owned fixture entry changed identity or kind.");
 					RequireSamePosixEntry(GetFileDescriptor(parent), name, identity);
@@ -342,7 +535,7 @@ namespace ProphetsWay.Logger.Tests
 
 				if (UnlinkAtPosix(GetFileDescriptor(parent), name, directory ? PosixRemoveDirectoryFlag() : 0) != 0)
 					throw new IOException("Could not remove the owned fixture entry.", new Win32Exception(Marshal.GetLastWin32Error()));
-				_posixOwnedEntries.Remove(path);
+				_ownedEntries.Remove(path);
 			}
 		}
 
@@ -359,6 +552,7 @@ namespace ProphetsWay.Logger.Tests
 
 			_ownership.Dispose();
 			_parentOwnership.Dispose();
+			CloseHandles(_posixAncestry);
 			_disposed = true;
 		}
 
@@ -373,7 +567,7 @@ namespace ProphetsWay.Logger.Tests
 					throw new IOException("Cleanup encountered an entry outside the synthetic fixture naming rules.");
 
 				var entryPath = Path.Combine(directoryPath, name);
-				if (!_reservations.Contains(entryPath) || !_posixOwnedEntries.TryGetValue(entryPath, out var expected))
+				if (!_reservations.Contains(entryPath) || !_ownedEntries.TryGetValue(entryPath, out var expected))
 					throw new IOException("An unreserved entry is not owned by this fixture.");
 
 				var child = OpenDirectoryAtPosix(directoryDescriptor, name, PosixDirectoryOpenFlags());
@@ -381,7 +575,7 @@ namespace ProphetsWay.Logger.Tests
 				{
 					using (child)
 					{
-						var identity = GetPosixIdentity(GetFileDescriptor(child));
+						var identity = GetEntryIdentity(GetFileDescriptor(child));
 						if (!identity.Equals(expected) || identity.FileType != PosixDirectoryType())
 							throw new IOException("An owned fixture directory changed identity or kind.");
 						RemoveOwnedPosixEntries(child, entryPath);
@@ -389,7 +583,7 @@ namespace ProphetsWay.Logger.Tests
 					RequireSamePosixEntry(directoryDescriptor, name, expected);
 					if (UnlinkAtPosix(directoryDescriptor, name, PosixRemoveDirectoryFlag()) != 0)
 						throw new IOException("Could not remove an owned fixture directory.", new Win32Exception(Marshal.GetLastWin32Error()));
-					_posixOwnedEntries.Remove(entryPath);
+					_ownedEntries.Remove(entryPath);
 				}
 				else
 				{
@@ -398,14 +592,14 @@ namespace ProphetsWay.Logger.Tests
 						throw new IOException("A linked or changed fixture entry cannot be adopted.", new Win32Exception(Marshal.GetLastWin32Error()));
 					using (file)
 					{
-						var identity = GetPosixIdentity(GetFileDescriptor(file));
+						var identity = GetEntryIdentity(GetFileDescriptor(file));
 						if (!identity.Equals(expected) || identity.FileType != PosixRegularFileType())
 							throw new IOException("An owned fixture file changed identity or kind.");
 						RequireSamePosixEntry(directoryDescriptor, name, expected);
 					}
 					if (UnlinkAtPosix(directoryDescriptor, name, 0) != 0)
 						throw new IOException("Could not remove an owned fixture file.", new Win32Exception(Marshal.GetLastWin32Error()));
-					_posixOwnedEntries.Remove(entryPath);
+					_ownedEntries.Remove(entryPath);
 				}
 			}
 		}
@@ -432,18 +626,21 @@ namespace ProphetsWay.Logger.Tests
 						continue;
 					}
 
-					if (!_posixOwnedEntries.TryGetValue(currentPath, out var owned) ||
+					if (!_ownedEntries.TryGetValue(currentPath, out var owned) ||
 						!owned.Equals(identity.Value))
 						throw new IOException("A linked or pre-existing unreserved entry cannot be adopted.");
 
 					if (currentPath != path)
 					{
 						if (identity.Value.FileType != PosixDirectoryType())
-							throw new IOException("An owned file obstructs fixture path preparation.");
+						{
+							reachable = false;
+							continue;
+						}
 						var child = OpenDirectoryAtPosix(GetFileDescriptor(current), component, PosixDirectoryOpenFlags());
 						if (child.IsInvalid)
 							throw new IOException("An owned fixture directory changed or cannot be opened.", new Win32Exception(Marshal.GetLastWin32Error()));
-						var openedIdentity = GetPosixIdentity(GetFileDescriptor(child));
+						var openedIdentity = GetEntryIdentity(GetFileDescriptor(child));
 						if (!openedIdentity.Equals(owned))
 						{
 							child.Dispose();
@@ -477,11 +674,11 @@ namespace ProphetsWay.Logger.Tests
 				for (var index = 0; index < components.Length - 1; index++)
 				{
 					currentPath = Path.Combine(currentPath, components[index]);
-					var expected = GetOwnedPosixIdentity(currentPath);
+					var expected = GetOwnedEntryIdentity(currentPath);
 					var child = OpenDirectoryAtPosix(GetFileDescriptor(current), components[index], PosixDirectoryOpenFlags());
 					if (child.IsInvalid)
 						throw new IOException("An owned fixture parent is missing, linked, or changed kind.", new Win32Exception(Marshal.GetLastWin32Error()));
-					var identity = GetPosixIdentity(GetFileDescriptor(child));
+					var identity = GetEntryIdentity(GetFileDescriptor(child));
 					if (!identity.Equals(expected))
 					{
 						child.Dispose();
@@ -500,9 +697,9 @@ namespace ProphetsWay.Logger.Tests
 			}
 		}
 
-		private PosixIdentity GetOwnedPosixIdentity(string path)
+		private EntryIdentity GetOwnedEntryIdentity(string path)
 		{
-			if (!_posixOwnedEntries.TryGetValue(path, out var identity))
+			if (!_ownedEntries.TryGetValue(path, out var identity))
 				throw new IOException("The fixture entry has not been created and owned by this fixture.");
 			return identity;
 		}
@@ -522,15 +719,17 @@ namespace ProphetsWay.Logger.Tests
 			return path.Substring(_rootPrefix.Length).Split(Path.DirectorySeparatorChar);
 		}
 
-		private static PosixIdentity GetPosixIdentity(int descriptor)
+		private static EntryIdentity GetEntryIdentity(int descriptor)
 		{
 			RequireSupportedPosixAbi();
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 			{
 				MacStat value;
-				if (FStatMacPosix(descriptor, out value) != 0)
+				if ((RuntimeInformation.ProcessArchitecture == Architecture.X64
+					? FStatMacPosix(descriptor, out value)
+					: FStatMacArm64Posix(descriptor, out value)) != 0)
 					throw new IOException("Could not inspect an owned fixture descriptor.", new Win32Exception(Marshal.GetLastWin32Error()));
-				return new PosixIdentity(unchecked((uint)value.Device), value.Inode, (uint)value.Mode & PosixFileTypeMask());
+				return new EntryIdentity(unchecked((uint)value.Device), value.Inode, (uint)value.Mode & PosixFileTypeMask());
 			}
 
 			if (string.Equals(RuntimeInformation.ProcessArchitecture.ToString(), "Arm64", StringComparison.Ordinal))
@@ -538,16 +737,16 @@ namespace ProphetsWay.Logger.Tests
 				LinuxArm64Stat arm64Value;
 				if (FStatLinuxArm64Posix(descriptor, out arm64Value) != 0)
 					throw new IOException("Could not inspect an owned fixture descriptor.", new Win32Exception(Marshal.GetLastWin32Error()));
-				return new PosixIdentity(arm64Value.Device, arm64Value.Inode, arm64Value.Mode & PosixFileTypeMask());
+				return new EntryIdentity(arm64Value.Device, arm64Value.Inode, arm64Value.Mode & PosixFileTypeMask());
 			}
 
 			LinuxStat linuxValue;
 			if (FStatLinuxPosix(descriptor, out linuxValue) != 0)
 				throw new IOException("Could not inspect an owned fixture descriptor.", new Win32Exception(Marshal.GetLastWin32Error()));
-			return new PosixIdentity(linuxValue.Device, linuxValue.Inode, linuxValue.Mode & PosixFileTypeMask());
+			return new EntryIdentity(linuxValue.Device, linuxValue.Inode, linuxValue.Mode & PosixFileTypeMask());
 		}
 
-		private static PosixIdentity? ReadPosixEntryIdentity(int directory, string name)
+		private static EntryIdentity? ReadPosixEntryIdentity(int directory, string name)
 		{
 			RequireSupportedPosixAbi();
 			var entry = OpenAtPosix(directory, name, PosixReadOnlyNoFollowFlags(), 0);
@@ -559,10 +758,10 @@ namespace ProphetsWay.Logger.Tests
 				throw new IOException("Could not open a fixture entry without following links.", new Win32Exception(error));
 			}
 			using (entry)
-				return GetPosixIdentity(GetFileDescriptor(entry));
+				return GetEntryIdentity(GetFileDescriptor(entry));
 		}
 
-		private static void RequireSamePosixEntry(int parent, string name, PosixIdentity expected)
+		private static void RequireSamePosixEntry(int parent, string name, EntryIdentity expected)
 		{
 			var actual = ReadPosixEntryIdentity(parent, name);
 			if (!actual.HasValue || !actual.Value.Equals(expected))
@@ -571,7 +770,7 @@ namespace ProphetsWay.Logger.Tests
 
 		private static void RequireSamePosixDirectory(int parent, string name, SafeFileHandle openedDirectory)
 		{
-			var opened = GetPosixIdentity(GetFileDescriptor(openedDirectory));
+			var opened = GetEntryIdentity(GetFileDescriptor(openedDirectory));
 			if (opened.FileType != PosixDirectoryType())
 				throw new IOException("The held fixture root is not an ordinary directory.");
 			RequireSamePosixEntry(parent, name, opened);
@@ -600,11 +799,9 @@ namespace ProphetsWay.Logger.Tests
 
 		private static void RequireSupportedPosixAbi()
 		{
-			if (IntPtr.Size != 8 ||
-				(RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
-				 !string.Equals(RuntimeInformation.ProcessArchitecture.ToString(), "X64", StringComparison.Ordinal) &&
-				 !string.Equals(RuntimeInformation.ProcessArchitecture.ToString(), "Arm64", StringComparison.Ordinal)))
-				throw new PlatformNotSupportedException("The POSIX fixture identity check supports Linux x64/Arm64 and 64-bit macOS ABIs.");
+			if (!IsSupportedPosixPlatform() || IntPtr.Size != 8 ||
+				(RuntimeInformation.ProcessArchitecture != Architecture.X64 && RuntimeInformation.ProcessArchitecture != Architecture.Arm64))
+				throw new PlatformNotSupportedException("The POSIX fixture supports Linux and macOS x64/Arm64 ABIs.");
 		}
 
 		private static uint PosixFileTypeMask()
@@ -627,9 +824,9 @@ namespace ProphetsWay.Logger.Tests
 			return OpenAtPosixNative(directory, name, flags, mode);
 		}
 
-		private struct PosixIdentity : IEquatable<PosixIdentity>
+		private struct EntryIdentity : IEquatable<EntryIdentity>
 		{
-			public PosixIdentity(ulong device, ulong inode, uint fileType)
+			public EntryIdentity(ulong device, ulong inode, uint fileType)
 			{
 				Device = device;
 				Inode = inode;
@@ -640,7 +837,7 @@ namespace ProphetsWay.Logger.Tests
 			public ulong Inode;
 			public uint FileType;
 
-			public bool Equals(PosixIdentity other)
+			public bool Equals(EntryIdentity other)
 			{
 				return Device == other.Device && Inode == other.Inode && FileType == other.FileType;
 			}
@@ -725,49 +922,69 @@ namespace ProphetsWay.Logger.Tests
 
 		private static List<string> EnumeratePosixNames(int directoryDescriptor)
 		{
-			var duplicate = DuplicatePosix(directoryDescriptor);
-			if (duplicate < 0)
-				throw new IOException("Could not duplicate the owned fixture directory handle.", new Win32Exception(Marshal.GetLastWin32Error()));
-			var directory = OpenDirectoryStreamPosix(duplicate);
+			RequireSupportedPosixAbi();
+			// dup shares directory offsets. openat(".") creates a fresh open description.
+			var opened = OpenDirectoryAtPosix(directoryDescriptor, ".", PosixDirectoryOpenFlags());
+			if (opened.IsInvalid)
+			{
+				var error = Marshal.GetLastWin32Error();
+				opened.Dispose();
+				throw new IOException("Could not open an independent fixture directory stream.", new Win32Exception(error));
+			}
+			var directory = OpenDirectoryStreamPosix(GetFileDescriptor(opened));
 			if (directory == IntPtr.Zero)
 			{
-				var error = new Win32Exception(Marshal.GetLastWin32Error());
-				ClosePosix(duplicate);
-				throw new IOException("Could not enumerate the owned fixture directory handle.", error);
+				var error = Marshal.GetLastWin32Error();
+				opened.Dispose();
+				throw new IOException("Could not enumerate the owned fixture directory handle.", new Win32Exception(error));
 			}
-
+			opened.SetHandleAsInvalid(); // fdopendir now owns the fd; only closedir may close it.
+			opened.Dispose();
+			var completed = false;
 			try
 			{
 				var names = new List<string>();
-				RequireSupportedPosixAbi();
-				// Darwin's 64-bit struct dirent has d_name at byte 21 after d_ino,
-				// d_seekoff, d_reclen, d_namlen, and d_type. Linux x86-64/AArch64
-				// places d_name at byte 19 after d_ino, d_off, d_reclen, and d_type.
 				var isMacOS = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+				var errno = isMacOS ? ErrorLocationMacPosix() : ErrorLocationLinuxPosix();
 				var nameOffset = isMacOS ? 21 : 19;
-				var nameCapacity = isMacOS ? 1024 : 256;
 				while (true)
 				{
-					var entry = ReadDirectoryEntryPosix(directory);
+					Marshal.WriteInt32(errno, 0);
+					var entry = isMacOS && RuntimeInformation.ProcessArchitecture == Architecture.X64
+						? ReadDirectoryEntryMacPosix(directory) : ReadDirectoryEntryPosix(directory);
 					if (entry == IntPtr.Zero)
+					{
+						var error = Marshal.ReadInt32(errno);
+						if (error != 0)
+							throw new IOException("Could not read the fixture directory stream.", new Win32Exception(error));
 						break;
+					}
+					var recordLength = unchecked((ushort)Marshal.ReadInt16(entry, 16));
+					var capacity = Math.Min(recordLength - nameOffset, isMacOS ? 1024 : 256);
+					if (capacity <= 0)
+						throw new IOException("Invalid fixture directory entry length.");
 					var bytes = new List<byte>();
-					for (var index = 0; index < nameCapacity; index++)
+					for (var index = 0; index < capacity; index++)
 					{
 						var value = Marshal.ReadByte(entry, nameOffset + index);
 						if (value == 0)
 							break;
 						bytes.Add(value);
 					}
-					if (bytes.Count == 0 || bytes.Count == nameCapacity)
-						throw new IOException("Could not read a fixture directory entry name.");
-					names.Add(new UTF8Encoding(false, true).GetString(bytes.ToArray()));
+					if (bytes.Count == 0 || bytes.Count == capacity ||
+						(isMacOS && bytes.Count != unchecked((ushort)Marshal.ReadInt16(entry, 18))))
+						throw new IOException("Could not read a bounded fixture directory entry name.");
+					var name = new UTF8Encoding(false, true).GetString(bytes.ToArray());
+					if (name != "." && name != "..")
+						names.Add(name);
 				}
+				completed = true;
 				return names;
 			}
 			finally
 			{
-				CloseDirectoryStreamPosix(directory);
+				if (CloseDirectoryStreamPosix(directory) != 0 && completed)
+					throw new IOException("Could not close the fixture directory stream.", new Win32Exception(Marshal.GetLastWin32Error()));
 			}
 		}
 
@@ -822,6 +1039,9 @@ namespace ProphetsWay.Logger.Tests
 				{
 					if ((attributes.Value & FileAttributes.ReparsePoint) != 0 || !owned)
 						throw new IOException("A linked or pre-existing unreserved entry cannot be adopted.");
+					using (var entry = OpenWindowsEntry(descendant, false))
+						if (!GetWindowsIdentity(entry).Equals(GetOwnedEntryIdentity(descendant)))
+							throw new IOException("An owned fixture entry changed identity or kind.");
 					reachable = (attributes.Value & FileAttributes.Directory) != 0;
 				}
 				else
@@ -867,7 +1087,236 @@ namespace ProphetsWay.Logger.Tests
 			if (_ownership.IsClosed || _ownership.IsInvalid)
 				throw new IOException("The fixture ownership handle is unavailable.");
 			ValidateDirectoryAncestry(_rootPath);
+			if (IsWindows)
+			{
+				using (var root = OpenWindowsEntry(_rootPath, false))
+					if (!GetWindowsIdentity(root).Equals(GetOwnedEntryIdentity(_rootPath)))
+						throw new IOException("The fixture root changed identity.");
+			}
+			else
+			{
+				var components = Path.GetDirectoryName(_rootPath).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+				for (var index = 0; index < components.Length; index++)
+					RequireSamePosixDirectory(GetFileDescriptor(_posixAncestry[index]), components[index], _posixAncestry[index + 1]);
+				RequireSamePosixDirectory(GetFileDescriptor(_parentOwnership), _rootName, _ownership);
+				if (!GetEntryIdentity(GetFileDescriptor(_ownership)).Equals(GetOwnedEntryIdentity(_rootPath)))
+					throw new IOException("The held fixture root changed identity.");
+			}
 		}
+
+		private static void PrepareParentDirectory(string path)
+		{
+			// Hold every no-follow ancestor while creating the next component. In
+			// particular, never use recursive CreateDirectory through unchecked paths.
+			var handles = IsWindows ? PinWindowsAncestry(path, true) : PinPosixAncestry(path, true);
+			CloseHandles(handles);
+		}
+
+		private static List<SafeFileHandle> PinWindowsAncestry(string path, bool prepare)
+		{
+			var ancestry = new Stack<string>();
+			for (var current = Path.GetFullPath(path); current != null; current = Path.GetDirectoryName(current))
+				ancestry.Push(current);
+			var handles = new List<SafeFileHandle>();
+			try
+			{
+				foreach (var ancestor in ancestry)
+				{
+					var handle = OpenDirectoryWindows(ancestor, 0, FileShare.Read | FileShare.Write,
+						IntPtr.Zero, FileMode.Open, 0x02000000 | 0x00200000, IntPtr.Zero);
+					if (handle.IsInvalid)
+					{
+						var error = Marshal.GetLastWin32Error();
+						handle.Dispose();
+						if (!prepare || (error != 2 && error != 3))
+							throw new IOException("Could not pin ordinary fixture ancestry.", new Win32Exception(error));
+						if (!CreateDirectoryWindows(ancestor, IntPtr.Zero))
+						{
+							error = Marshal.GetLastWin32Error();
+							if (error != 183) // A concurrent first preparation must still verify the winner.
+								throw new IOException("Could not prepare fixture ancestry.", new Win32Exception(error));
+						}
+						handle = OpenWindowsEntry(ancestor, false, true);
+					}
+					handles.Add(handle);
+					if (GetWindowsIdentity(handle).FileType != PosixDirectoryType())
+						throw new IOException("Fixture ancestry must contain only ordinary directories.");
+				}
+				return handles;
+			}
+			catch { CloseHandles(handles); throw; }
+		}
+
+		private static List<SafeFileHandle> PinPosixAncestry(string path, bool prepare)
+		{
+			RequireSupportedPosixAbi();
+			var handles = new List<SafeFileHandle>();
+			try
+			{
+				var root = OpenDirectoryPosix("/", PosixDirectoryOpenFlags());
+				handles.Add(root);
+				if (root.IsInvalid)
+					throw new IOException("Could not pin the filesystem root.", new Win32Exception(Marshal.GetLastWin32Error()));
+				foreach (var name in Path.GetFullPath(path).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries))
+				{
+					var parent = GetFileDescriptor(handles[handles.Count - 1]);
+					var child = OpenDirectoryAtPosix(parent, name, PosixDirectoryOpenFlags());
+					if (child.IsInvalid)
+					{
+						var error = Marshal.GetLastWin32Error();
+						child.Dispose();
+						if (!prepare || error != 2)
+							throw new IOException("Could not pin ordinary fixture ancestry.", new Win32Exception(error));
+						if (CreateDirectoryAtPosix(parent, name, PosixDirectoryMode) != 0)
+						{
+							error = Marshal.GetLastWin32Error();
+							if (error != 17)
+								throw new IOException("Could not prepare fixture ancestry.", new Win32Exception(error));
+						}
+						child = OpenDirectoryAtPosix(parent, name, PosixDirectoryOpenFlags());
+					}
+					handles.Add(child);
+					if (child.IsInvalid || GetEntryIdentity(GetFileDescriptor(child)).FileType != PosixDirectoryType())
+						throw new IOException("Fixture ancestry must contain only ordinary directories.");
+					RequireSamePosixDirectory(parent, name, child);
+				}
+				return handles;
+			}
+			catch { CloseHandles(handles); throw; }
+		}
+
+		private static void CloseHandles(List<SafeFileHandle> handles)
+		{
+			if (handles == null)
+				return;
+			for (var index = handles.Count - 1; index >= 0; index--)
+				handles[index].Dispose();
+		}
+
+		private List<SafeFileHandle> PinWindowsOwnedParent(string path)
+		{
+			return PinWindowsOwnedParent(path, _ownedEntries, false);
+		}
+
+		private List<SafeFileHandle> PinWindowsOwnedParent(string path, Dictionary<string, EntryIdentity> known, bool allowMissing)
+		{
+			ValidateRoot();
+			var handles = new List<SafeFileHandle>();
+			try
+			{
+				foreach (var ancestor in Descendants(path))
+				{
+					if (PathComparer.Equals(ancestor, path))
+						break;
+					if (!known.TryGetValue(ancestor, out var expected))
+					{
+						if (!allowMissing)
+							throw new IOException("The fixture parent has not been observed as owned.");
+						CloseHandles(handles);
+						return null;
+					}
+					var handle = OpenWindowsEntry(ancestor, false, true);
+					handles.Add(handle);
+					var actual = GetWindowsIdentity(handle);
+					if (!actual.Equals(expected) || actual.FileType != PosixDirectoryType())
+						throw new IOException("An owned fixture parent changed identity or kind.");
+				}
+				return handles;
+			}
+			catch { CloseHandles(handles); throw; }
+		}
+
+		private static SafeFileHandle OpenWindowsEntry(string path, bool delete, bool pin = false)
+		{
+			var handle = OpenDirectoryWindows(path, delete ? 0x00010080U : 0U,
+				FileShare.Read | FileShare.Write | (pin || delete ? 0 : FileShare.Delete),
+				IntPtr.Zero, FileMode.Open, 0x02000000 | 0x00200000, IntPtr.Zero);
+			if (handle.IsInvalid)
+			{
+				var error = Marshal.GetLastWin32Error();
+				handle.Dispose();
+				throw new IOException("Could not open a fixture entry without following reparse points.", new Win32Exception(error));
+			}
+			return handle;
+		}
+
+		private static EntryIdentity? ReadWindowsEntryIdentity(string path)
+		{
+			using (var handle = OpenDirectoryWindows(path, 0, FileShare.Read | FileShare.Write | FileShare.Delete,
+				IntPtr.Zero, FileMode.Open, 0x02000000 | 0x00200000, IntPtr.Zero))
+			{
+				if (!handle.IsInvalid)
+					return GetWindowsIdentity(handle);
+				var error = Marshal.GetLastWin32Error();
+				if (error == 2 || error == 3)
+					return null;
+				throw new IOException("Could not inspect a reserved fixture entry.", new Win32Exception(error));
+			}
+		}
+
+		private static EntryIdentity GetWindowsIdentity(SafeFileHandle handle)
+		{
+			WindowsFileInformation value;
+			if (!GetFileInformationWindows(handle, out value))
+				throw new IOException("Could not inspect a fixture handle.", new Win32Exception(Marshal.GetLastWin32Error()));
+			if ((value.Attributes & FileAttributes.ReparsePoint) != 0 || GetFileTypeWindows(handle) != 1)
+				throw new IOException("A linked or non-disk fixture entry cannot be adopted.");
+			return new EntryIdentity(value.Volume, ((ulong)value.IndexHigh << 32) | value.IndexLow,
+				(value.Attributes & FileAttributes.Directory) != 0 ? PosixDirectoryType() : PosixRegularFileType());
+		}
+
+		private void DeleteWindowsEntry(string path, bool directory)
+		{
+			var parents = PinWindowsOwnedParent(path);
+			try
+			{
+				using (var handle = OpenWindowsEntry(path, true))
+				{
+					var identity = GetWindowsIdentity(handle);
+					if (!identity.Equals(GetOwnedEntryIdentity(path)) ||
+						identity.FileType != (directory ? PosixDirectoryType() : PosixRegularFileType()))
+						throw new IOException("An owned fixture entry changed identity or kind before removal.");
+					DeleteHeldWindowsEntry(handle);
+				}
+				_ownedEntries.Remove(path);
+			}
+			finally { CloseHandles(parents); }
+		}
+
+		private static void DeleteHeldWindowsEntry(SafeFileHandle handle)
+		{
+			var delete = new WindowsFileDisposition { Delete = true };
+			if (!SetFileDispositionWindows(handle, 4, ref delete, (uint)Marshal.SizeOf(typeof(WindowsFileDisposition))))
+				throw new IOException("Could not remove the verified owned fixture entry.", new Win32Exception(Marshal.GetLastWin32Error()));
+		}
+
+		[StructLayout(LayoutKind.Sequential)]
+		private struct WindowsFileInformation
+		{
+			public FileAttributes Attributes;
+			public uint CreationLow, CreationHigh, AccessLow, AccessHigh, WriteLow, WriteHigh;
+			public uint Volume, SizeHigh, SizeLow, Links, IndexHigh, IndexLow;
+		}
+
+		[StructLayout(LayoutKind.Sequential)]
+		private struct WindowsFileDisposition
+		{
+			[MarshalAs(UnmanagedType.U1)] public bool Delete;
+		}
+
+		[DllImport("kernel32.dll", EntryPoint = "GetFileInformationByHandle", ExactSpelling = true, SetLastError = true)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		private static extern bool GetFileInformationWindows(SafeFileHandle handle, out WindowsFileInformation information);
+
+		[DllImport("kernel32.dll", EntryPoint = "GetFileType", ExactSpelling = true, SetLastError = true)]
+		private static extern uint GetFileTypeWindows(SafeFileHandle handle);
+
+		[DllImport("kernel32.dll", EntryPoint = "GetFinalPathNameByHandleW", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
+		private static extern uint GetFinalPathNameWindows(SafeFileHandle handle, StringBuilder path, uint length, uint flags);
+
+		[DllImport("kernel32.dll", EntryPoint = "SetFileInformationByHandle", ExactSpelling = true, SetLastError = true)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		private static extern bool SetFileDispositionWindows(SafeFileHandle handle, int informationClass, ref WindowsFileDisposition information, uint size);
 
 		private static void ValidateDirectoryAncestry(string path)
 		{
@@ -981,8 +1430,11 @@ namespace ProphetsWay.Logger.Tests
 		[DllImport("libc", EntryPoint = "fstat", ExactSpelling = true, SetLastError = true)]
 		private static extern int FStatLinuxArm64Posix(int descriptor, out LinuxArm64Stat value);
 
-		[DllImport("libc", EntryPoint = "fstat", ExactSpelling = true, SetLastError = true)]
+		[DllImport("libc", EntryPoint = "fstat$INODE64", ExactSpelling = true, SetLastError = true)]
 		private static extern int FStatMacPosix(int descriptor, out MacStat value);
+
+		[DllImport("libc", EntryPoint = "fstat", ExactSpelling = true, SetLastError = true)]
+		private static extern int FStatMacArm64Posix(int descriptor, out MacStat value);
 
 		[DllImport("libc", EntryPoint = "dup", ExactSpelling = true, SetLastError = true)]
 		private static extern int DuplicatePosix(int descriptor);
@@ -992,6 +1444,15 @@ namespace ProphetsWay.Logger.Tests
 
 		[DllImport("libc", EntryPoint = "readdir", ExactSpelling = true, SetLastError = true)]
 		private static extern IntPtr ReadDirectoryEntryPosix(IntPtr directory);
+
+		[DllImport("libc", EntryPoint = "readdir$INODE64", ExactSpelling = true, SetLastError = true)]
+		private static extern IntPtr ReadDirectoryEntryMacPosix(IntPtr directory);
+
+		[DllImport("libc", EntryPoint = "__error", ExactSpelling = true)]
+		private static extern IntPtr ErrorLocationMacPosix();
+
+		[DllImport("libc", EntryPoint = "__errno_location", ExactSpelling = true)]
+		private static extern IntPtr ErrorLocationLinuxPosix();
 
 		[DllImport("libc", EntryPoint = "closedir", ExactSpelling = true, SetLastError = true)]
 		private static extern int CloseDirectoryStreamPosix(IntPtr directory);
