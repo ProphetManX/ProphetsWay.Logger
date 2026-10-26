@@ -2,7 +2,9 @@
 
 Route log messages to console, file, event, or custom destinations with per-destination severity and label selection.
 
-> **Current tree: unreleased v4 work.** The version file still reads `3.0.1`.
+> **Current tree: unreleased v4 work.** The app variables select `4.0.0`; v4 remains unreleased.
+> Logger's optional Linux/macOS jobs are configured and enabled for CI. No Linux/macOS job has
+> yet run, and no cross-platform runtime result is claimed.
 > Explicit-registration route isolation and ordered membership snapshots (M2-B) are implemented.
 > Native M3 scopes, entry annotations, full captured context, registration settings and
 > whole-entry label selection are now implemented alongside the six native severities.
@@ -54,7 +56,8 @@ These commands do not install the unreleased API merely because it is documented
 To use the native severity, scope/context, label-policy, text/formatter examples, or either Microsoft
 logging bridge direction now, reference the current
 [library project](ProphetsWay.Logger/ProphetsWay.Logger.csproj) from your application.
-[app-variables.yml](app-variables.yml) still selects `3.0.1`; no v4 package or release is claimed.
+[app-variables.yml](app-variables.yml) selects `4.0.0` for this unreleased v4 work; no v4 package
+or release is claimed.
 
 ### Current Source Targets
 
@@ -106,8 +109,8 @@ This is historical, partial M6 evidence, not full qualification or release appro
 this 2026-10-01 record, inbound was present and outbound had not yet been implemented; later M5 source
 adds outbound destinations, described below. Remaining
 assertion migration, the owner-handled test-project rename, broader consumer/security qualification
-and deferred non-Windows proof remain separate. The version file still selects `3.0.1`; this update
-changes neither that selection nor publication status.
+and deferred non-Windows proof remain separate. At that historical checkpoint the version file
+selected the pre-v4 release; this update changed neither that selection nor publication status.
 
 **2026-10-24 annotation:** [D025](docs/decision-log.md#d025---owner-approved-test-project-rename)
 records explicit owner approval of the test-project rename and accompanying infrastructure/docs.
@@ -531,7 +534,7 @@ destinations. The provider starts with its own logical-flow scope source; a sour
 through factory scope integration is borrowed. The caller/factory remains responsible for
 disposing scope handles through that source's normal cleanup.
 
-This is current unreleased source behavior, not a claim that the published `3.0.1` package includes
+This is current unreleased source behavior, not a claim that the published package includes
 the bridge. Enabling inbound does not install outbound; the outbound direction is a separate,
 explicitly registered destination path described next. This documentation does not claim M5/M6
 completion, current-package qualification, or release readiness.

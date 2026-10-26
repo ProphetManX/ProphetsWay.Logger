@@ -24,23 +24,20 @@ namespace ProphetsWay.Logger.Tests
 
 	public sealed class InboundTestEnvironment : IDisposable
 	{
-		private const string Parent = @"C:\temp\logger tests";
+		private readonly IsolatedFileFixture _fixture;
 		private bool _disposed;
 
 		public InboundTestEnvironment()
 		{
-			Directory.Exists(Parent).ShouldBeTrue("D021's already-approved isolated parent must exist.");
-			(File.GetAttributes(Parent) & FileAttributes.ReparsePoint).ShouldBe((FileAttributes)0);
-			DirectoryPath = Path.Combine(Parent, "inbound-" + Guid.NewGuid().ToString("N"));
-			Directory.Exists(DirectoryPath).ShouldBeFalse();
-			Directory.CreateDirectory(DirectoryPath);
+			_fixture = new IsolatedFileFixture();
+			DirectoryPath = _fixture.RootPath;
 			try
 			{
 				NativeLogger.ConfigureAutomaticFileHostDirectory(DirectoryPath);
 			}
 			catch
 			{
-				Directory.Delete(DirectoryPath);
+				_fixture.Dispose();
 				throw;
 			}
 		}
@@ -49,6 +46,7 @@ namespace ProphetsWay.Logger.Tests
 
 		public void AssertNoAutomaticOutput()
 		{
+			_fixture.ValidateRootPath();
 			Directory.GetFiles(DirectoryPath).ShouldBeEmpty("No inbound test should trigger automatic file fallback.");
 			Directory.GetDirectories(DirectoryPath).ShouldBeEmpty();
 		}
@@ -57,15 +55,7 @@ namespace ProphetsWay.Logger.Tests
 		{
 			if (_disposed) return;
 			_disposed = true;
-			if (!Directory.Exists(DirectoryPath)) return;
-			(File.GetAttributes(DirectoryPath) & FileAttributes.ReparsePoint).ShouldBe((FileAttributes)0);
-			foreach (var file in Directory.GetFiles(DirectoryPath))
-			{
-				(File.GetAttributes(file) & FileAttributes.ReparsePoint).ShouldBe((FileAttributes)0);
-				File.Delete(file);
-			}
-			Directory.GetDirectories(DirectoryPath).ShouldBeEmpty("Refusing recursive cleanup of unexpected test directories.");
-			Directory.Delete(DirectoryPath);
+			_fixture.Dispose();
 		}
 	}
 
