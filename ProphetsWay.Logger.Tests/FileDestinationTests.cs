@@ -546,9 +546,11 @@ namespace ProphetsWay.Logger.Tests
 				var previousOutput = Console.Out;
 				var previousError = Console.Error;
 				FileStream held = null;
+				FileStream controlHeld = null;
 				try
 				{
 					string target;
+					string controlTarget = null;
 					Exception frameworkFailure;
 					if (operation == "prepare")
 					{
@@ -559,18 +561,29 @@ namespace ProphetsWay.Logger.Tests
 					else
 					{
 						fixture.WriteAllBytes("entry.log", prefix);
+						fixture.WriteAllBytes("control.log", prefix);
 						target = fixture.GetPath("entry.log");
+						controlTarget = fixture.GetPath("control.log");
 						held = fixture.OpenExclusive("entry.log");
-						frameworkFailure = Record.Exception(() => { File.Delete(fixture.GetPath("entry.log")); });
+						controlHeld = fixture.OpenExclusive("control.log");
+						frameworkFailure = Record.Exception(() => { File.Delete(controlTarget); });
 					}
-					frameworkFailure.ShouldBeOfType<IOException>();
+					if (operation == "prepare")
+						frameworkFailure.ShouldNotBeNull();
+					else if (frameworkFailure != null)
+						frameworkFailure.ShouldBeOfType<IOException>();
 					Console.SetOut(output);
 					Console.SetError(error);
 					Utilities.Logger.DispatchFailed += observer;
 					var failure = Record.Exception(() => new FileDestination(target, resetFile: true));
-					failure.ShouldBeOfType<IOException>();
-					failure.GetType().ShouldBe(frameworkFailure.GetType());
-					failure.HResult.ShouldBe(frameworkFailure.HResult);
+					if (frameworkFailure == null)
+						failure.ShouldBeNull();
+					else
+					{
+						failure.ShouldNotBeNull();
+						failure.GetType().ShouldBe(frameworkFailure.GetType());
+						failure.HResult.ShouldBe(frameworkFailure.HResult);
+					}
 					output.Attempts.ShouldBe(0);
 					error.Attempts.ShouldBe(0);
 					output.ToString().ShouldBe("");
@@ -580,8 +593,23 @@ namespace ProphetsWay.Logger.Tests
 					{
 						held.Dispose();
 						held = null;
+						controlHeld.Dispose();
+						controlHeld = null;
 					}
-					File.ReadAllBytes(fixture.GetPath(operation == "prepare" ? "obstacle" : "entry.log")).ShouldBe(prefix);
+					if (operation == "prepare")
+						File.ReadAllBytes(fixture.GetPath("obstacle")).ShouldBe(prefix);
+					else if (frameworkFailure == null)
+					{
+						File.Exists(target).ShouldBeFalse();
+						File.Exists(controlTarget).ShouldBeFalse();
+						fixture.ObserveDeletedFile("entry.log");
+						fixture.ObserveDeletedFile("control.log");
+					}
+					else
+					{
+						File.ReadAllBytes(target).ShouldBe(prefix);
+						File.ReadAllBytes(controlTarget).ShouldBe(prefix);
+					}
 				}
 				finally
 				{
@@ -590,6 +618,8 @@ namespace ProphetsWay.Logger.Tests
 					Console.SetError(previousError);
 					if (held != null)
 						held.Dispose();
+					if (controlHeld != null)
+						controlHeld.Dispose();
 				}
 			}
 		}

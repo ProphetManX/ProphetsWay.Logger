@@ -200,7 +200,10 @@ namespace ProphetsWay.Utilities
 					{
 						stream = _openFile(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
 					}
-					catch (IOException exception) when (exception.HResult == unchecked((int)0x80070050) || exception.HResult == unchecked((int)0x800700B7))
+					catch (IOException exception) when (
+						exception.HResult == unchecked((int)0x80070050) ||
+						exception.HResult == unchecked((int)0x800700B7) ||
+						(Path.DirectorySeparatorChar == '/' && exception.HResult == 17))
 					{
 						continue;
 					}

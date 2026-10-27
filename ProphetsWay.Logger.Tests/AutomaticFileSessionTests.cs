@@ -354,6 +354,35 @@ namespace ProphetsWay.Logger.Tests
 		}
 
 		[Fact]
+		public void ShouldClassifyRawEexistAsACollisionOnlyOnPosix()
+		{
+			using (var fixture = new AutomaticFileSessionFixture())
+			{
+				var isPosix = Path.DirectorySeparatorChar == '/';
+				var requests = new List<Tuple<string, FileMode, FileAccess, FileShare>>();
+				var tokens = new Queue<Guid>(new[] { FirstToken, SecondToken });
+				var localCalls = 0;
+				var owner = Create(fixture, local: () => { localCalls++; return fixture.LocalRoot; },
+					token: () => tokens.Dequeue(),
+					open: (path, mode, access, share) =>
+					{
+						requests.Add(Tuple.Create(path, mode, access, share));
+						if (requests.Count == 1) throw new IOException("synthetic native EEXIST", 17);
+						return fixture.Open(path, mode, access, share);
+					});
+				Write(owner, "classified").ShouldBeTrue();
+				var chosenRoot = isPosix ? fixture.PrimaryDirectory : Secondary(fixture.LocalRoot, fixture.PrimaryDirectory);
+				requests.ShouldBe(new[]
+				{
+					Request(fixture.PrimaryDirectory, FirstToken, FileMode.CreateNew),
+					Request(chosenRoot, SecondToken, FileMode.CreateNew)
+				});
+				localCalls.ShouldBe(isPosix ? 0 : 1);
+				fixture.ReadAllBytes(Candidate(chosenRoot, SecondToken)).ShouldBe(Bytes("classified"));
+			}
+		}
+
+		[Fact]
 		public void ShouldResolveSecondaryAfterAClockFailureWithoutResamplingOrOpeningAFile()
 		{
 			using (var fixture = new AutomaticFileSessionFixture())

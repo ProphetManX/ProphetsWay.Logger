@@ -945,12 +945,15 @@ namespace ProphetsWay.Logger.Tests
 			{
 				var names = new List<string>();
 				var isMacOS = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+				var architecture = RuntimeInformation.ProcessArchitecture;
+				var useMacInode64Readdir = isMacOS && architecture == Architecture.X64;
+				var readdirEntryPoint = useMacInode64Readdir ? "readdir$INODE64" : "readdir";
 				var errno = isMacOS ? ErrorLocationMacPosix() : ErrorLocationLinuxPosix();
 				var nameOffset = isMacOS ? 21 : 19;
 				while (true)
 				{
 					Marshal.WriteInt32(errno, 0);
-					var entry = isMacOS && RuntimeInformation.ProcessArchitecture == Architecture.X64
+					var entry = useMacInode64Readdir
 						? ReadDirectoryEntryMacPosix(directory) : ReadDirectoryEntryPosix(directory);
 					if (entry == IntPtr.Zero)
 					{
@@ -962,7 +965,9 @@ namespace ProphetsWay.Logger.Tests
 					var recordLength = unchecked((ushort)Marshal.ReadInt16(entry, 16));
 					var capacity = Math.Min(recordLength - nameOffset, isMacOS ? 1024 : 256);
 					if (capacity <= 0)
-						throw new IOException("Invalid fixture directory entry length.");
+						throw new IOException("Invalid fixture directory entry length (architecture=" + architecture
+							+ ", entrypoint=" + readdirEntryPoint + ", d_reclen offset=16 value=" + recordLength
+							+ ", expected name offset=" + nameOffset + ").");
 					var bytes = new List<byte>();
 					for (var index = 0; index < capacity; index++)
 					{
