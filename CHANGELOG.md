@@ -1,3 +1,402 @@
+# Unreleased
+
+## Hosted test-harness portability (native POSIX verification pending)
+
+Owner-approved LOGGER-CI-FIX-R1/R2 implements safe preparation of missing Windows fixture-parent
+ancestry, architecture-correct Darwin inode64 bindings, fresh POSIX directory enumeration and
+platform-native inert mock paths. Reserved product-created entries must be observed explicitly
+at quiescent boundaries; reset must verify selected-file absence before retiring only that old
+identity, without lazy adoption or weakened no-follow checks. Windows Release validation on
+2026-10-26 passed the solution build and 863/863 tests on each of `net48` and `net10.0`,
+with zero failures or skips, using the CI filter `Requires!=LocalDb`.
+
+Initial hosted Windows, Linux and macOS attempts failed, with leading defects in fixture setup,
+native ABI/enumeration, ownership identity capture and Windows-only mock inputs; no shipped
+Logger bug is established. No passing native Linux/macOS verification is recorded; hosted
+reruns remain required, and Windows success or ABI declaration proxies cannot certify them.
+This test-harness repair changes no public API, library asset, version or Logger runtime behavior.
+
+## Assertion migration
+
+The three remaining legacy boolean assertions in `DestinationManagementTests` now use
+Shouldly instead of FluentAssertions, and the unused FluentAssertions 5.10.3 test-project
+reference has been removed. Assertion expressions, expected values, all four test identities
+and product operations are unchanged. This completes the assertion/dependency migration
+only; it does not claim full M6, release qualification or non-Windows verification.
+
+## Test tooling naming
+
+The owner-approved test project name is now `ProphetsWay.Logger.Tests`, including its
+directory, project file and test namespaces. Solution references and current developer
+guidance follow the plural name. This mechanical rename preserves test bodies, assertions,
+dependencies, target frameworks and the project GUID; the test assembly is not shipped.
+Logger runtime behavior, public library namespaces, package identity and version are unchanged.
+Historical evidence retains its original identities; fresh validation is required for the rename.
+
+## Destination management test isolation
+
+The four existing `DestinationManagementTests` cases now exercise real public destination
+management through fresh loaded Logger state with owned synthetic automatic-file output beneath
+the D021 parent `c:/temp/logger tests/`. Method identities and existing assertions are preserved;
+Logger runtime behavior, public API, dependencies and version are unchanged. Separate fresh Windows
+VSTest hosts passed 4/4 cases on each of `net48` and `net10.0`, with zero failures or skips,
+against the readiness-reviewed inputs on 2026-10-24. Final evidence and code/docs review remain
+separate gates; this is not same-host full-suite, unfiltered, full M6, non-Windows or release proof.
+
+README guidance and two optional manual class-only tasks keep this execution separate from the
+unchanged default 18-class filters. The three existing tasks and historical task archive remain
+unchanged. These documentation changes do not requalify the updated package README or package.
+
+## Packaging and debugging metadata
+
+The Logger package project now declares its GitHub project URL and `logging;logger;diagnostics`
+tags, uses the standard `git` repository type, and opts into XML documentation, repository metadata,
+embedded untracked sources, portable symbol generation, and `.snupkg` symbol packaging. CI-only
+`ContinuousIntegrationBuild` is enabled when `TF_BUILD` is `True`, so deterministic CI build metadata
+is separated from local builds. These are additive packaging and debuggability improvements; they do
+not add runtime API or decide the overall v4 compatibility and versioning question.
+
+The XML documentation setting currently surfaces 58 `CS1591` compiler occurrences, which remain
+unresolved. The project metadata has been updated, but package contents, evaluated local-versus-CI
+properties, remote Source Link/debugger retrieval, and binary reproducibility are not claimed here.
+
+## Logging abstractions dependency
+
+The Logger library now directly references `Microsoft.Extensions.Logging.Abstractions` `10.0.12`. Consumers should account for the corresponding transitive restore closure, including `Microsoft.Extensions.DependencyInjection.Abstractions` and the supporting `System.*` packages selected for the target framework. This entry records dependency adoption only; it does not claim that the current build, tests, or package qualification have completed.
+
+## Inbound Microsoft logging bridge
+
+Current unreleased source adds `MicrosoftLoggerFactoryExtensions.AddProphetsWay(ILoggerFactory,
+IMicrosoftLogLabelMapper = null)`. An explicit call creates one `MicrosoftLoggerProvider`, registers
+that provider with the supplied factory, and returns the same provider. Its provider-created loggers
+retain their supplied categories and share the provider's lifetime and scope source. Inbound dispatch
+uses the exact `LogBridgeEntry` route while retaining concrete `LogBridgeEntry<TState>` payloads.
+
+Callers may explicitly supply an `IMicrosoftLogLabelMapper`; the mapper and factory are borrowed.
+The host must arrange provider cleanup by explicitly disposing the returned provider or ensuring
+the factory/provider's normal lifetime handling retires it; provider disposal is idempotent. The
+provider begins with its own logical-flow scope source; a caller-supplied external scope source and
+its scope handles remain borrowed and are cleaned up by their opener. The provider does not dispose
+the factory, mapper, supplied scope source, or native destinations.
+
+This describes current source, not the published package or release qualification. The outbound
+Logger-to-Microsoft destinations are described separately below; enabling this inbound provider does
+not register them. This entry does not claim M5/M6 completion.
+
+## Outbound Microsoft logging destinations
+
+Current unreleased source adds two opt-in outbound destinations: `MicrosoftLoggerDestination` for
+ordinary native entries and `GenericMicrosoftLoggerDestination<T>` for an exact declared-`T` route.
+Each accepts either a borrowed `ILoggerFactory` (with an optional category fallback) or a borrowed
+fixed `ILogger`. Register them explicitly with `Logger.AddDestination(destination)` or
+`Logger.AddDestination<T>(destination)`; outbound registration does not install the inbound provider.
+
+Native severity and label selection happen before Microsoft callbacks. The adapter maps one lowest
+set native severity bit to one Microsoft level, retains the original mask and available entry state,
+exception, event/category, structured properties, and separate native-context/external-scope facts.
+The transport keeps entry, native contexts and external scopes in distinct ordered groups; scope
+replay preserves individual frames and cleans returned handles in reverse order. The factory's
+category fallback applies only when the source category is null; a fixed logger retains its category.
+`IsEnabled == false` is normal rejection. The destination does not classify or sanitize consumer data.
+
+Registration does not transfer ownership: clearing or removing a destination does not dispose its
+factory or fixed logger. Output and cleanup failures follow Logger's safe reporting and propagation
+contract. This describes current unreleased source only, not the published package, package/consumer
+qualification, M6 completion, release readiness, or non-Windows verification.
+
+## Controlled Microsoft bridge returns
+
+- Fixed unchanged controlled outbound calls fanned out through multiple `AddProphetsWay`
+  providers to preserve original entry labels and visited-route suppression on matching receipts.
+- Fixed controlled-return registration selection, intrinsic/custom severity checks and native
+  handoff to use the retained full native severity mask rather than the projected Microsoft level.
+
+## Support and tooling
+
+The library target set is now `netstandard2.0;net10.0`. This removes dedicated assets for the
+older .NET Framework, .NET Standard 1.x, .NET Core, .NET 5 and .NET 6 targets, including the former
+`net48` library asset. Consumers that can use the `netstandard2.0` asset remain supported; consumers
+that require one of the removed assets must move to a compatible `netstandard2.0` consumer or to
+`net10.0`. This target change is breaking and requires a major-version decision before publication.
+
+The test project now exercises `net48` and `net10.0` with the refreshed xUnit v3 tooling. This changes
+the verification matrix, not the Logger runtime behavior.
+
+## Native severity and destination validation
+
+The native Logger severity model now has six exact bits: `Critical = 1`, `ErrorOnly = 2`,
+`WarningOnly = 4`, `InformationOnly = 8`, `DebugOnly = 16`, and `TraceOnly = 32`. Inclusive
+destination masks are `Error = 3`, `Warning = 7`, `Information = 15`, `Debug = 31`, and
+`Trace = 63`; a destination accepts a composite message only when it contains every requested bit.
+The three public `Security` helper forms have been removed. The Logger's internal `Log` helpers remain
+private, while `Log` on destination interfaces remains public for direct destination calls. There is
+no compatibility replacement for the removed `Security` names, so callers must select the new severity
+helper that matches their intent.
+
+The ordinary, metadata-typed, and metadata extension helper families now expose the six severity
+operations with exact-bit delivery and explicit argument requirements: `Trace`, `Debug`, `Info`, and
+`Warn` require a message; `Error` requires an exception and permits a missing message; `Critical`
+requires both. Existing callers should update removed helpers and any calls that relied on omitted
+arguments or on the former cumulative severity values.
+
+Destination masks supplied as enum values, integers, or recognized case-sensitive strings are now
+validated strictly. Values from 0 through 63 are representable, including unnamed combinations such
+as `9`; zero is a valid active reject-all destination mask. The new validation rejects invalid, negative,
+unsupported, malformed, or null inputs with argument errors; it does not imply that all such invalid
+forms previously shared one `Information` fallback. Destination eligibility continues to require every
+requested message bit, while the new raw and direct destination guards require a nonzero mask from 1
+through 63 and validate before callbacks or output. Valid calls preserve the original composite mask,
+message, metadata, and exception. Exception details are included for valid warnings and composites as
+well as errors, including when the raw message is null; no synthetic message or exception is fabricated.
+
+This is breaking for consumers that compile against the removed `Security` members or depend on the
+old enum numbers, permissive helper arguments, or inputs now rejected by strict validation. The current
+tree is unreleased v4-direction source; this entry describes the native severity change, not full v4
+integration or the output-failure policy. The outbound Microsoft bridge is recorded in its separate
+current-source entry below. Native text framing is covered by the M4-A entry; remaining qualification
+work is not claimed here.
+
+## Sensitivity labels
+
+A new immutable `SensitivityLabel` reference type is available in `ProphetsWay.Utilities`. Create one
+with an application-defined identifier, for example:
+
+```csharp
+var label = new SensitivityLabel("internal");
+```
+
+Labels retain their exact non-null identifier, compare by ordinal value, and provide a matching hash
+code. Identifiers must contain 1 through 256 UTF-16 code units and must not contain whitespace or
+control characters. Invalid input is rejected without copying the supplied identifier into argument
+diagnostics.
+
+## Pure destination-label policy
+
+The new `LabelFilterMode` enum (`NoFilter`, `Exclude`, and `AllowOnly`) and `DestinationLabelPolicy`
+class provide immutable, defensive-copying membership evaluation. `Exclude` rejects any intersecting
+label; `AllowOnly` requires nonempty effective membership wholly contained in the configured labels;
+`NoFilter` permits valid effective input. Duplicate identities and ordering do not affect the result,
+and null labels or undeclared modes are rejected with argument errors.
+
+This remains a standalone predicate API for callers that want to evaluate a policy directly; it does
+not render or redact content, select fallback destinations, or provide confidentiality or security
+guarantees. M3 also uses the immutable policy as an additional whole-entry gate through
+`DestinationRegistrationSettings` and the destination's intrinsic `LabelPolicy`: both configured
+and intrinsic restrictions must permit the complete effective label union before payload delivery.
+A label denial is a deliberate non-failure and does not select fallback; enabled membership still
+suppresses fallback on that route.
+
+The pure destination-label policy now protects its configured membership readback from ordinary collection-interface mutation attempts, including the synchronization-root path that previously exposed its owned backing list on the modern runtime. Constructed policies retain the same deduplicated, ordinal membership, and `Mode`, `Allows`, and the public API remain unchanged; consumers do not need to change their calls.
+
+## Explicit destination registration
+
+The existing ordinary and metadata-typed registration methods now maintain separate, exact routes. A
+typed registration is selected by its declared `T`, not by runtime metadata assignability, and a
+destination-contract type does not alias the ordinary route. The same compatible destination reference
+may be registered on distinct routes, but adding that same reference twice to one route now throws
+`ArgumentException` with `ParamName` `newDest`. Removal is reference-only, so an equal but distinct
+destination remains registered, survivor order is preserved, and remove/clear affect only their selected
+route. These are breaking behavior changes for callers that relied on duplicate registration, equality-
+based removal, or ordinary/typed route sharing; no method signature or public type was added, and callers
+should register each intended route explicitly and retain the reference they intend to remove.
+
+Registration and dispatch now publish complete ordered membership captures before user eligibility or
+callbacks run. Mutations from those callbacks affect later captures, recursive dispatch captures again,
+and an older capture may still invoke a removed or cleared destination after the mutation returns.
+Registration does not invoke recipients, and remove/clear never dispose borrowed destinations; hosts
+must quiesce producers and await synchronous calls before disposing them. This corrects the prior live-
+enumeration and ownership hazards without promising a drain, immediate revocation, or automatic fallback.
+
+## Log annotation occurrences
+
+The new `LogAnnotations` value captures an explicit `IEnumerable<SensitivityLabel>` through its
+constructor and exposes the successful capture through the read-only `LabelOccurrences` property.
+The constructor copies the supplied occurrences in order, preserves duplicates, accepts an empty
+sequence, and rejects null input or null elements. A failed or unsupported sequence capture does not
+publish a usable partial value; callers remain responsible for providing a finite, stable sequence.
+The returned collection is read-only. `BeginScope` can attach one to a native scope and
+`LogAnnotated` can attach one to an entry; dispatch captures the enclosing scopes and entry
+annotation together before recipient callbacks, while the policy predicate still uses deduplicated
+ordinal membership rather than occurrence order. An annotation remains data, not authorization,
+classification, formatting, redaction, or a security guarantee.
+
+## Configured dispatch failure reporting
+
+Configured ordinary and declared-typed routes now capture the complete route, settings, scopes and
+effective labels before attempting each enabled, independently eligible recipient. Registration
+severity, destination severity and both applicable label policies must permit the entry; a contextual
+recipient receives one contextual handoff and a legacy recipient receives one raw handoff. A deliberate
+Boolean label denial withholds the entry from that recipient without recording a failure; a
+`LabelCheck` exception is recorded and returns through the safe report boundary. Neither kind of label
+outcome stops later captured recipients, while an eligibility or output callback failure also does not
+stop later captured recipients.
+After applicable attempts, the call attempts bounded notification through `Logger.DispatchFailed` when
+subscribers are present and same-thread recursive reporting is not already suppressed, along with the
+ordinary stderr summary, then throws `LogDispatchException` for mandatory eligibility/output failures.
+A capture or check-only failure therefore permits the whole call to return safely only when no mandatory
+eligibility/output failure also occurred, so mixed outcomes remain represented by `LogDispatchException`.
+The report exposes a correlation ID, encounter-ordered failure descriptors with each recipient's
+one-based captured position and `LabelCheck`, `Eligibility` or `Output` stage, an overflow count when
+more failures occurred than the retained descriptor limit, and a separate `CoreCaptureFailureCount`
+for a shared capture failure. Subscriber failures are contained, and the safe exception/report boundary
+does not retain or expose the original callback causes.
+
+Consumers that previously handled only the first raw recipient exception should instead catch
+`LogDispatchException` and inspect its `Report`, and may subscribe to `Logger.DispatchFailed` when they
+need the bounded notification. This contract applies to configured routes; unconfigured fallback
+behavior remains separately qualified, and it does not claim automatic fallback, retries, rollback,
+or full exception-graph sanitization.
+
+The configured-route failure behavior corrects the prior single-failure propagation boundary. This
+entry records that configured-route slice, not the full v4 integration or automatic Trace/file behavior.
+Native text framing is recorded in the M4-A entry below; file lifecycle/termination and broader
+qualification are separate. Current outbound source behavior is described in the M5 entry above.
+
+## Native scopes and contextual destinations
+
+The Logger now captures native scopes and entry annotations into an immutable `LogContext`. Use
+`BeginScope` for ordered scope properties and labels, and `LogAnnotated` for entry labels; captured
+scope and label membership is complete at capture time, while nested property values remain the
+caller-owned objects. Scope handles are flow-local and conventional: dispose them in order, and do
+not treat a retained `LogContext` as authorization to bypass current destination checks.
+
+Destination registration now has immutable per-registration `Enabled`, severity-mask, and label-policy
+settings. `SetDestinationSettings` publishes a complete replacement atomically, so a callback sees
+either the old settings or the new settings rather than a partially updated combination. The ordinary
+and exact-declared-metadata-type routes remain separate. Existing independent destination interfaces
+remain valid; contextual interfaces are optional extensions for destinations that need the captured
+context.
+
+Supplied destinations and base classes now expose guarded direct `Log` calls and optional
+`LogWithContext` calls. Custom destinations deriving from `BaseLoggingDestination` or
+`BaseLoggingDestination<T>` must move their implementation to the protected `LogCore` override;
+the public logging entrypoints are guarded and are no longer the subclass override point. This is a
+source and binary compatibility break for custom destinations that overrode the former public logging
+member. Built-in event destinations expose the selected context through their event arguments, while
+event delivery preserves the original payload, metadata, exception and existing event semantics. Native
+text rendering and framing are covered by the separate M4-A entry below.
+
+Failure results now distinguish a failed native capture from a destination `LabelCheck`, `Eligibility`,
+or `Output` failure. Shared capture and label-check failures report safely and return without handing
+the incomplete or rejected entry to that recipient; eligibility and output failures remain mandatory
+`LogDispatchException` results after independent attempts. `CoreCaptureFailureCount` records the core
+capture count without inventing a recipient failure, and failure-report membership no longer exposes a
+writable `SyncRoot` alias through collection interfaces. Consumers reading `LogDispatchException.Report`
+can therefore distinguish these safe result paths without receiving callback causes or payload data.
+
+This M3 work is unreleased and does not by itself claim publication or release readiness. The custom
+destination override change has major-version implications; the new scope, annotation, contextual
+delivery, settings, and failure-report members are additive individually, but they do not make that
+overall compatibility decision a minor or patch change. The accepted local validation is green on the
+focused `net48` and `net10.0` matrix, with the library/example builds and compile-only README checks
+also passing; it is not unfiltered real-file fixture certification. The permanent report-membership
+regression and parent final gate are complete within that accepted local boundary; they are not pending release work. M4-A native text rendering and framing is now implemented as a separate unreleased slice. M4-B, the outbound Microsoft bridge, file lifecycle/termination and broader release qualification were separate from this M3 scope; later Unreleased entries describe subsequent work.
+
+## Native text rendering and framing
+
+Native ordinary and exact-declared-metadata text destinations now render one complete, unterminated
+single-line record from the call's captured `LogContext.EventTimestampUtc`. The prefix uses invariant
+UTC `O` formatting and the existing full severity spelling; entry labels and every captured native scope
+frame follow in their original order, including empty frames, duplicate labels, repeated or null keys,
+and null values. Message, exception, metadata, label, key, and formatted property-value content is
+escaped as data, so null, empty, whitespace, literal `null`, and embedded line boundaries remain
+distinct without being silently discarded. Raw/event transport and the existing local event timestamp
+semantics are unchanged.
+
+This changes the default text layout and is a breaking output-contract change for consumers that parse,
+snapshot, or otherwise depend on the former local-time prefix and message-only text. Update those parsers
+and fixtures to the structured record layout; custom text destinations still implement `PrintLogEntry`,
+but must treat its input as the new complete record rather than reconstructing the old layout. The new
+`LogContext.EventTimestampUtc`, protected `FormatValue(object value)` hook, and
+`GenericTextBasedDestination<T>` are additive individually. The default formatter supports the documented
+scalar set with invariant formats, returns `[no formatter: TypeName]` for unsupported values, and emits
+null as a null token; an override may extend scalar formatting, but a thrown formatter, massage, render,
+or print operation remains an output failure. Consumers overriding `FormatValue` should return unescaped
+text and leave framing/escaping to the destination.
+
+This M4-A slice does not claim automatic Trace/file behavior, physical file termination or lifecycle,
+either Microsoft bridge direction, fallback completion, or publication/release qualification. Current
+inbound and outbound Microsoft source behavior is described in separate entries above; neither was
+part of this native text-framing slice. This is an unreleased v4-direction slice; no version number is
+changed here.
+
+## Explicit file destinations
+
+`FileDestination` now defaults all three constructor overloads to `resetFile: false`, so constructing a
+destination no longer deletes an existing selected file unless deletion is explicitly requested with
+`resetFile: true`. This is a breaking v4-direction behavior change for source callers that omitted the
+argument: recompile them with the desired value. Previously compiled callers retain the default value
+embedded in their call site until rebuilt, and callers that already pass `true` retain eager deletion.
+
+The destination captures the selected `fileName` path at construction and writes back to that same path,
+creating a missing file there on permitted output. Each write appends the rendered record followed by one
+`Environment.NewLine`, using the selected one of the five declared encodings (`ASCII`, `BigEndianUnicode`,
+`Unicode`, `UTF8`, or `UTF32`). It does not add a BOM, repair an unterminated existing prefix, inspect or
+transcode existing bytes, or relocate output. Undefined encoding values now fail with
+`ArgumentOutOfRangeException` for `encoder` before deletion or directory creation. Invalid `fileName`
+values identify `fileName`; ordinary framework filesystem and access diagnostics remain the originating
+exceptions rather than being replaced by a console echo.
+
+This remains an explicit-file implementation only. It does not claim automatic fallback, recovery, retry,
+replay, relocation, shared-session behavior, or publication/release qualification. The default change and
+the established file-output contract have major-version implications; the version file remains unchanged.
+
+## Automatic file destinations
+
+Automatic file output is now enabled as the implicit final `Trace` recipient for an ordinary route and
+for each exact declared-metadata-type route when that route has no enabled compatible explicit
+registration. An enabled explicit destination that rejects or fails still suppresses that route's
+automatic output; automatic output does not rescue it, and a label denial remains a deliberate
+non-failure. Ordinary and typed automatic routes share one session and one selected pathname, while
+remaining distinct for rendering and metadata retention. The typed route preserves its declared
+metadata, including `null` or `default(T)`.
+
+The default primary directory is the consuming host's `AppContext.BaseDirectory`. Before the first
+automatic attempt, applications may select a different primary directory:
+
+```csharp
+Logger.ConfigureAutomaticFileHostDirectory(directory);
+```
+
+The path is normalized when configured and must be supplied before automatic establishment starts;
+configuration performs no directory or permission probe and cannot reset failure state or move an
+existing file. If the captured primary location is unavailable during initial establishment, the
+session tries one application-associated directory under
+`Environment.SpecialFolder.LocalApplicationData`. It selects one UTF-8 file named with the UTC
+allocation timestamp and a GUID token, creates missing directories and avoids an existing-name
+collision. The selected pathname is retained for the session, and later records append one
+`Environment.NewLine` after the complete native rendered record.
+
+Initial inability to establish either location is remembered: the automatic attempt returns a
+mandatory output failure on that call and later calls do not keep probing or silently switch
+locations. After a pathname is selected, a later open, write, flush or disposal failure also remains
+an output failure; the record is not replayed, relocated or retried. Consumers should handle the
+existing `LogDispatchException` failure contract and should configure the primary directory before
+the first log call when the host's base directory is not an appropriate output location. This is
+additive API surface within the unreleased v4-direction change, whose automatic output, fallback
+suppression and failure semantics are breaking behavior decisions; the version file remains `3.0.1`.
+
+## Bridge carrier representation
+
+The Logger now exposes the assembly-created `LogBridgeEntry`, `LogBridgeEntry<TState>`, and
+`LogBridgeScope` carrier types. They preserve original typed or opaque state, declared state type,
+producer delegate, exception, cached text, ordered structured property and scope frames, annotations,
+and native source-origin context; their constructors remain assembly-only, and captured membership is
+read-only without deep-freezing nested caller-owned values. As recorded with the carrier-only source
+on 2026-10-03, that change did not add inbound or outbound adapters, activation, routing, loop guards,
+or lifecycle behavior. Later M5 entries above describe the subsequent inbound and outbound source behavior.
+
+## Microsoft log label mapper contract
+
+The v4-direction contract now includes the public `IMicrosoftLogLabelMapper` interface for explicit
+mapping of external Microsoft logging input to optional `LogAnnotations`. Implementations may map each
+entry through `MapEntry<TState>` and each captured external scope frame through `MapScope`; the
+callbacks receive the completed original facts and may return no attachment or a present annotation.
+At the time this mapper contract was recorded on 2026-10-03, it was contract surface only and did not
+include a provider implementation, callback invocation, routing, activation, or lifecycle behavior.
+Current inbound callback use and outbound behavior are described in separate entries above; outbound
+is not part of this mapper contract, and no release qualification is claimed here.
+
 # v3.0.1
 ### Build target for Net 6.0
 Library now targets .Net 6.0

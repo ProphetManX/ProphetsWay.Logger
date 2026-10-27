@@ -1,8 +1,11 @@
 variables:
   #user must update these each build personally as new versions are being worked on
-  Major: '3'
+  Major: '4'
   Minor: '0'
-  Patch: '1'
+  Patch: '0'
+
+  EnableLinuxTesting: 'yes'
+  EnableMacTesting: 'yes'
 
   # set these once and forget them per project/repo 
   #HasSqlProj: ''  #can be empty or ignored if unnecessary, but if "yes" then pipeline will find any *.sqlproj projects and build them 

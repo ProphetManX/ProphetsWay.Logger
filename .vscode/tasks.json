@@ -1,0 +1,110 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Logger build current solution",
+			"type": "process",
+			"command": "dotnet",
+			"args": ["build", "${workspaceFolder}/Logger.sln", "--configuration", "Debug"],
+			"options": { "cwd": "${workspaceFolder}" },
+			"problemMatcher": ["$msCompile"],
+			"group": "build"
+		},
+		{
+			"label": "Logger safe tests net48",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"${workspaceFolder}/ProphetsWay.Logger.Tests/ProphetsWay.Logger.Tests.csproj",
+				"--configuration", "Debug",
+				"--framework", "net48",
+				"--no-build", "--no-restore",
+				"--filter",
+				"FullyQualifiedName~ProphetsWay.Logger.Tests.SensitivityLabelTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationLabelPolicyTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.BasicTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.GenericBasicTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.AdvancedTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.GenericAdvancedTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.LoggerTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.GenericLoggerTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.MetadataLoggerTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.ILoggingDestinationTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.LogAnnotationsTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.EventDestinationTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationRegistrationSettingsTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.TextRenderingTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.LogBridgeRepresentationTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.MicrosoftLoggerProviderTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.MicrosoftLoggerFactoryExtensionsTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.MicrosoftLoggerDestinationTests.",
+				"--collect", "XPlat Code Coverage",
+				"--logger", "trx",
+				"--results-directory", "${workspaceFolder}/TestResults/developer/net48"
+			],
+			"options": { "cwd": "${workspaceFolder}" },
+			"problemMatcher": ["$msCompile"],
+			"group": "test"
+		},
+		{
+			"label": "Logger safe tests net10.0",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"${workspaceFolder}/ProphetsWay.Logger.Tests/ProphetsWay.Logger.Tests.csproj",
+				"--configuration", "Debug",
+				"--framework", "net10.0",
+				"--no-build", "--no-restore",
+				"--filter",
+				"FullyQualifiedName~ProphetsWay.Logger.Tests.SensitivityLabelTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationLabelPolicyTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.BasicTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.GenericBasicTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.AdvancedTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.GenericAdvancedTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.LoggerTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.GenericLoggerTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.MetadataLoggerTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.ILoggingDestinationTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.LogAnnotationsTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.EventDestinationTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationRegistrationSettingsTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.TextRenderingTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.LogBridgeRepresentationTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.MicrosoftLoggerProviderTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.MicrosoftLoggerFactoryExtensionsTests.|FullyQualifiedName~ProphetsWay.Logger.Tests.MicrosoftLoggerDestinationTests.",
+				"--collect", "XPlat Code Coverage",
+				"--logger", "trx",
+				"--results-directory", "${workspaceFolder}/TestResults/developer/net10.0"
+			],
+			"options": { "cwd": "${workspaceFolder}" },
+			"problemMatcher": ["$msCompile"],
+			"group": "test"
+		},
+		{
+			"label": "Logger isolated destination management tests net48",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"${workspaceFolder}/ProphetsWay.Logger.Tests/ProphetsWay.Logger.Tests.csproj",
+				"--configuration",
+				"Debug",
+				"--framework",
+				"net48",
+				"--no-build",
+				"--no-restore",
+				"--filter",
+				"FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationManagementTests.",
+				"--logger",
+				"trx",
+				"--results-directory",
+				"${workspaceFolder}/TestResults/developer/destination-management/net48"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Logger isolated destination management tests net10.0",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"${workspaceFolder}/ProphetsWay.Logger.Tests/ProphetsWay.Logger.Tests.csproj",
+				"--configuration",
+				"Debug",
+				"--framework",
+				"net10.0",
+				"--no-build",
+				"--no-restore",
+				"--filter",
+				"FullyQualifiedName~ProphetsWay.Logger.Tests.DestinationManagementTests.",
+				"--logger",
+				"trx",
+				"--results-directory",
+				"${workspaceFolder}/TestResults/developer/destination-management/net10.0"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "test"
+		}
+	]
+}

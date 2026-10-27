@@ -1,0 +1,140 @@
+﻿using System;
+using Shouldly;
+using ProphetsWay.Utilities;
+using ProphetsWay.Utilities.LoggerDestinations;
+using Xunit;
+
+namespace ProphetsWay.Logger.Tests
+{
+	[Collection("Logger is a Singleton")]
+	public class GenericBasicTests
+	{
+		public class TestObject
+		{
+			public TestObject(string name, int val)
+			{
+				Name = name;
+				Value = val;
+			}
+
+			public string Name { get; }
+			public int Value { get; }
+		}
+
+		[Fact]
+		public void ShouldContainMessage()
+		{
+			//setup
+			const string msg = "Hello World!";
+			var evtMessage = string.Empty;
+			var d = new GenericEventDestination<TestObject>(LogLevels.Debug);
+			d.LoggingEvent += (sender, args) => evtMessage = args.Message;
+			Utilities.Logger.AddDestination(d);
+			var obj = new TestObject("blarg", 5);
+
+			//act
+			Utilities.Logger.Debug(msg, obj);
+
+			//assert 
+			evtMessage.ShouldContain(msg, Case.Sensitive);
+
+			//cleanup
+			Utilities.Logger.RemoveDestination(d);
+		}
+
+		[Fact]
+		public void ShouldContainException()
+		{
+			//setup
+			var e = new Exception("Hello World!");
+			var evtMessage = string.Empty;
+			var d = new GenericEventDestination<TestObject>(LogLevels.Error);
+			d.LoggingEvent += (sender, args) => evtMessage = args.Exception.Message;
+			Utilities.Logger.AddDestination(d);
+			var obj = new TestObject("what?", 67);
+
+			//act
+			Utilities.Logger.Error(e, obj, "Goodbye Everyone");
+
+			//assert
+			evtMessage.ShouldContain(e.Message, Case.Sensitive);
+
+			//cleanup
+			Utilities.Logger.RemoveDestination(d);
+		}
+
+		[Fact]
+		public void ShouldContainMetadata()
+		{
+			//setup
+			const string msg = "Goodbye Everyone";
+			var e = new Exception("Hello World!");
+			TestObject evtObject = null;
+			var d = new GenericEventDestination<TestObject>(LogLevels.Error);
+			d.LoggingEvent += (sender, args) => evtObject = args.Metadata;
+			Utilities.Logger.AddDestination(d);
+			var obj = new TestObject("ok", 2);
+
+			//act
+			Utilities.Logger.Error(e, obj, msg);
+
+			//assert
+			evtObject.ShouldNotBeNull();
+			var actualName = evtObject.Name;
+			var expectedName = obj.Name;
+			actualName.ShouldNotBeNull();
+			actualName.Length.ShouldBe(expectedName.Length);
+			for (var characterIndex = 0; characterIndex < expectedName.Length; characterIndex++)
+			{
+				string.Equals(actualName[characterIndex].ToString(), expectedName[characterIndex].ToString(),
+					StringComparison.CurrentCulture).ShouldBeTrue();
+			}
+			evtObject.Value.ShouldBe(obj.Value);
+
+			//cleanup
+			Utilities.Logger.RemoveDestination(d);
+		}
+
+		[Fact]
+		public void ShouldContainMessageExceptionAndMetadata()
+		{
+			//setup
+			const string msg = "Goodbye Everyone";
+			var e = new Exception("Hello World!");
+			var evtMessage = string.Empty;
+			var exMessage = string.Empty;
+			TestObject evtObject = null;
+			var d = new GenericEventDestination<TestObject>(LogLevels.Error);
+			d.LoggingEvent += (sender, args) =>
+			{
+				evtMessage = args.Message;
+				evtObject = args.Metadata;
+				exMessage = args.Exception.Message;
+			};
+
+			Utilities.Logger.AddDestination(d);
+			var obj = new TestObject("ok", 2);
+
+			//act
+			Utilities.Logger.Error(e, obj, msg);
+
+			//assert
+			evtMessage.ShouldContain(msg, Case.Sensitive);
+			exMessage.ShouldContain(e.Message, Case.Sensitive);
+			evtObject.ShouldNotBeNull();
+			var actualName = evtObject.Name;
+			var expectedName = obj.Name;
+			actualName.ShouldNotBeNull();
+			actualName.Length.ShouldBe(expectedName.Length);
+			for (var characterIndex = 0; characterIndex < expectedName.Length; characterIndex++)
+			{
+				string.Equals(actualName[characterIndex].ToString(), expectedName[characterIndex].ToString(),
+					StringComparison.CurrentCulture).ShouldBeTrue();
+			}
+			evtObject.Value.ShouldBe(obj.Value);
+
+			//cleanup
+			Utilities.Logger.RemoveDestination(d);
+		}
+	}
+}
