@@ -966,20 +966,14 @@ namespace ProphetsWay.Logger.Tests
 					var capacity = Math.Min(recordLength - nameOffset, isMacOS ? 1024 : 256);
 					if (capacity <= 0)
 						throw new IOException("Invalid fixture directory entry length (architecture=" + architecture
-							+ ", entrypoint=" + readdirEntryPoint + ", d_reclen offset=16 value=" + recordLength
+							+ ", entrypoint=" + readdirEntryPoint + ", value currently read at offset16=" + recordLength
 							+ ", expected name offset=" + nameOffset
-							+ "; candidate d_reclen offset=8 "
-							+ (recordLength >= 10 ? "value=" + unchecked((ushort)Marshal.ReadInt16(entry, 8)) : "unavailable")
-							+ ", candidate d_reclen offset=16 "
-							+ (recordLength >= 18 ? "value=" + unchecked((ushort)Marshal.ReadInt16(entry, 16)) : "unavailable")
-							+ "; candidate d_namlen byte offset=11 "
-							+ (recordLength >= 12 ? "value=" + Marshal.ReadByte(entry, 11) : "unavailable")
-							+ ", candidate d_namlen byte offset=18 "
-							+ (recordLength >= 19 ? "value=" + Marshal.ReadByte(entry, 18) : "unavailable")
-							+ "; candidate d_type byte offset=10 "
-							+ (recordLength >= 11 ? "value=" + Marshal.ReadByte(entry, 10) : "unavailable")
-							+ ", candidate d_type byte offset=20 "
-							+ (recordLength >= 21 ? "value=" + Marshal.ReadByte(entry, 20) : "unavailable") + ").");
+							+ "; candidate ushort at offset4 "
+							+ (recordLength >= 6 ? "value=" + unchecked((ushort)Marshal.ReadInt16(entry, 4)) : "unavailable")
+							+ ", candidate byte at offset6 "
+							+ (recordLength >= 7 ? "value=" + Marshal.ReadByte(entry, 6) : "unavailable")
+							+ ", candidate byte at offset7 "
+							+ (recordLength >= 8 ? "value=" + Marshal.ReadByte(entry, 7) : "unavailable") + ").");
 					var bytes = new List<byte>();
 					for (var index = 0; index < capacity; index++)
 					{
