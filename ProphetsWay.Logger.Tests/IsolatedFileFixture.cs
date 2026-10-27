@@ -946,18 +946,17 @@ namespace ProphetsWay.Logger.Tests
 				var names = new List<string>();
 				var isMacOS = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 				var architecture = RuntimeInformation.ProcessArchitecture;
-				var useMacInode64Readdir = isMacOS && architecture == Architecture.X64;
-				var readdirEntryPoint = useMacInode64Readdir ? "readdir$INODE64" : "readdir";
+				var useMacX64DirectoryEntryLayout = isMacOS && architecture == Architecture.X64;
+				var readdirEntryPoint = "readdir";
 				var errno = isMacOS ? ErrorLocationMacPosix() : ErrorLocationLinuxPosix();
-				var recordLengthOffset = useMacInode64Readdir ? 4 : 16;
-				var nameOffset = useMacInode64Readdir ? 8 : isMacOS ? 21 : 19;
-				var nameLengthOffset = useMacInode64Readdir ? 7 : 18;
-				var nameLengthSize = useMacInode64Readdir ? 1 : 2;
+				var recordLengthOffset = useMacX64DirectoryEntryLayout ? 4 : 16;
+				var nameOffset = useMacX64DirectoryEntryLayout ? 8 : isMacOS ? 21 : 19;
+				var nameLengthOffset = useMacX64DirectoryEntryLayout ? 7 : 18;
+				var nameLengthSize = useMacX64DirectoryEntryLayout ? 1 : 2;
 				while (true)
 				{
 					Marshal.WriteInt32(errno, 0);
-					var entry = useMacInode64Readdir
-						? ReadDirectoryEntryMacPosix(directory) : ReadDirectoryEntryPosix(directory);
+					var entry = ReadDirectoryEntryPosix(directory);
 					if (entry == IntPtr.Zero)
 					{
 						var error = Marshal.ReadInt32(errno);
@@ -968,7 +967,7 @@ namespace ProphetsWay.Logger.Tests
 					var recordLength = unchecked((ushort)Marshal.ReadInt16(entry, recordLengthOffset));
 					var hasNameLength = isMacOS && recordLength >= nameLengthOffset + nameLengthSize;
 					var nameLength = hasNameLength
-						? useMacInode64Readdir
+						? useMacX64DirectoryEntryLayout
 							? Marshal.ReadByte(entry, nameLengthOffset)
 							: unchecked((ushort)Marshal.ReadInt16(entry, nameLengthOffset))
 						: 0;
@@ -1461,9 +1460,6 @@ namespace ProphetsWay.Logger.Tests
 
 		[DllImport("libc", EntryPoint = "readdir", ExactSpelling = true, SetLastError = true)]
 		private static extern IntPtr ReadDirectoryEntryPosix(IntPtr directory);
-
-		[DllImport("libc", EntryPoint = "readdir$INODE64", ExactSpelling = true, SetLastError = true)]
-		private static extern IntPtr ReadDirectoryEntryMacPosix(IntPtr directory);
 
 		[DllImport("libc", EntryPoint = "__error", ExactSpelling = true)]
 		private static extern IntPtr ErrorLocationMacPosix();

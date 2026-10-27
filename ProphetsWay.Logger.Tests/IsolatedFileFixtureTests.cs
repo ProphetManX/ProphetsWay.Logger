@@ -341,13 +341,13 @@ namespace ProphetsWay.Logger.Tests
 		}
 
 		[Fact]
-		public void DarwinX64DirectoryEntryDeclarationIncludesInode64_ProxyNotNativeRuntimeEvidence()
+		public void DarwinX64DirectoryEntryUsesPlainReaddirDeclaration_ProxyNotNativeRuntimeEvidence()
 		{
-			typeof(IsolatedFileFixture).GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
-				.Select(method => method.GetCustomAttribute<DllImportAttribute>())
-				.Where(import => import != null)
-				.Any(import => import.EntryPoint == "readdir$INODE64").ShouldBeTrue(
-					"This checks only that the X64 symbol is declared; it is not native-runtime evidence.");
+			var method = typeof(IsolatedFileFixture).GetMethod("ReadDirectoryEntryPosix",
+				BindingFlags.Static | BindingFlags.NonPublic);
+			method.ShouldNotBeNull();
+			method.GetCustomAttribute<DllImportAttribute>().EntryPoint.ShouldBe("readdir",
+				"This checks only the plain readdir P/Invoke declaration; it is not native Darwin runtime evidence.");
 		}
 
 		[Fact]
