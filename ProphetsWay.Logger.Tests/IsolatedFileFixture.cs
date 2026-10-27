@@ -949,7 +949,10 @@ namespace ProphetsWay.Logger.Tests
 				var useMacInode64Readdir = isMacOS && architecture == Architecture.X64;
 				var readdirEntryPoint = useMacInode64Readdir ? "readdir$INODE64" : "readdir";
 				var errno = isMacOS ? ErrorLocationMacPosix() : ErrorLocationLinuxPosix();
-				var nameOffset = isMacOS ? 21 : 19;
+				var recordLengthOffset = useMacInode64Readdir ? 4 : 16;
+				var nameOffset = useMacInode64Readdir ? 8 : isMacOS ? 21 : 19;
+				var nameLengthOffset = useMacInode64Readdir ? 7 : 18;
+				var nameLengthSize = useMacInode64Readdir ? 1 : 2;
 				while (true)
 				{
 					Marshal.WriteInt32(errno, 0);
@@ -962,18 +965,21 @@ namespace ProphetsWay.Logger.Tests
 							throw new IOException("Could not read the fixture directory stream.", new Win32Exception(error));
 						break;
 					}
-					var recordLength = unchecked((ushort)Marshal.ReadInt16(entry, 16));
+					var recordLength = unchecked((ushort)Marshal.ReadInt16(entry, recordLengthOffset));
+					var hasNameLength = isMacOS && recordLength >= nameLengthOffset + nameLengthSize;
+					var nameLength = hasNameLength
+						? useMacInode64Readdir
+							? Marshal.ReadByte(entry, nameLengthOffset)
+							: unchecked((ushort)Marshal.ReadInt16(entry, nameLengthOffset))
+						: 0;
 					var capacity = Math.Min(recordLength - nameOffset, isMacOS ? 1024 : 256);
+					var recordDescription = "architecture=" + architecture + ", entrypoint=" + readdirEntryPoint
+						+ ", record-length offset=" + recordLengthOffset + " value=" + recordLength
+						+ ", name offset=" + nameOffset
+						+ ", name-length offset=" + (isMacOS ? nameLengthOffset.ToString() : "not-applicable")
+						+ ", name-length value=" + (isMacOS ? hasNameLength ? nameLength.ToString() : "unavailable" : "not-applicable");
 					if (capacity <= 0)
-						throw new IOException("Invalid fixture directory entry length (architecture=" + architecture
-							+ ", entrypoint=" + readdirEntryPoint + ", value currently read at offset16=" + recordLength
-							+ ", expected name offset=" + nameOffset
-							+ "; candidate ushort at offset4 "
-							+ (recordLength >= 6 ? "value=" + unchecked((ushort)Marshal.ReadInt16(entry, 4)) : "unavailable")
-							+ ", candidate byte at offset6 "
-							+ (recordLength >= 7 ? "value=" + Marshal.ReadByte(entry, 6) : "unavailable")
-							+ ", candidate byte at offset7 "
-							+ (recordLength >= 8 ? "value=" + Marshal.ReadByte(entry, 7) : "unavailable") + ").");
+						throw new IOException("Invalid fixture directory entry length (" + recordDescription + ").");
 					var bytes = new List<byte>();
 					for (var index = 0; index < capacity; index++)
 					{
@@ -983,8 +989,8 @@ namespace ProphetsWay.Logger.Tests
 						bytes.Add(value);
 					}
 					if (bytes.Count == 0 || bytes.Count == capacity ||
-						(isMacOS && bytes.Count != unchecked((ushort)Marshal.ReadInt16(entry, 18))))
-						throw new IOException("Could not read a bounded fixture directory entry name.");
+						(isMacOS && (!hasNameLength || bytes.Count != nameLength)))
+						throw new IOException("Could not read a bounded fixture directory entry name (" + recordDescription + ").");
 					var name = new UTF8Encoding(false, true).GetString(bytes.ToArray());
 					if (name != "." && name != "..")
 						names.Add(name);

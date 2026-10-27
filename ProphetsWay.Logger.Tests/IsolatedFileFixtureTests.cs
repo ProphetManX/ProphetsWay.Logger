@@ -341,13 +341,13 @@ namespace ProphetsWay.Logger.Tests
 		}
 
 		[Fact]
-		public void DarwinDirectoryEntryDeclarationIncludesInode64_ProxyNotNativeRuntimeEvidence()
+		public void DarwinX64DirectoryEntryDeclarationIncludesInode64_ProxyNotNativeRuntimeEvidence()
 		{
 			typeof(IsolatedFileFixture).GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
 				.Select(method => method.GetCustomAttribute<DllImportAttribute>())
 				.Where(import => import != null)
 				.Any(import => import.EntryPoint == "readdir$INODE64").ShouldBeTrue(
-					"The Darwin d_name offset 21 requires the inode64 dirent ABI, not legacy readdir. This is only a declaration proxy.");
+					"This checks only that the X64 symbol is declared; it is not native-runtime evidence.");
 		}
 
 		[Fact]
