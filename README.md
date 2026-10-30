@@ -354,6 +354,71 @@ tokens, `"Critical|InformationOnly"`, `"Critical, 8"`, `"1, 8"`, `"0x9"`, overfl
 values and unknown bits are rejected. Invalid text no longer silently selects Information.
 Prefer named masks; configure `LogLevels.Trace` explicitly when you need all six severities.
 
+#### Configuration-Sourced Levels
+
+Logger does not choose, read or watch a configuration format. Let the host read its normal
+configuration source and pass the resulting string to a destination constructor. This keeps
+configuration ownership with the application while allowing operators to change a destination
+from `Warning` to `Debug` or `Trace` and restart the application without rebuilding it.
+
+For a modern host using `appsettings.json`:
+
+```json
+{
+  "Logging": {
+    "ProphetsWay": {
+      "FileLevel": "Warning"
+    }
+  }
+}
+```
+
+```csharp
+using System;
+using Microsoft.Extensions.Configuration;
+using ProphetsWay.Utilities.LoggerDestinations;
+
+public static FileDestination CreateFileDestination(IConfiguration configuration)
+{
+    var configuredLevel = configuration["Logging:ProphetsWay:FileLevel"];
+    if (configuredLevel == null)
+        throw new InvalidOperationException("Logging:ProphetsWay:FileLevel is required.");
+
+    return new FileDestination("application.log", configuredLevel);
+}
+```
+
+For a .NET Framework host using `app.config`:
+
+```xml
+<configuration>
+  <appSettings>
+    <add key="ProphetsWay.Logger.FileLevel" value="Warning" />
+  </appSettings>
+</configuration>
+```
+
+```csharp
+using System;
+using System.Configuration;
+using ProphetsWay.Utilities.LoggerDestinations;
+
+public static FileDestination CreateFileDestination()
+{
+    var configuredLevel = ConfigurationManager.AppSettings["ProphetsWay.Logger.FileLevel"];
+    if (configuredLevel == null)
+        throw new InvalidOperationException("ProphetsWay.Logger.FileLevel is required.");
+
+    return new FileDestination("application.log", configuredLevel);
+}
+```
+
+Register the returned destination normally and retain its reference for removal. Each destination
+can use a different configuration key. Missing values fail in the host examples above; invalid,
+wrong-case or unknown values are rejected by the destination constructor instead of silently
+changing the production logging policy. Live reload without an application restart is a separate
+host integration concern.
+
 ### Label Identity
 
 [SensitivityLabel.cs](ProphetsWay.Logger/SensitivityLabel.cs) defines a sealed immutable
